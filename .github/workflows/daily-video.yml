@@ -69,6 +69,15 @@ jobs:
             throw "FFmpeg is not available in PATH. Restart the self-hosted runner service after installing."
           }
 
+      # Restore the JSON cache from previous runs; each run saves an updated snapshot.
+      - name: Restore persistent JSON cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/usa-channel
+          key: ${{ runner.os }}-usa-channel-json-cache-v1-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-usa-channel-json-cache-v1-
+
       - name: Install Python dependencies
         run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
 
