@@ -35,6 +35,8 @@ jobs:
     env:
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      LEONARDO_API_KEY: ${{ secrets.LEONARDO_API_KEY }}
+      LEONARDO_MODEL_ID: ${{ vars.LEONARDO_MODEL_ID || 'de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3' }}
       VOICESTUDIO_API_URL: ${{ vars.VOICESTUDIO_API_URL || 'http://localhost:3900' }}
       VOICESTUDIO_VOICE_ID: ${{ vars.VOICESTUDIO_VOICE_ID || 'f90360e8' }}
       VOICESTUDIO_VOICE_NAME: ${{ vars.VOICESTUDIO_VOICE_NAME || 'sndp' }}
