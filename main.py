@@ -250,7 +250,8 @@ def render(data: dict, audio: Path, key: str) -> Path:
     subtitles = OUT / "captions.srt"
     make_srt(data["scenes"], subtitles, duration)
     video = OUT / ("usa_channel_shorts.mp4" if FORMAT == "shorts" else "usa_channel_video.mp4")
-    subtitle_filter = f"subtitles={subtitles.as_posix().replace(':', r'\\:')}:force_style='FontName=Arial,FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00101010,BorderStyle=1,Outline=3,Shadow=1,Alignment=2,MarginV=65'"
+    subtitle_path = subtitles.as_posix().replace(":", r"\\:")
+    subtitle_filter = f"subtitles={subtitle_path}:force_style='FontName=Arial,FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00101010,BorderStyle=1,Outline=3,Shadow=1,Alignment=2,MarginV=65'"
     run([ff, "-y", "-i", str(silent), "-i", str(audio), "-vf", subtitle_filter,
          "-map", "0:v:0", "-map", "1:a:0", "-c:v", "libx264", "-preset", "medium",
          "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
