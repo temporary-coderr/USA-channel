@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
+from datetime import datetime, timezone, timedelta
 import re
 import shutil
 import subprocess
@@ -24,7 +26,65 @@ VOICE_MODEL = os.getenv("VOICESTUDIO_MODEL", "omnivoice")
 FORMAT = os.getenv("VIDEO_FORMAT", "landscape").lower()
 DURATION_TARGET = int(os.getenv("TARGET_MINUTES", "6"))
 SESSION = requests.Session()
+
 SESSION.headers.update({"User-Agent": "USA-Channel-VideoBot/1.0"})
+
+# Persistent JSON cache, restored between GitHub Actions runs.
+CACHE_DIR = ROOT / ".cache" / "usa-channel"
+CACHE_FILE = CACHE_DIR / "cache.json"
+CACHE_TTL_DAYS = int(os.getenv("CACHE_TTL_DAYS", "30"))
+
+
+def load_cache() -> dict:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        data = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            data.setdefault("topics", [])
+            data.setdefault("pixabay", {})
+            return data
+    except (OSError, json.JSONDecodeError):
+        pass
+    return {"version": 1, "topics": [], "pixabay": {}}
+
+
+def save_cache(cache: dict) -> None:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    temp = CACHE_FILE.with_suffix(".tmp")
+    temp.write_text(json.dumps(cache, indent=2, ensure_ascii=False), encoding="utf-8")
+    temp.replace(CACHE_FILE)
+
+
+def cache_key(kind: str, query: str) -> str:
+    raw = f"{kind}|{FORMAT}|{query.strip().lower()}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def cached_pixabay(kind: str, query: str, fetcher):
+    cache = load_cache()
+    key = cache_key(kind, query)
+    entry = cache["pixabay"].get(key)
+    if entry:
+        try:
+            saved = datetime.fromisoformat(entry["saved_at"])
+            if datetime.now(timezone.utc) - saved < timedelta(days=CACHE_TTL_DAYS):
+                print(f"Cache hit: Pixabay {kind} — {query}")
+                return entry.get("value")
+        except (KeyError, ValueError, TypeError):
+            pass
+    value = fetcher()
+    cache["pixabay"][key] = {
+        "query": query, "kind": kind,
+        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "value": value,
+    }
+    if len(cache["pixabay"]) > 500:
+        ordered = sorted(cache["pixabay"].items(),
+                         key=lambda item: item[1].get("saved_at", ""))
+        cache["pixabay"] = dict(ordered[-400:])
+    save_cache(cache)
+    return value
+
 
 
 def require_env(name: str) -> str:
@@ -52,11 +112,19 @@ def get_topic() -> str:
     topic = os.getenv("VIDEO_TOPIC", "").strip()
     if topic:
         return topic
-    prompt = """Choose one compelling, evergreen psychology topic for a high-retention English YouTube channel.
+    cache = load_cache()
+    recent = [x.get("topic", "") for x in cache["topics"][-60:]]
+    prompt = f"""Choose one compelling, evergreen psychology topic for a high-retention English YouTube channel.
 Avoid diagnosis, medical advice, pop-psych myths, sensational claims and topics used in recent generic listicles.
-Return JSON only: {"topic":"specific topic","angle":"distinctive angle"}."""
+Do not repeat or closely rephrase these recently used topics: {json.dumps(recent)}.
+Choose a genuinely different angle. Return JSON only:
+{{"topic":"specific topic","angle":"distinctive angle"}}."""
     data = json.loads(groq_chat([{"role": "user", "content": prompt}], 0.9))
-    return f"{data['topic']} — {data['angle']}"
+    selected = f"{data['topic']} — {data['angle']}"
+    cache["topics"].append({"topic": selected, "date": datetime.now(timezone.utc).date().isoformat()})
+    cache["topics"] = cache["topics"][-100:]
+    save_cache(cache)
+    return selected
 
 
 def make_content(topic: str) -> dict:
@@ -110,30 +178,34 @@ def voiceover(text: str, path: Path) -> None:
 
 
 def pixabay_video(query: str, key: str) -> str | None:
-    r = SESSION.get(PIXABAY_VIDEO, params={"key": key, "q": query, "video_type": "film",
-                    "safesearch": "true", "per_page": 20}, timeout=60)
-    r.raise_for_status()
-    hits = r.json().get("hits", [])
-    if not hits:
-        return None
-    hits.sort(key=lambda h: h.get("views", 0), reverse=True)
-    for hit in hits:
-        choices = sorted(hit.get("videos", {}).values(),
-                         key=lambda v: v.get("width", 0) * v.get("height", 0), reverse=True)
-        for v in choices:
-            w, h = v.get("width", 0), v.get("height", 0)
-            if (FORMAT == "shorts" and h > w) or (FORMAT != "shorts" and w >= h):
-                return v.get("url")
-    return next(iter(hits[0].get("videos", {}).values()), {}).get("url")
+    def fetch():
+        r = SESSION.get(PIXABAY_VIDEO, params={"key": key, "q": query, "video_type": "film",
+                        "safesearch": "true", "per_page": 20}, timeout=60)
+        r.raise_for_status()
+        hits = r.json().get("hits", [])
+        if not hits:
+            return None
+        hits.sort(key=lambda h: h.get("views", 0), reverse=True)
+        for hit in hits:
+            choices = sorted(hit.get("videos", {}).values(),
+                             key=lambda v: v.get("width", 0) * v.get("height", 0), reverse=True)
+            for v in choices:
+                w, h = v.get("width", 0), v.get("height", 0)
+                if (FORMAT == "shorts" and h > w) or (FORMAT != "shorts" and w >= h):
+                    return v.get("url")
+        return next(iter(hits[0].get("videos", {}).values()), {}).get("url")
+    return cached_pixabay("video", query, fetch)
 
 
 def pixabay_image(query: str, key: str) -> str | None:
-    r = SESSION.get(PIXABAY_IMAGE, params={"key": key, "q": query, "image_type": "photo",
-                    "safesearch": "true", "per_page": 20, "orientation": "vertical" if FORMAT == "shorts" else "horizontal"},
-                    timeout=60)
-    r.raise_for_status()
-    hits = r.json().get("hits", [])
-    return hits[0].get("largeImageURL") if hits else None
+    def fetch():
+        r = SESSION.get(PIXABAY_IMAGE, params={"key": key, "q": query, "image_type": "photo",
+                        "safesearch": "true", "per_page": 20, "orientation": "vertical" if FORMAT == "shorts" else "horizontal"},
+                        timeout=60)
+        r.raise_for_status()
+        hits = r.json().get("hits", [])
+        return hits[0].get("largeImageURL") if hits else None
+    return cached_pixabay("image", query, fetch)
 
 
 def leonardo_image(prompt: str, output_file: Path) -> bool:
