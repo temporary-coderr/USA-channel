@@ -82,3 +82,13 @@ Open **Actions → USA Channel Video Automation → Run workflow**. For manual d
 - Pixabay assets are fetched at run time. Check the current Pixabay license/terms for each asset and retain any required attribution/records.
 - Groq output and stock search results can be imperfect. Review every script, visual, caption and final video before publishing.
 - A failed API call, missing secret, unavailable VoiceStudio, or missing FFmpeg stops the workflow with an error rather than silently producing an incomplete video.
+
+
+## Persistent JSON cache
+
+The workflow restores `.cache/usa-channel/cache.json` from earlier GitHub Actions runs and saves the updated cache after a run. It stores:
+- Up to 100 recently generated topics, so automatic topic selection can avoid the last 60.
+- Pixabay video/photo search results keyed by search phrase and video format.
+- Pixabay search entries expire after 30 days by default; set `CACHE_TTL_DAYS` to change this.
+
+The cache contains search metadata and URLs, not API keys. It reduces repeated topic selection and Pixabay API searches; it does not guarantee that an external asset URL will remain available forever. The first run starts with an empty cache, so cache hits begin on later runs.
