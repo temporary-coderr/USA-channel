@@ -136,6 +136,52 @@ def pixabay_image(query: str, key: str) -> str | None:
     return hits[0].get("largeImageURL") if hits else None
 
 
+def leonardo_image(prompt: str, output_file: Path) -> bool:
+    """Generate a private Leonardo scene image; return False if no key is configured."""
+    api_key = os.getenv("LEONARDO_API_KEY", "").strip()
+    if not api_key:
+        return False
+    width, height = (576, 1024) if FORMAT == "shorts" else (1024, 576)
+    headers = {"authorization": f"Bearer {api_key}", "accept": "application/json",
+               "content-type": "application/json"}
+    payload = {
+        "prompt": (prompt + ", cinematic documentary still, photorealistic, natural light, "
+                   "professional composition, no text, no watermark")[:1450],
+        "negative_prompt": "text, captions, logo, watermark, blurry, distorted anatomy",
+        "modelId": os.getenv("LEONARDO_MODEL_ID", "de7d3faf-762f-48e0-b3b7-9d0ac3a3fcf3"),
+        "width": width, "height": height, "num_images": 1,
+        "alchemy": False, "public": False, "guidance_scale": 7
+    }
+    r = SESSION.post("https://cloud.leonardo.ai/api/rest/v1/generations",
+                     headers=headers, json=payload, timeout=90)
+    if not r.ok:
+        raise RuntimeError(f"Leonardo create failed ({r.status_code}): {r.text[:1200]}")
+    generation_id = r.json().get("sdGenerationJob", {}).get("generationId")
+    if not generation_id:
+        raise RuntimeError(f"Leonardo returned no generationId: {r.text[:800]}")
+    import time
+    for attempt in range(30):
+        time.sleep(10)
+        status_response = SESSION.get(
+            f"https://cloud.leonardo.ai/api/rest/v1/generations/{generation_id}",
+            headers=headers, timeout=60)
+        if not status_response.ok:
+            raise RuntimeError(f"Leonardo status failed ({status_response.status_code}): {status_response.text[:1000]}")
+        result = status_response.json().get("generations_by_pk", {})
+        status = result.get("status", "").upper()
+        if status == "COMPLETE":
+            images = result.get("generated_images", [])
+            if not images or not images[0].get("url"):
+                raise RuntimeError("Leonardo completed without returning an image URL.")
+            download(images[0]["url"], output_file)
+            print(f"Leonardo image saved: {output_file}")
+            return True
+        if status == "FAILED":
+            raise RuntimeError(f"Leonardo image generation failed: {prompt}")
+        print(f"Leonardo status: {status or 'PENDING'} ({attempt + 1}/30)")
+    raise TimeoutError("Leonardo generation timed out after five minutes.")
+
+
 def download(url: str, path: Path) -> None:
     with SESSION.get(url, stream=True, timeout=(20, 180)) as r:
         r.raise_for_status()
@@ -211,53 +257,62 @@ def render(data: dict, audio: Path, key: str) -> Path:
     ff = ffmpeg_bin()
     duration = probe_duration(audio)
     width, height = (1080, 1920) if FORMAT == "shorts" else (1920, 1080)
-    weights = [max(1, len(s["narration"].split())) for s in data["scenes"]]
+    weights = [max(1, len(scene["narration"].split())) for scene in data["scenes"]]
     total = sum(weights)
-    concat_file = TMP / "concat.txt"
     clip_paths = []
+
     for i, (scene, weight) in enumerate(zip(data["scenes"], weights), 1):
         seconds = duration * weight / total
-        q = re.sub(r"[^a-zA-Z0-9 ]", "", scene["visual_query"])[:80]
-        print(f"[{i}/{len(data['scenes'])}] Finding visuals: {q}")
-        asset = pixabay_video(q, key)
-        source = TMP / f"source_{i:02}.mp4"
-        still = False
-        if asset:
-            download(asset, source)
-        else:
-            image_url = pixabay_image(q, key)
-            if not image_url:
-                raise RuntimeError(f"No Pixabay video or image found for scene: {q}")
-            source = TMP / f"source_{i:02}.jpg"
-            download(image_url, source)
-            still = True
-        clip = TMP / f"clip_{i:02}.mp4"
+        query = re.sub(r"[^a-zA-Z0-9 ]", "", scene["visual_query"])[:80]
+        print(f"[{i}/{len(data['scenes'])}] Finding visuals: {query}")
+        image_path = TMP / f"leonardo_{i:02}.jpg"
+        has_image = leonardo_image(scene["visual_query"], image_path)
+        video_url = pixabay_video(query, key)
+        video_path = TMP / f"stock_{i:02}.mp4"
+        has_video = bool(video_url)
+        if has_video:
+            download(video_url, video_path)
+
+        if not has_image:
+            image_url = pixabay_image(query, key)
+            if image_url:
+                image_path = TMP / f"pixabay_{i:02}.jpg"
+                download(image_url, image_path)
+                has_image = True
+
         vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1,fps=30"
-        if still:
-            cmd = [ff, "-y", "-loop", "1", "-i", str(source), "-t", f"{seconds:.3f}",
-                   "-vf", vf, "-an", "-c:v", "libx264", "-preset", "veryfast",
-                   "-crf", "22", "-pix_fmt", "yuv420p", str(clip)]
-        else:
-            cmd = [ff, "-y", "-stream_loop", "-1", "-i", str(source), "-t", f"{seconds:.3f}",
-                   "-vf", vf, "-an", "-c:v", "libx264", "-preset", "veryfast",
-                   "-crf", "22", "-pix_fmt", "yuv420p", str(clip)]
-        run(cmd)
-        clip_paths.append(clip)
+        if has_image:
+            still_seconds = seconds * (0.4 if has_video else 1.0)
+            still_clip = TMP / f"still_{i:02}.mp4"
+            run([ff, "-y", "-loop", "1", "-i", str(image_path), "-t", f"{still_seconds:.3f}",
+                 "-vf", vf, "-an", "-c:v", "libx264", "-preset", "veryfast",
+                 "-crf", "22", "-pix_fmt", "yuv420p", str(still_clip)])
+            clip_paths.append(still_clip)
+        if has_video:
+            motion_seconds = seconds * (0.6 if has_image else 1.0)
+            motion_clip = TMP / f"motion_{i:02}.mp4"
+            run([ff, "-y", "-stream_loop", "-1", "-i", str(video_path),
+                 "-t", f"{motion_seconds:.3f}", "-vf", vf, "-an",
+                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
+                 "-pix_fmt", "yuv420p", str(motion_clip)])
+            clip_paths.append(motion_clip)
+        if not has_image and not has_video:
+            raise RuntimeError(f"No visual found for scene: {query}")
+
+    concat_file = TMP / "concat.txt"
     concat_file.write_text("".join(f"file '{p.as_posix()}'\n" for p in clip_paths), encoding="utf-8")
     silent = TMP / "silent.mp4"
-    run([ff, "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file),
-         "-c", "copy", str(silent)])
+    run([ff, "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(silent)])
     subtitles = OUT / "captions.srt"
     make_srt(data["scenes"], subtitles, duration)
     video = OUT / ("usa_channel_shorts.mp4" if FORMAT == "shorts" else "usa_channel_video.mp4")
-    subtitle_path = subtitles.as_posix().replace(":", r"\\:")
+    subtitle_path = subtitles.as_posix().replace(":", r"\:")
     subtitle_filter = f"subtitles={subtitle_path}:force_style='FontName=Arial,FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00101010,BorderStyle=1,Outline=3,Shadow=1,Alignment=2,MarginV=65'"
     run([ff, "-y", "-i", str(silent), "-i", str(audio), "-vf", subtitle_filter,
          "-map", "0:v:0", "-map", "1:a:0", "-c:v", "libx264", "-preset", "medium",
          "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
          "-shortest", "-movflags", "+faststart", str(video)])
     return video
-
 
 def main() -> int:
     OUT.mkdir(exist_ok=True)
