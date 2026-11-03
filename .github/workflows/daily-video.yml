@@ -1,0 +1,89 @@
+name: USA Channel Video Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Optional topic; leave blank for an automatically selected evergreen psychology topic"
+        required: false
+        type: string
+      format:
+        description: "Video format"
+        required: true
+        default: landscape
+        type: choice
+        options:
+          - landscape
+          - shorts
+  schedule:
+    # Daily at 18:30 India time (13:00 UTC)
+    - cron: "0 13 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: usa-channel-video
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    # VoiceStudio is installed on the user's Windows PC. Register that PC as a
+    # self-hosted runner and keep VoiceStudio/API running before scheduled jobs.
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 90
+    env:
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      VOICESTUDIO_API_URL: ${{ vars.VOICESTUDIO_API_URL || 'http://localhost:3900' }}
+      VOICESTUDIO_VOICE_ID: ${{ vars.VOICESTUDIO_VOICE_ID || 'f90360e8' }}
+      VOICESTUDIO_VOICE_NAME: ${{ vars.VOICESTUDIO_VOICE_NAME || 'sndp' }}
+      VOICESTUDIO_MODEL: ${{ vars.VOICESTUDIO_MODEL || 'omnivoice' }}
+      VIDEO_FORMAT: ${{ github.event.inputs.format || 'landscape' }}
+      VIDEO_TOPIC: ${{ github.event.inputs.topic || '' }}
+      TARGET_MINUTES: "6"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install FFmpeg (if missing)
+        shell: pwsh
+        run: |
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            if (Get-Command winget -ErrorAction SilentlyContinue) {
+              winget install --id Gyan.FFmpeg.Shared --exact --silent --accept-package-agreements --accept-source-agreements
+            } else {
+              throw "FFmpeg is missing. Install FFmpeg and add it to PATH on this runner."
+            }
+          }
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            throw "FFmpeg is not available in PATH. Restart the self-hosted runner service after installing."
+          }
+
+      - name: Install Python dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+
+      - name: Validate required secrets
+        shell: pwsh
+        run: |
+          if (-not $env:GROQ_API_KEY) { throw "Add GROQ_API_KEY in Settings > Secrets and variables > Actions." }
+          if (-not $env:PIXABAY_API_KEY) { throw "Add PIXABAY_API_KEY in Settings > Secrets and variables > Actions." }
+
+      - name: Generate and render video
+        run: python main.py
+
+      - name: Upload generated video and metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: usa-channel-output-${{ github.run_number }}
+          path: output/
+          if-no-files-found: warn
+          retention-days: 7
