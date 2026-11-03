@@ -22,10 +22,12 @@ In **Settings → Secrets and variables → Actions → New repository secret**,
 |---|---|
 | `GROQ_API_KEY` | Script generation |
 | `PIXABAY_API_KEY` | Stock video and photo search |
+| `LEONARDO_API_KEY` | Leonardo scene-image generation (optional; API credits are charged) |
 
 Do not put keys in Python files or commit them.
 
 Optional Actions variables (Settings → Secrets and variables → Actions → Variables):
+- `LEONARDO_MODEL_ID` — defaults to the Phoenix 1.0 model ID in the workflow; use a model ID enabled for your API account.
 - `VOICESTUDIO_API_URL` — defaults to `http://localhost:3900`
 - `VOICESTUDIO_VOICE_ID` — defaults to `f90360e8`
 - `VOICESTUDIO_VOICE_NAME` — defaults to `sndp`
@@ -76,6 +78,7 @@ Open **Actions → USA Channel Video Automation → Run workflow**. For manual d
 - This generates videos and artifacts; it does **not** automatically publish to YouTube yet.
 - Thumbnail artwork is not rendered yet; metadata includes a thumbnail search prompt.
 - Scene durations and captions are estimated from narration word counts rather than forced-alignment transcription. Review timing before publishing.
+- Leonardo image generation consumes Leonardo API credits; check your API balance and pricing before enabling daily runs. Leonardo images are requested as private.
 - Pixabay assets are fetched at run time. Check the current Pixabay license/terms for each asset and retain any required attribution/records.
 - Groq output and stock search results can be imperfect. Review every script, visual, caption and final video before publishing.
 - A failed API call, missing secret, unavailable VoiceStudio, or missing FFmpeg stops the workflow with an error rather than silently producing an incomplete video.
