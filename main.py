@@ -161,6 +161,24 @@ Return valid JSON only with this exact shape:
 
 
 def voiceover(text: str, path: Path) -> None:
+    modal_url = os.getenv("MODAL_TTS_URL", "").strip()
+    if modal_url:
+        token = require_env("VOICE_API_TOKEN")
+        try:
+            r = SESSION.post(
+                modal_url,
+                json={"text": text},
+                headers={"Authorization": f"Bearer {token}", "Accept": "audio/wav"},
+                timeout=(30, 900),
+            )
+        except requests.RequestException as exc:
+            raise RuntimeError(f"Could not reach the Modal Chatterbox voice endpoint: {exc}") from exc
+        if not r.ok or not r.content or "audio" not in r.headers.get("Content-Type", "").lower():
+            raise RuntimeError(f"Modal voice API failed ({r.status_code}): {r.text[:1200]}")
+        path.write_bytes(r.content)
+        return
+
+    # Local VoiceStudio remains available for manual/local testing.
     url = f"{VOICE_API}/v1/audio/speech"
     payload = {"model": VOICE_MODEL, "input": text, "voice": VOICE_ID,
                "response_format": "mp3", "language": "English", "speed": 1.0}
@@ -169,8 +187,7 @@ def voiceover(text: str, path: Path) -> None:
                         timeout=(20, 900))
     except requests.RequestException as exc:
         raise RuntimeError(
-            f"Cannot reach VoiceStudio at {url}. GitHub-hosted runners cannot reach your PC's localhost. "
-            "Use a self-hosted Windows runner on the PC where VoiceStudio is running."
+            f"Cannot reach VoiceStudio at {url}. Set MODAL_TTS_URL to use the cloud voice service."
         ) from exc
     if not r.ok or not r.content or "json" in r.headers.get("Content-Type", "").lower():
         raise RuntimeError(f"VoiceStudio failed ({r.status_code}): {r.text[:1200]}")
@@ -395,8 +412,10 @@ def main() -> int:
     (OUT / "script.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
     (OUT / "narration.txt").write_text(data["full_narration"], encoding="utf-8")
     (OUT / "metadata.json").write_text(json.dumps({k: data.get(k) for k in ("title", "description", "tags", "thumbnail_query", "word_count")}, indent=2), encoding="utf-8")
-    audio = OUT / "narration.mp3"
-    print(f"Generating narration with VoiceStudio profile {VOICE_NAME} ({VOICE_ID})...")
+    use_modal = bool(os.getenv("MODAL_TTS_URL", "").strip())
+    audio = OUT / ("narration.wav" if use_modal else "narration.mp3")
+    print("Generating narration with cloud Chatterbox voice..." if use_modal else
+          f"Generating narration with VoiceStudio profile {VOICE_NAME} ({VOICE_ID})...")
     voiceover(data["full_narration"], audio)
     video = render(data, audio, key)
     print(f"SUCCESS: {video}")
