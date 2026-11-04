@@ -33,7 +33,7 @@ Do not paste secrets into chat, scripts, workflow files, or commits. No voice-cl
 
 ## Important limitations
 
-- Scene durations and caption timing are estimated from word count at 140 words/minute. Captions start after the 5-second intro, but may need adjustment to match your recorded voice.
+- Scene durations and caption timing are estimated from word count at 140 words/minute. Long-video captions start after the 5-second intro; Shorts captions start at the beginning. Both may need adjustment to match your recorded voice.
 - The current renderer uses clean cuts between stock scenes; it does not yet provide complex cross-dissolves, exact voice-aligned captions, or AI-generated images.
 - Pixabay results and availability vary. Review footage and applicable license terms before publishing.
 - No narration, YouTube upload, or automatic thumbnail generation is included.
