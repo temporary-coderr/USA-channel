@@ -87,6 +87,7 @@ jobs:
             output/title.txt
             output/voiceover_script.txt
             output/scene_plan.json
+            output/visual_manifest.json
             output/wise_lab_logo.svg
           if-no-files-found: error
           retention-days: 7
