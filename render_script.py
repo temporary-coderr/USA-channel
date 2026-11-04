@@ -174,7 +174,7 @@ def render_scene(media: Path, destination: Path, seconds: float,
         frames = max(1, round(seconds * FPS))
         zoom = (
             f"scale={int(width * 1.18)}:{int(height * 1.18)}:force_original_aspect_ratio=increase,"
-            f"crop={int(width * 1.18)}:{int(height * 1.18)},""
+            f"crop={int(width * 1.18)}:{int(height * 1.18)},"
             f"zoompan=z='min(zoom+0.0007,1.12)':d={frames}:"
             f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
             f"s={width}x{height}:fps={FPS},"
