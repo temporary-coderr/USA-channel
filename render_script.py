@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -15,6 +16,10 @@ ROOT = Path(__file__).resolve().parent
 SCRIPT = Path(os.getenv("SCRIPT_FILE", "scripts/script.txt"))
 OUT = ROOT / "output"
 WORK = OUT / "work"
+CACHE = ROOT / ".cache"
+MEDIA_CACHE = CACHE / "media"
+API_CACHE = CACHE / "pixabay_api"
+PLAN_CACHE = CACHE / "scene_plans"
 FORMAT = os.getenv("VIDEO_FORMAT", "landscape").lower()
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 PIXABAY_VIDEO = "https://pixabay.com/api/videos/"
@@ -159,10 +164,25 @@ def groq_json(script: str) -> dict:
     return plan
 
 
+def cache_key(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
 def pixabay_search(endpoint: str, params: dict) -> dict:
+    """Cache Pixabay search responses so reruns keep the same candidate set."""
+    API_CACHE.mkdir(parents=True, exist_ok=True)
+    safe_params = {k: v for k, v in params.items() if k != "key"}
+    cache_file = API_CACHE / f"{cache_key(endpoint + json.dumps(safe_params, sort_keys=True))}.json"
+    if cache_file.exists():
+        try:
+            return json.loads(cache_file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            cache_file.unlink(missing_ok=True)
     response = SESSION.get(endpoint, params=params, timeout=60)
     response.raise_for_status()
-    return response.json()
+    data = response.json()
+    cache_file.write_text(json.dumps(data), encoding="utf-8")
+    return data
 
 
 def find_video(query: str, key: str, vertical: bool) -> str | None:
@@ -193,14 +213,26 @@ def find_image(query: str, key: str, vertical: bool) -> str | None:
 
 
 def download(url: str, destination: Path) -> None:
+    """Reuse downloaded Pixabay assets across GitHub Actions runs."""
+    MEDIA_CACHE.mkdir(parents=True, exist_ok=True)
+    suffix = destination.suffix or ".bin"
+    cached_file = MEDIA_CACHE / f"{cache_key(url)}{suffix}"
+    if cached_file.exists() and cached_file.stat().st_size >= 4000:
+        shutil.copy2(cached_file, destination)
+        print(f"Using cached media: {destination.name}")
+        return
+    temporary_file = cached_file.with_suffix(cached_file.suffix + ".part")
     with SESSION.get(url, stream=True, timeout=(20, 180)) as response:
         response.raise_for_status()
-        with destination.open("wb") as file:
+        with temporary_file.open("wb") as file:
             for chunk in response.iter_content(1024 * 512):
                 if chunk:
                     file.write(chunk)
-    if destination.stat().st_size < 4000:
+    if temporary_file.stat().st_size < 4000:
+        temporary_file.unlink(missing_ok=True)
         raise RuntimeError(f"Downloaded media file is unexpectedly small: {destination.name}")
+    temporary_file.replace(cached_file)
+    shutil.copy2(cached_file, destination)
 
 
 
@@ -447,7 +479,20 @@ def main() -> int:
     vertical = FORMAT == "shorts"
     width, height = (1080, 1920) if vertical else (1920, 1080)
     key = required_env("PIXABAY_API_KEY")
-    plan = groq_json(script)
+    # Reuse the exact scene plan for an unchanged script. This prevents Groq
+    # from selecting different visual queries every time the workflow reruns.
+    PLAN_CACHE.mkdir(parents=True, exist_ok=True)
+    plan_file = PLAN_CACHE / f"{cache_key(script)}.json"
+    if plan_file.exists():
+        try:
+            plan = json.loads(plan_file.read_text(encoding="utf-8"))
+            print("Using cached scene plan for this script.")
+        except (OSError, json.JSONDecodeError):
+            plan_file.unlink(missing_ok=True)
+            plan = groq_json(script)
+    else:
+        plan = groq_json(script)
+    plan_file.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
     (OUT / "scene_plan.json").write_text(json.dumps(plan, indent=2, ensure_ascii=False), encoding="utf-8")
 
     voice_segments = []
