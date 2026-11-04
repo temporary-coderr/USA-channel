@@ -1,94 +1,41 @@
-# USA-channel — Psychology Video Automation
+# USA-channel — Script-to-video editor
 
-This project generates an English-language psychology video using Groq for the script, Pixabay for scene-matched stock footage/images, VoiceStudio's existing `sndp` voice profile for narration, and FFmpeg for editing.
+This repository can turn a supplied English script into a silent, edited YouTube video. The new workflow runs on GitHub-hosted Ubuntu runners; your Windows PC does not need to stay on.
 
-## What it generates
+## New workflow: build video from your script
 
-- A 5–7 minute documentary-style script (default target: 6 minutes)
-- A title, description, tags and thumbnail search prompt in `output/metadata.json`
-- Narration audio via VoiceStudio profile `sndp`
-- Relevant Pixabay stock footage for each scene, with a photo fallback
-- A 1080p landscape MP4 (or 1080x1920 Shorts when selected)
-- SRT captions with phrase-sized caption chunks
-- All outputs in a downloadable GitHub Actions artifact
+1. Replace the sample text in `scripts/script.txt` with your full script and commit it.
+2. Open **Actions → Build silent video from script → Run workflow**.
+3. Choose **landscape** for normal YouTube (16:9, 1080p) or **shorts** (9:16).
+4. When the run completes, open its summary and download the `usa-channel-video-...` artifact.
+5. Add your recorded voice to the MP4 in your video editor, adjust narration/caption timing if needed, then upload to YouTube.
 
-The script prompt requires a strong opening, coherent storytelling, practical takeaways and cautious treatment of psychological claims. AI-generated scripts still need human review; this is not a guarantee of factual accuracy or professional editorial quality.
+## What the renderer does
 
-## Required GitHub Actions secrets
+- Uses Groq to split the supplied script into ordered scenes and create visual search phrases. It is instructed to preserve the script's narration wording.
+- Searches Pixabay for scene-matched stock video clips. If no suitable video is returned, it falls back to a relevant still image.
+- Adds a slow Ken Burns zoom to still-image scenes, light color treatment and fade-ins.
+- Burns readable phrase-sized captions into the video and also exports a separate `captions.srt`.
+- Exports a silent MP4 and the original script/scene plan for review.
 
-In **Settings → Secrets and variables → Actions → New repository secret**, add:
+The current renderer concatenates scenes with clean cuts; it does not yet create complex cross-dissolves, animated word-by-word karaoke captions, AI-generated imagery, or exact voice-aligned captions. Scene timing is estimated from word count at 140 words/minute. After recording your voice, adjust timing in your editor if needed. Stock footage is illustrative B-roll, not proof that an event happened.
+
+## Required repository secrets
+
+Add these in **Settings → Secrets and variables → Actions → New repository secret**:
 
 | Secret | Purpose |
-|---|---|
-| `GROQ_API_KEY` | Script generation |
-| `PIXABAY_API_KEY` | Stock video and photo search |
-| `LEONARDO_API_KEY` | Leonardo scene-image generation (optional; API credits are charged) |
+| --- | --- |
+| `GROQ_API_KEY` | Script-to-scene planning |
+| `PIXABAY_API_KEY` | Stock video and image search |
 
-Do not put keys in Python files or commit them.
+Do not paste secrets into chat, scripts, workflow files, or commits. Do not use paid AI-image services unless you separately choose to enable them and understand their pricing. This workflow does not require a voice-cloning or TTS service.
 
-Optional Actions variables (Settings → Secrets and variables → Actions → Variables):
-- `LEONARDO_MODEL_ID` — defaults to the Phoenix 1.0 model ID in the workflow; use a model ID enabled for your API account.
-- `VOICESTUDIO_API_URL` — defaults to `http://localhost:3900`
-- `VOICESTUDIO_VOICE_ID` — defaults to `f90360e8`
-- `VOICESTUDIO_VOICE_NAME` — defaults to `sndp`
-- `VOICESTUDIO_MODEL` — defaults to `omnivoice`
+## Notes
 
-## Important: this workflow requires your Windows PC
-
-VoiceStudio is running on your PC, so a normal GitHub-hosted runner cannot connect to `localhost:3900`. The workflow is deliberately configured for a **self-hosted Windows x64 runner**. Install/register the GitHub Actions runner on the same PC as VoiceStudio, keep the runner service and VoiceStudio API running, and make sure FFmpeg is on PATH.
-
-GitHub Actions will run daily at 18:30 India time (13:00 UTC), and can also be started manually from the Actions tab. Manual runs let you enter a topic and choose landscape or Shorts. A scheduled run defaults to landscape.
-
-If you do not want your PC running, the voice step must be moved to a reachable hosted TTS provider or a secured remote VoiceStudio endpoint. Do not expose the local VoiceStudio API publicly without authentication and network protections.
-
-## Run locally on Windows 11
-
-1. Install Python 3.11+ and FFmpeg (including `ffprobe`), and add FFmpeg to PATH.
-2. Start VoiceStudio and confirm its API is available at `http://localhost:3900`.
-3. Open PowerShell in the repository and install packages:
-
-   ```powershell
-   py -m pip install -r requirements.txt
-   ```
-
-4. Set the API keys for this PowerShell session:
-
-   ```powershell
-   $env:GROQ_API_KEY="YOUR_GROQ_KEY"
-   $env:PIXABAY_API_KEY="YOUR_PIXABAY_KEY"
-   ```
-
-5. Run:
-
-   ```powershell
-   py main.py
-   ```
-
-Optional settings:
-- `VIDEO_TOPIC="..." ` — force a topic instead of automatic selection.
-- `VIDEO_FORMAT=shorts` — vertical output.
-- `TARGET_MINUTES=6` — target duration.
-
-## Workflow
-
-Open **Actions → USA Channel Video Automation → Run workflow**. For manual dispatch, optionally enter a topic and choose a format. Download the artifact named `usa-channel-output-...` after the run completes.
-
-## Current limitations
-
-- This generates videos and artifacts; it does **not** automatically publish to YouTube yet.
-- Thumbnail artwork is not rendered yet; metadata includes a thumbnail search prompt.
-- Scene durations and captions are estimated from narration word counts rather than forced-alignment transcription. Review timing before publishing.
-- Leonardo image generation consumes Leonardo API credits; check your API balance and pricing before enabling daily runs. Leonardo images are requested as private.
-- Pixabay assets are fetched at run time. Check the current Pixabay license/terms for each asset and retain any required attribution/records.
-- Groq output and stock search results can be imperfect. Review every script, visual, caption and final video before publishing.
-- A failed API call, missing secret, unavailable VoiceStudio, or missing FFmpeg stops the workflow with an error rather than silently producing an incomplete video.
-
-
-## Persistent JSON cache
-
-The workflow restores `.cache/usa-channel/cache.json` from earlier GitHub Actions runs and saves the updated cache after a run. It stores:
-- Up to 100 recently generated topics, so automatic topic selection can avoid the last 60.
-- Pixabay video/photo search results keyed by search phrase and video format.
-- Pixabay search entries expire after 30 days by default; set `CACHE_TTL_DAYS` to change this.
-
-The cache contains search metadata and URLs, not API keys. It reduces repeated topic selection and Pixabay API searches; it does not guarantee that an external asset URL will remain available forever. The first run starts with an empty cache, so cache hits begin on later runs.
+- The script should be in English and preferably at least 100 words.
+- GitHub-hosted Actions usage is subject to your GitHub plan's included minutes and limits.
+- Pixabay search results and availability vary. Review each downloaded asset and the current license/terms before publishing.
+- Groq scene planning and search results can be imperfect. Review the output before publication.
+- No narration, voice cloning, YouTube upload, or automatic thumbnail generation is included in this workflow. The MP4 is silent so you can add your own voice recording.
+- Outputs are uploaded as a GitHub Actions artifact and retained for 7 days.
