@@ -109,10 +109,43 @@ def groq_json(script: str) -> dict:
     for scene in scenes:
         if not scene.get("narration") or not scene.get("visual_query"):
             raise RuntimeError("A scene is missing narration or a visual search query.")
-    # Prevent a model from silently omitting large parts of the supplied script.
-    planned = " ".join(s["narration"] for s in scenes)
-    if len(planned.split()) < len(script.split()) * 0.72:
-        raise RuntimeError("Scene plan omitted too much of the script. Try again or shorten the script.")
+    # Use the model for visual planning, but assign narration ourselves.
+    # This guarantees that every original sentence is included, in order, even
+    # when the model returns incomplete or shortened narration excerpts.
+    sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", script.strip())
+    sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
+    if len(sentences) < len(scenes):
+        # For scripts with very long sentences, split on word boundaries as a fallback.
+        words = script.split()
+        chunk_size = max(1, (len(words) + len(scenes) - 1) // len(scenes))
+        narration_chunks = [
+            " ".join(words[i:i + chunk_size])
+            for i in range(0, len(words), chunk_size)
+        ]
+        while len(narration_chunks) < len(scenes):
+            narration_chunks.append("")
+        narration_chunks = narration_chunks[:len(scenes)]
+    else:
+        narration_chunks = []
+        remaining = sentences[:]
+        for scene_index in range(len(scenes)):
+            slots_left = len(scenes) - scene_index
+            if slots_left == 1:
+                group = remaining
+            else:
+                words_left = sum(len(part.split()) for part in remaining)
+                target = max(1, round(words_left / slots_left))
+                group = []
+                count = 0
+                while remaining and (count < target or not group):
+                    candidate = remaining[0]
+                    if group and count + len(candidate.split()) > target:
+                        break
+                    group.append(remaining.pop(0))
+                    count += len(candidate.split())
+            narration_chunks.append(" ".join(group))
+    for scene, narration in zip(scenes, narration_chunks):
+        scene["narration"] = narration
     return plan
 
 
