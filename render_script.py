@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import hashlib
 import json
 import os
 import re
@@ -16,10 +15,7 @@ ROOT = Path(__file__).resolve().parent
 SCRIPT = Path(os.getenv("SCRIPT_FILE", "scripts/script.txt"))
 OUT = ROOT / "output"
 WORK = OUT / "work"
-CACHE = ROOT / ".cache"
-MEDIA_CACHE = CACHE / "media"
-API_CACHE = CACHE / "pixabay_api"
-PLAN_CACHE = CACHE / "scene_plans"
+HISTORY_FILE = ROOT / "visual_history" / "used_assets.json"
 FORMAT = os.getenv("VIDEO_FORMAT", "landscape").lower()
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 PIXABAY_VIDEO = "https://pixabay.com/api/videos/"
@@ -164,76 +160,91 @@ def groq_json(script: str) -> dict:
     return plan
 
 
-def cache_key(value: str) -> str:
-    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+def load_visual_history() -> tuple[dict, set[str]]:
+    if not HISTORY_FILE.exists():
+        return {"assets": []}, set()
+    try:
+        history = json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        raise RuntimeError("visual_history/used_assets.json is invalid JSON. Fix or reset this history file.")
+    assets = history.get("assets", [])
+    return history, {str(item.get("id")) for item in assets if item.get("id") is not None}
 
 
 def pixabay_search(endpoint: str, params: dict) -> dict:
-    """Cache Pixabay search responses so reruns keep the same candidate set."""
-    API_CACHE.mkdir(parents=True, exist_ok=True)
-    safe_params = {k: v for k, v in params.items() if k != "key"}
-    cache_file = API_CACHE / f"{cache_key(endpoint + json.dumps(safe_params, sort_keys=True))}.json"
-    if cache_file.exists():
-        try:
-            return json.loads(cache_file.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            cache_file.unlink(missing_ok=True)
     response = SESSION.get(endpoint, params=params, timeout=60)
     response.raise_for_status()
-    data = response.json()
-    cache_file.write_text(json.dumps(data), encoding="utf-8")
-    return data
+    return response.json()
 
 
-def find_video(query: str, key: str, vertical: bool) -> str | None:
-    data = pixabay_search(PIXABAY_VIDEO, {
-        "key": key, "q": query, "video_type": "film",
-        "safesearch": "true", "per_page": 30,
-    })
-    hits = data.get("hits", [])
-    # Prefer a landscape/portrait match and higher resolution, not just the first result.
+def _pick_video_hit(hits: list[dict], used_ids: set[str], vertical: bool, query: str) -> dict | None:
     candidates = []
     for hit in hits:
+        asset_id = str(hit.get("id", ""))
+        if not asset_id or asset_id in used_ids:
+            continue
+        variants = []
         for variant in hit.get("videos", {}).values():
             w, h = variant.get("width", 0), variant.get("height", 0)
-            if w and h and ((h > w) if vertical else (w >= h)):
-                candidates.append((w * h, variant.get("url")))
-    candidates.sort(reverse=True)
+            url = variant.get("url")
+            if url and w and h and ((h > w) if vertical else (w >= h)):
+                variants.append((w * h, url))
+        if variants:
+            variants.sort(reverse=True)
+            candidates.append((variants[0][0], {
+                "id": asset_id, "url": variants[0][1], "type": "video",
+                "query": query, "page_url": hit.get("pageURL", "")
+            }))
+    candidates.sort(key=lambda item: item[0], reverse=True)
     return candidates[0][1] if candidates else None
 
 
-def find_image(query: str, key: str, vertical: bool) -> str | None:
-    data = pixabay_search(PIXABAY_IMAGE, {
-        "key": key, "q": query, "image_type": "photo",
-        "safesearch": "true", "per_page": 20,
-        "orientation": "vertical" if vertical else "horizontal",
-    })
-    hits = data.get("hits", [])
-    return hits[0].get("largeImageURL") if hits else None
+def find_video(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
+    # Fetch multiple pages so a growing history does not force old footage to be reused.
+    for page in range(1, 4):
+        data = pixabay_search(PIXABAY_VIDEO, {
+            "key": key, "q": query, "video_type": "film",
+            "safesearch": "true", "per_page": 200, "page": page,
+        })
+        asset = _pick_video_hit(data.get("hits", []), used_ids, vertical, query)
+        if asset:
+            return asset
+        if page * 200 >= data.get("totalHits", 0):
+            break
+    return None
+
+
+def find_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
+    for page in range(1, 4):
+        data = pixabay_search(PIXABAY_IMAGE, {
+            "key": key, "q": query, "image_type": "photo",
+            "safesearch": "true", "per_page": 200, "page": page,
+            "orientation": "vertical" if vertical else "horizontal",
+        })
+        for hit in data.get("hits", []):
+            asset_id = str(hit.get("id", ""))
+            url = hit.get("largeImageURL")
+            if asset_id and asset_id not in used_ids and url:
+                return {
+                    "id": asset_id, "url": url, "type": "image",
+                    "query": query, "page_url": hit.get("pageURL", "")
+                }
+        if page * 200 >= data.get("totalHits", 0):
+            break
+    return None
 
 
 def download(url: str, destination: Path) -> None:
-    """Reuse downloaded Pixabay assets across GitHub Actions runs."""
-    MEDIA_CACHE.mkdir(parents=True, exist_ok=True)
-    suffix = destination.suffix or ".bin"
-    cached_file = MEDIA_CACHE / f"{cache_key(url)}{suffix}"
-    if cached_file.exists() and cached_file.stat().st_size >= 4000:
-        shutil.copy2(cached_file, destination)
-        print(f"Using cached media: {destination.name}")
-        return
-    temporary_file = cached_file.with_suffix(cached_file.suffix + ".part")
+    # Always download the newly selected asset; no local media cache is used.
     with SESSION.get(url, stream=True, timeout=(20, 180)) as response:
         response.raise_for_status()
-        with temporary_file.open("wb") as file:
+        with destination.open("wb") as file:
             for chunk in response.iter_content(1024 * 512):
                 if chunk:
                     file.write(chunk)
-    if temporary_file.stat().st_size < 4000:
-        temporary_file.unlink(missing_ok=True)
+    if destination.stat().st_size < 4000:
+        destination.unlink(missing_ok=True)
         raise RuntimeError(f"Downloaded media file is unexpectedly small: {destination.name}")
-    temporary_file.replace(cached_file)
-    shutil.copy2(cached_file, destination)
-
 
 
 def probe_duration(path: Path) -> float:
@@ -479,21 +490,11 @@ def main() -> int:
     vertical = FORMAT == "shorts"
     width, height = (1080, 1920) if vertical else (1920, 1080)
     key = required_env("PIXABAY_API_KEY")
-    # Reuse the exact scene plan for an unchanged script. This prevents Groq
-    # from selecting different visual queries every time the workflow reruns.
-    PLAN_CACHE.mkdir(parents=True, exist_ok=True)
-    plan_file = PLAN_CACHE / f"{cache_key(script)}.json"
-    if plan_file.exists():
-        try:
-            plan = json.loads(plan_file.read_text(encoding="utf-8"))
-            print("Using cached scene plan for this script.")
-        except (OSError, json.JSONDecodeError):
-            plan_file.unlink(missing_ok=True)
-            plan = groq_json(script)
-    else:
-        plan = groq_json(script)
-    plan_file.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
-    (OUT / "scene_plan.json").write_text(json.dumps(plan, indent=2, ensure_ascii=False), encoding="utf-8")
+    # Plan each run afresh. Visual history, not a media cache, prevents repeats.
+    plan = groq_json(script)
+    history, historical_ids = load_visual_history()
+    used_ids = set(historical_ids)
+    selected_assets = []
 
     voice_segments = []
     durations = []
@@ -512,18 +513,30 @@ def main() -> int:
         query = re.sub(r"[^a-zA-Z0-9 ]", " ", scene["visual_query"]).strip()[:90]
         image_query = re.sub(r"[^a-zA-Z0-9 ]", " ", scene.get("image_query", query)).strip()[:90]
         print(f"Scene {index}/{len(plan['scenes'])}: {query}")
-        video_url = find_video(query, key, vertical)
-        media_path = WORK / f"source_{index:02}.mp4"
+        # Try the scene's specific query first, then broader alternatives.
+        queries = [query, f"{query} documentary", f"{query} lifestyle"]
+        asset = None
+        for candidate_query in dict.fromkeys(q for q in queries if q.strip()):
+            asset = find_video(candidate_query, key, vertical, used_ids)
+            if asset:
+                break
         is_image = False
-        if video_url:
-            download(video_url, media_path)
-        else:
-            image_url = find_image(image_query or query, key, vertical)
-            if not image_url:
-                raise RuntimeError(f"No suitable Pixabay video or image found for scene: {query}")
-            media_path = WORK / f"source_{index:02}.jpg"
-            download(image_url, media_path)
-            is_image = True
+        if not asset:
+            for candidate_query in dict.fromkeys(q for q in [image_query, query, f"{query} photography"] if q.strip()):
+                asset = find_image(candidate_query, key, vertical, used_ids)
+                if asset:
+                    break
+            is_image = asset is not None
+        if not asset:
+            raise RuntimeError(
+                f"No unused Pixabay visual found for scene '{query}'. "
+                "No previously used asset was reused; try a more specific or different script."
+            )
+        used_ids.add(str(asset["id"]))
+        selected_assets.append(asset)
+        scene["visual_asset"] = asset
+        media_path = WORK / f"source_{index:02}.jpg" if is_image else WORK / f"source_{index:02}.mp4"
+        download(asset["url"], media_path)
 
         scene_path = WORK / f"scene_{index:02}.mp4"
         render_scene(media_path, scene_path, seconds, width, height, is_image)
@@ -566,6 +579,26 @@ def main() -> int:
         add_wise_lab_branding(voiced_content, final, width, height)
         print("LONG VIDEO MODE: Inworld narration and WISE LAB intro/outro included.")
 
+    # Persist asset IDs only after the complete video has rendered successfully.
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    history_assets = history.setdefault("assets", [])
+    existing_history_ids = {str(item.get("id")) for item in history_assets if item.get("id") is not None}
+    for asset in selected_assets:
+        if str(asset["id"]) not in existing_history_ids:
+            history_assets.append({
+                **asset,
+                "used_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+                "format": FORMAT,
+                "script_file": str(SCRIPT),
+            })
+            existing_history_ids.add(str(asset["id"]))
+    HISTORY_FILE.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (OUT / "visual_manifest.json").write_text(
+        json.dumps(selected_assets, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    (OUT / "scene_plan.json").write_text(
+        json.dumps(plan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     (OUT / "title.txt").write_text(plan.get("title", "WISE LAB video") + "\n", encoding="utf-8")
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
     print(f"VIDEO READY: {final}")
