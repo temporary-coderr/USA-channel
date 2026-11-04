@@ -15,10 +15,6 @@ on:
         options:
           - landscape
           - shorts
-  schedule:
-    # Daily at 18:30 India time (13:00 UTC)
-    - cron: "0 13 * * *"
-
 permissions:
   contents: read
 
