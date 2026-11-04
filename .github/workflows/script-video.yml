@@ -36,6 +36,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Restore scene, Pixabay API and downloaded media cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: wise-lab-assets-v2-${{ runner.os }}-${{ hashFiles('scripts/script.txt', 'render_script.py') }}
+          restore-keys: |
+            wise-lab-assets-v2-${{ runner.os }}-
+
       - name: Install Python
         uses: actions/setup-python@v5
         with:
