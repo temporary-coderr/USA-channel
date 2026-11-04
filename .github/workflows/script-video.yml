@@ -13,7 +13,7 @@ on:
           - shorts
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: usa-channel-script-video
@@ -35,14 +35,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Restore scene, Pixabay API and downloaded media cache
-        uses: actions/cache@v4
-        with:
-          path: .cache
-          key: wise-lab-assets-v2-${{ runner.os }}-${{ hashFiles('scripts/script.txt', 'render_script.py') }}
-          restore-keys: |
-            wise-lab-assets-v2-${{ runner.os }}-
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -69,6 +61,18 @@ jobs:
 
       - name: Create edited WISE LAB video
         run: python render_script.py
+
+      - name: Save visual usage history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add visual_history/used_assets.json
+          if git diff --cached --quiet; then
+            echo "Visual history has no changes."
+          else
+            git commit -m "Update WISE LAB visual usage history"
+            git push
+          fi
 
       - name: Upload WISE LAB video, logo and captions
         uses: actions/upload-artifact@v4
