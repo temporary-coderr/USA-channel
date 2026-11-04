@@ -50,7 +50,35 @@ def groq_json(script: str) -> dict:
         json={
             "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
             "temperature": 0.25,
-            "response_format": {"type": "json_object"},
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "wise_lab_scene_plan",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string"},
+                            "scenes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "heading": {"type": "string"},
+                                        "narration": {"type": "string"},
+                                        "visual_query": {"type": "string"},
+                                        "image_query": {"type": "string"}
+                                    },
+                                    "required": ["heading", "narration", "visual_query", "image_query"],
+                                    "additionalProperties": False
+                                }
+                            }
+                        },
+                        "required": ["title", "scenes"],
+                        "additionalProperties": False
+                    }
+                }
+            },
             "messages": [
                 {"role": "system", "content": (
                     "You are a documentary video editor. Break the supplied script into 8-14 "
