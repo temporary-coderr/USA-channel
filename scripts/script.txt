@@ -1,0 +1,6 @@
+PASTE YOUR COMPLETE VIDEO SCRIPT HERE.
+
+The workflow will divide it into documentary-style scenes, find matching Pixabay stock footage,
+add motion to still-image fallbacks, apply light cinematic treatment, and burn phrase-sized captions.
+
+Keep the script in English for the USA Channel. Do not add API keys to this file.
