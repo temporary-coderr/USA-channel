@@ -26,6 +26,9 @@ jobs:
     env:
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      INWORLD_API_KEY: ${{ secrets.INWORLD_API_KEY }}
+      INWORLD_VOICE_ID: Dennis
+      INWORLD_LANGUAGE: en-US
       VIDEO_FORMAT: ${{ inputs.format }}
       SCRIPT_FILE: scripts/script.txt
       TARGET_WPM: "140"
@@ -54,6 +57,7 @@ jobs:
           test -s scripts/script.txt || (echo "Upload your script to scripts/script.txt first." && exit 1)
           test -n "$GROQ_API_KEY" || (echo "Missing GROQ_API_KEY repository secret." && exit 1)
           test -n "$PIXABAY_API_KEY" || (echo "Missing PIXABAY_API_KEY repository secret." && exit 1)
+          test -n "$INWORLD_API_KEY" || (echo "Missing INWORLD_API_KEY repository secret. Add it in repository Settings > Secrets and variables > Actions." && exit 1)
 
       - name: Create edited WISE LAB video
         run: python render_script.py
@@ -67,6 +71,7 @@ jobs:
           path: |
             output/wise_lab_*.mp4
             output/captions.srt
+            output/wise_lab_voiceover.mp3
             output/title.txt
             output/voiceover_script.txt
             output/scene_plan.json
