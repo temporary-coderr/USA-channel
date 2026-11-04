@@ -1,0 +1,67 @@
+name: Build silent video from script
+
+on:
+  workflow_dispatch:
+    inputs:
+      format:
+        description: "Video format"
+        required: true
+        default: landscape
+        type: choice
+        options:
+          - landscape
+          - shorts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: usa-channel-script-video
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GROQ_API_KEY: \${{ secrets.GROQ_API_KEY }}
+      PIXABAY_API_KEY: \${{ secrets.PIXABAY_API_KEY }}
+      VIDEO_FORMAT: \${{ inputs.format }}
+      SCRIPT_FILE: scripts/script.txt
+      TARGET_WPM: "140"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Python packages
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Check script and API secrets
+        run: |
+          test -s scripts/script.txt || (echo "Upload your script to scripts/script.txt first." && exit 1)
+          test -n "$GROQ_API_KEY" || (echo "Missing GROQ_API_KEY repository secret." && exit 1)
+          test -n "$PIXABAY_API_KEY" || (echo "Missing PIXABAY_API_KEY repository secret." && exit 1)
+
+      - name: Create edited video
+        run: python render_script.py
+
+      - name: Upload MP4 and separate captions
+        uses: actions/upload-artifact@v4
+        with:
+          name: usa-channel-video-\${{ github.run_number }}
+          path: output/
+          if-no-files-found: error
+          retention-days: 7
