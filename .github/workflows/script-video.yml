@@ -1,4 +1,4 @@
-name: Build silent video from script
+name: Build WISE LAB video from script
 
 on:
   workflow_dispatch:
@@ -55,13 +55,13 @@ jobs:
           test -n "$GROQ_API_KEY" || (echo "Missing GROQ_API_KEY repository secret." && exit 1)
           test -n "$PIXABAY_API_KEY" || (echo "Missing PIXABAY_API_KEY repository secret." && exit 1)
 
-      - name: Create edited video
+      - name: Create edited WISE LAB video
         run: python render_script.py
 
-      - name: Upload MP4 and separate captions
+      - name: Upload WISE LAB video, logo and captions
         uses: actions/upload-artifact@v4
         with:
-          name: usa-channel-video-${{ github.run_number }}
+          name: wise-lab-video-${{ github.run_number }}
           path: output/
           if-no-files-found: error
           retention-days: 7
