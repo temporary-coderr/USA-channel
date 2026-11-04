@@ -48,7 +48,7 @@ def groq_json(script: str) -> dict:
         GROQ_URL,
         headers={"Authorization": f"Bearer {required_env('GROQ_API_KEY')}"},
         json={
-            "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+            "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
             "temperature": 0.25,
             "response_format": {"type": "json_object"},
             "messages": [
