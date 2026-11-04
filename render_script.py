@@ -140,10 +140,10 @@ def timestamp(seconds: float) -> str:
     return f"{hours:02}:{minutes:02}:{secs:02},{milliseconds:03}"
 
 
-def make_captions(scenes: list[dict], path: Path, durations: list[float]) -> None:
+def make_captions(scenes: list[dict], path: Path, durations: list[float], offset: float = 0.0) -> None:
     entries = []
     index = 1
-    cursor = 0.0
+    cursor = offset
     for scene, duration in zip(scenes, durations):
         words = re.findall(r"\S+", scene["narration"])
         chunks = [words[i:i + 6] for i in range(0, len(words), 6)]
@@ -191,6 +191,104 @@ def render_scene(media: Path, destination: Path, seconds: float,
              "-vf", vf_base, "-an", "-c:v", "libx264", "-preset", "veryfast",
              "-crf", "21", "-pix_fmt", "yuv420p", str(destination)])
 
+
+
+def make_brand_clip(destination: Path, duration: float, width: int, height: int,
+                    headline: str, subtitle: str, footer: str) -> None:
+    """Create an original WISE LAB ident with a custom synthesized ambient music bed."""
+    ff = ffmpeg()
+    font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    # The sound is synthesized from simple tones for this channel; no stock music is used.
+    audio = (
+        "aevalsrc=0.075*sin(2*PI*220*t)+0.055*sin(2*PI*277.18*t)"
+        "+0.045*sin(2*PI*329.63*t)+0.025*sin(2*PI*440*t):s=48000:d="
+        f"{duration:.3f},"
+        f"afade=t=in:st=0:d=0.8,afade=t=out:st={max(0.1, duration - 1.0):.3f}:d=1"
+    )
+    video_filter = (
+        "noise=alls=7:allf=t+u,"
+        "drawbox=x=0:y=0:w=iw:h=ih:color=0x081321@0.18:t=fill,"
+        f"drawbox=x=(w-w*0.42)/2:y=h*0.205:w=w*0.42:h=3:color=0x39D6D0@0.9:t=fill,"
+        f"drawtext=fontfile={font}:text='W':fontcolor=0x39D6D0:fontsize=h*0.16:"
+        "x=(w-text_w)/2:y=h*0.245:shadowcolor=black@0.45:shadowx=2:shadowy=3,"
+        f"drawtext=fontfile={font}:text='WISE LAB':fontcolor=white:fontsize=h*0.085:"
+        "x=(w-text_w)/2:y=h*0.445:shadowcolor=black@0.5:shadowx=2:shadowy=3,"
+        f"drawtext=fontfile={regular}:text='{subtitle}':fontcolor=0xD5E4EF:"
+        "fontsize=h*0.033:x=(w-text_w)/2:y=h*0.565,"
+        f"drawtext=fontfile={font}:text='{headline}':fontcolor=0x39D6D0:"
+        "fontsize=h*0.043:x=(w-text_w)/2:y=h*0.69,"
+        f"drawtext=fontfile={regular}:text='{footer}':fontcolor=white@0.78:"
+        "fontsize=h*0.025:x=(w-text_w)/2:y=h*0.79,"
+        "fade=t=in:st=0:d=0.65,"
+        f"fade=t=out:st={max(0.0, duration - 0.65):.3f}:d=0.65,"
+        "format=yuv420p"
+    )
+    run([
+        ff, "-y",
+        "-f", "lavfi", "-i", f"color=c=0x081321:s={width}x{height}:r={FPS}:d={duration:.3f}",
+        "-f", "lavfi", "-i", audio,
+        "-vf", video_filter,
+        "-map", "0:v:0", "-map", "1:a:0",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+        "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
+        "-t", f"{duration:.3f}", "-pix_fmt", "yuv420p",
+        str(destination)
+    ])
+
+
+def add_wise_lab_branding(content_video: Path, final_video: Path,
+                          width: int, height: int) -> None:
+    """Place the same short WISE LAB intro/outro around every finished video."""
+    intro_seconds, outro_seconds = 5.0, 7.0
+    intro = WORK / "wise_lab_intro.mp4"
+    outro = WORK / "wise_lab_outro.mp4"
+    content_av = WORK / "content_with_silence.mp4"
+    logo_svg = OUT / "wise_lab_logo.svg"
+    logo_svg.write_text(
+        """<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#39D6D0"/><stop offset="1" stop-color="#5577FF"/></linearGradient></defs>
+<rect width="800" height="800" rx="180" fill="#081321"/>
+<circle cx="400" cy="400" r="285" fill="none" stroke="url(#g)" stroke-width="24"/>
+<path d="M190 270 L285 540 L400 355 L515 540 L610 270" fill="none" stroke="url(#g)" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>""",
+        encoding="utf-8"
+    )
+    make_brand_clip(
+        intro, intro_seconds, width, height,
+        "EXPLORE THE MIND", "Explore the Mind. Understand Human Behaviour.",
+        "PSYCHOLOGY • BEHAVIOUR • EVERYDAY LIFE"
+    )
+    make_brand_clip(
+        outro, outro_seconds, width, height,
+        "KEEP THINKING. STAY CURIOUS.", "The more you understand the mind,",
+        "SUBSCRIBE TO WISE LAB"
+    )
+    # Give the silent main section a silent AAC track so all three sections can be joined cleanly.
+    probe = subprocess.run(
+        [ffmpeg().replace("ffmpeg", "ffprobe"), "-v", "error", "-show_entries",
+         "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(content_video)],
+        capture_output=True, text=True
+    )
+    if probe.returncode:
+        raise RuntimeError("Could not read the rendered video duration: " + probe.stderr[-1000:])
+    content_seconds = float(probe.stdout.strip())
+    run([
+        ffmpeg(), "-y", "-i", str(content_video),
+        "-f", "lavfi", "-t", f"{content_seconds:.3f}",
+        "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
+        "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
+        "-c:a", "aac", "-b:a", "160k", "-shortest", str(content_av)
+    ])
+    run([
+        ffmpeg(), "-y", "-i", str(intro), "-i", str(content_av), "-i", str(outro),
+        "-filter_complex",
+        "[0:v:0][0:a:0][1:v:0][1:a:0][2:v:0][2:a:0]concat=n=3:v=1:a=1[v][a]",
+        "-map", "[v]", "-map", "[a]",
+        "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+        "-c:a", "aac", "-b:a", "160k", "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart", str(final_video)
+    ])
 
 def main() -> int:
     if not SCRIPT.exists():
@@ -241,7 +339,8 @@ def main() -> int:
          "-c", "copy", str(silent)])
 
     captions = OUT / "captions.srt"
-    make_captions(plan["scenes"], captions, durations)
+    intro_seconds = 5.0
+    make_captions(plan["scenes"], captions, durations, offset=intro_seconds)
     caption_filter_path = captions.resolve().as_posix().replace(":", r"\:")
     style = (
         "FontName=Arial,FontSize=23,PrimaryColour=&H00FFFFFF,"
@@ -249,15 +348,17 @@ def main() -> int:
         "Alignment=2,MarginV=75"
     )
     caption_filter = f"subtitles='{caption_filter_path}':force_style='{style}'"
-    final = OUT / ("usa_channel_shorts_silent.mp4" if vertical else "usa_channel_silent.mp4")
+    content_final = WORK / ("content_shorts.mp4" if vertical else "content_landscape.mp4")
     run([ffmpeg(), "-y", "-i", str(silent), "-vf", caption_filter,
          "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
-         "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(final)])
+         "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(content_final)])
+    final = OUT / ("wise_lab_shorts.mp4" if vertical else "wise_lab_video.mp4")
+    add_wise_lab_branding(content_final, final, width, height)
 
-    (OUT / "title.txt").write_text(plan.get("title", "USA Channel video") + "\n", encoding="utf-8")
+    (OUT / "title.txt").write_text(plan.get("title", "WISE LAB video") + "\n", encoding="utf-8")
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
     print(f"VIDEO READY: {final}")
-    print("This MP4 has no narration or music. Record your voice and add it during final assembly.")
+    print("WISE LAB intro/outro and original synthesized BGM are included. The main section is silent for your own narration.")
     return 0
 
 
