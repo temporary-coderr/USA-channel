@@ -104,11 +104,20 @@ def groq_json(script: str) -> dict:
     data = response.json()["choices"][0]["message"]["content"]
     plan = json.loads(data)
     scenes = plan.get("scenes", [])
-    if not 5 <= len(scenes) <= 16:
-        raise RuntimeError(f"Scene planner returned {len(scenes)} scenes; expected 5–16.")
+    if not scenes or len(scenes) > 16:
+        raise RuntimeError(f"Scene planner returned {len(scenes)} scenes; expected 1–16.")
     for scene in scenes:
-        if not scene.get("narration") or not scene.get("visual_query"):
-            raise RuntimeError("A scene is missing narration or a visual search query.")
+        if not scene.get("visual_query"):
+            raise RuntimeError("A scene is missing a visual search query.")
+    # Some valid model responses contain only a few broad scenes. Expand them
+    # into at least five visual segments; narration is reassigned from the
+    # complete original script below, so no spoken content is lost.
+    original_scene_count = len(scenes)
+    while len(scenes) < 5:
+        source_scene = scenes[(len(scenes) - original_scene_count) % original_scene_count]
+        extra_scene = dict(source_scene)
+        extra_scene["heading"] = (source_scene.get("heading") or "Scene") + " — continued"
+        scenes.append(extra_scene)
     # Use the model for visual planning, but assign narration ourselves.
     # This guarantees that every original sentence is included, in order, even
     # when the model returns incomplete or shortened narration excerpts.
