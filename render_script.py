@@ -206,20 +206,25 @@ def make_brand_clip(destination: Path, duration: float, width: int, height: int,
         f"{duration:.3f},"
         f"afade=t=in:st=0:d=0.8,afade=t=out:st={max(0.1, duration - 1.0):.3f}:d=1"
     )
+    logo_size = int(min(width * 0.16, height * 0.16))
+    brand_size = int(min(width * 0.085, height * 0.085))
+    subtitle_size = int(min(width * 0.045, height * 0.033))
+    headline_size = int(min(width * 0.045, height * 0.043))
+    footer_size = int(min(width * 0.025, height * 0.025))
     video_filter = (
         "noise=alls=7:allf=t+u,"
         "drawbox=x=0:y=0:w=iw:h=ih:color=0x081321@0.18:t=fill,"
-        f"drawbox=x=(w-w*0.42)/2:y=h*0.205:w=w*0.42:h=3:color=0x39D6D0@0.9:t=fill,"
-        f"drawtext=fontfile={font}:text='W':fontcolor=0x39D6D0:fontsize=h*0.16:"
-        "x=(w-text_w)/2:y=h*0.245:shadowcolor=black@0.45:shadowx=2:shadowy=3,"
-        f"drawtext=fontfile={font}:text='WISE LAB':fontcolor=white:fontsize=h*0.085:"
-        "x=(w-text_w)/2:y=h*0.445:shadowcolor=black@0.5:shadowx=2:shadowy=3,"
+        "drawbox=x=iw*0.29:y=ih*0.205:w=iw*0.42:h=3:color=0x39D6D0@0.9:t=fill,"
+        f"drawtext=fontfile={font}:text='W':fontcolor=0x39D6D0:fontsize={logo_size}:"
+        "x=(main_w-text_w)/2:y=main_h*0.245:shadowcolor=black@0.45:shadowx=2:shadowy=3,"
+        f"drawtext=fontfile={font}:text='WISE LAB':fontcolor=white:fontsize={brand_size}:"
+        "x=(main_w-text_w)/2:y=main_h*0.445:shadowcolor=black@0.5:shadowx=2:shadowy=3,"
         f"drawtext=fontfile={regular}:text='{subtitle}':fontcolor=0xD5E4EF:"
-        "fontsize=h*0.033:x=(w-text_w)/2:y=h*0.565,"
+        f"fontsize={subtitle_size}:x=(main_w-text_w)/2:y=main_h*0.565,"
         f"drawtext=fontfile={font}:text='{headline}':fontcolor=0x39D6D0:"
-        "fontsize=h*0.043:x=(w-text_w)/2:y=h*0.69,"
+        f"fontsize={headline_size}:x=(main_w-text_w)/2:y=main_h*0.69,"
         f"drawtext=fontfile={regular}:text='{footer}':fontcolor=white@0.78:"
-        "fontsize=h*0.025:x=(w-text_w)/2:y=h*0.79,"
+        f"fontsize={footer_size}:x=(main_w-text_w)/2:y=main_h*0.79,"
         "fade=t=in:st=0:d=0.65,"
         f"fade=t=out:st={max(0.0, duration - 0.65):.3f}:d=0.65,"
         "format=yuv420p"
@@ -261,7 +266,7 @@ def add_wise_lab_branding(content_video: Path, final_video: Path,
     )
     make_brand_clip(
         outro, outro_seconds, width, height,
-        "KEEP THINKING. STAY CURIOUS.", "The more you understand the mind,",
+        "KEEP THINKING. STAY CURIOUS.", "Understand the mind. Understand the world.",
         "SUBSCRIBE TO WISE LAB"
     )
     # Give the silent main section a silent AAC track so all three sections can be joined cleanly.
@@ -341,6 +346,8 @@ def main() -> int:
     captions = OUT / "captions.srt"
     intro_seconds = 5.0
     make_captions(plan["scenes"], captions, durations, offset=intro_seconds)
+    content_captions = WORK / "content_captions.srt"
+    make_captions(plan["scenes"], content_captions, durations)
     caption_filter_path = captions.resolve().as_posix().replace(":", r"\:")
     style = (
         "FontName=Arial,FontSize=23,PrimaryColour=&H00FFFFFF,"
