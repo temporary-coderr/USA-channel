@@ -348,7 +348,7 @@ def main() -> int:
     make_captions(plan["scenes"], captions, durations, offset=intro_seconds)
     content_captions = WORK / "content_captions.srt"
     make_captions(plan["scenes"], content_captions, durations)
-    caption_filter_path = captions.resolve().as_posix().replace(":", r"\:")
+    caption_filter_path = content_captions.resolve().as_posix().replace(":", r"\:")
     style = (
         "FontName=Arial,FontSize=23,PrimaryColour=&H00FFFFFF,"
         "OutlineColour=&H00101010,BorderStyle=1,Outline=3,Shadow=1,"
