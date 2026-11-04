@@ -161,23 +161,26 @@ def make_captions(scenes: list[dict], path: Path, durations: list[float]) -> Non
 def render_scene(media: Path, destination: Path, seconds: float,
                  width: int, height: int, is_image: bool) -> None:
     ff = ffmpeg()
+    fade_out_start = max(0.0, seconds - 0.35)
     vf_base = (
-        f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+        f"scale={int(width * 1.08)}:{int(height * 1.08)}:force_original_aspect_ratio=increase,"
         f"crop={width}:{height},setsar=1,fps={FPS},"
         "eq=contrast=1.04:saturation=1.06:brightness=0.01,"
-        "fade=t=in:st=0:d=0.35"
+        "fade=t=in:st=0:d=0.35,"
+        f"fade=t=out:st={fade_out_start:.3f}:d=0.35"
     )
     if is_image:
         # Slow Ken Burns zoom. One output frame is generated for each frame of the scene.
         frames = max(1, round(seconds * FPS))
         zoom = (
-            f"scale={width * 1.18}:{height * 1.18}:force_original_aspect_ratio=increase,"
-            f"crop={width * 1.18}:{height * 1.18},"
+            f"scale={int(width * 1.18)}:{int(height * 1.18)}:force_original_aspect_ratio=increase,"
+            f"crop={int(width * 1.18)}:{int(height * 1.18)},""
             f"zoompan=z='min(zoom+0.0007,1.12)':d={frames}:"
             f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
             f"s={width}x{height}:fps={FPS},"
             "eq=contrast=1.04:saturation=1.06:brightness=0.01,"
-            "fade=t=in:st=0:d=0.35"
+            "fade=t=in:st=0:d=0.35,"
+            f"fade=t=out:st={fade_out_start:.3f}:d=0.35"
         )
         run([ff, "-y", "-loop", "1", "-i", str(media), "-t", f"{seconds:.3f}",
              "-vf", zoom, "-an", "-c:v", "libx264", "-preset", "veryfast",
