@@ -62,6 +62,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wise-lab-video-${{ github.run_number }}
-          path: output/
+          # Upload only the finished video and useful deliverables.
+          # Exclude output/work/ and large intermediate renders/source footage.
+          path: |
+            output/wise_lab_*.mp4
+            output/captions.srt
+            output/title.txt
+            output/voiceover_script.txt
+            output/scene_plan.json
+            output/wise_lab_logo.svg
           if-no-files-found: error
           retention-days: 7
