@@ -16,9 +16,9 @@ This repository turns an English psychology script into a documentary-style vide
 - Searches Pixabay for relevant stock video and falls back to still photos when needed.
 - Adds gentle movement to still images, light colour treatment and fades.
 - Burns phrase-sized captions into the video and exports a separate `captions.srt`.
-- Creates a consistent WISE LAB identity on every export: a custom vector W mark, a 5-second intro, a 7-second outro, and original synthesized ambient welcome music.
-- Uses the intro message **“Explore the Mind. Understand Human Behaviour.”** and the outro message **“Keep Thinking. Stay Curious. Subscribe to WISE LAB.”**
-- The music is included only in the intro and outro; the main section is silent so you can add your own voice recording.
+- For **landscape long videos only**, adds a custom WISE LAB vector W mark, a 5-second intro, a 7-second outro, and original synthesized ambient welcome music.
+- The long-video intro says **“Explore the Mind. Understand Human Behaviour.”** and the outro says **“Keep Thinking. Stay Curious. Subscribe to WISE LAB.”**
+- **Shorts skip the intro, outro, and branding music** so they begin immediately. The main video section is silent so you can add your own voice recording.
 
 ## Required repository secrets
 
