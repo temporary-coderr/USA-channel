@@ -419,21 +419,12 @@ def add_wise_lab_branding(content_video: Path, final_video: Path,
         "KEEP THINKING. STAY CURIOUS.", "Understand the mind. Understand the world.",
         "SUBSCRIBE TO WISE LAB"
     )
-    # Give the silent main section a silent AAC track so all three sections can be joined cleanly.
-    probe = subprocess.run(
-        [ffmpeg().replace("ffmpeg", "ffprobe"), "-v", "error", "-show_entries",
-         "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(content_video)],
-        capture_output=True, text=True
-    )
-    if probe.returncode:
-        raise RuntimeError("Could not read the rendered video duration: " + probe.stderr[-1000:])
-    content_seconds = float(probe.stdout.strip())
+    # Preserve the Inworld narration audio when preparing the branded sequence.
     run([
         ffmpeg(), "-y", "-i", str(content_video),
-        "-f", "lavfi", "-t", f"{content_seconds:.3f}",
-        "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
-        "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
-        "-c:a", "aac", "-b:a", "160k", "-shortest", str(content_av)
+        "-map", "0:v:0", "-map", "0:a:0", "-c:v", "copy",
+        "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+        "-shortest", str(content_av)
     ])
     run([
         ffmpeg(), "-y", "-i", str(intro), "-i", str(content_av), "-i", str(outro),
