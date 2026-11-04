@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 import re
@@ -202,6 +203,85 @@ def download(url: str, destination: Path) -> None:
         raise RuntimeError(f"Downloaded media file is unexpectedly small: {destination.name}")
 
 
+
+def probe_duration(path: Path) -> float:
+    ffprobe = shutil.which("ffprobe")
+    if not ffprobe:
+        raise RuntimeError("ffprobe is not installed.")
+    result = subprocess.run([ffprobe, "-v", "error", "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1", str(path)], capture_output=True, text=True)
+    if result.returncode:
+        raise RuntimeError("Could not read media duration: " + result.stderr[-1000:])
+    return float(result.stdout.strip())
+
+
+def split_tts_text(text: str, limit: int = 1800) -> list[str]:
+    sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", text.strip())
+    chunks, current = [], ""
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        if len(sentence.encode("utf-16-le")) // 2 > limit:
+            for word in sentence.split():
+                candidate = (current + " " + word).strip()
+                if len(candidate.encode("utf-16-le")) // 2 > limit and current:
+                    chunks.append(current)
+                    current = word
+                else:
+                    current = candidate
+            continue
+        candidate = (current + " " + sentence).strip()
+        if len(candidate.encode("utf-16-le")) // 2 > limit and current:
+            chunks.append(current)
+            current = sentence
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
+
+
+def synthesize_inworld(text: str, destination: Path, scene_number: int) -> None:
+    api_key = required_env("INWORLD_API_KEY")
+    voice_id = os.getenv("INWORLD_VOICE_ID", "Dennis").strip() or "Dennis"
+    model_id = os.getenv("INWORLD_MODEL_ID", "inworld-tts-2").strip() or "inworld-tts-2"
+    chunk_paths = []
+    for chunk_index, chunk in enumerate(split_tts_text(text), 1):
+        response = SESSION.post(
+            "https://api.inworld.ai/tts/v1/voice",
+            headers={"Authorization": f"Basic {api_key}", "Content-Type": "application/json"},
+            json={
+                "text": chunk, "voiceId": voice_id, "modelId": model_id,
+                "language": os.getenv("INWORLD_LANGUAGE", "en-US"),
+                "audioConfig": {"audioEncoding": "MP3", "sampleRateHertz": 48000},
+                "speakingRate": float(os.getenv("INWORLD_SPEAKING_RATE", "1.0")),
+            }, timeout=180,
+        )
+        if not response.ok:
+            raise RuntimeError(f"Inworld TTS error in scene {scene_number}, chunk {chunk_index}: HTTP {response.status_code}: {response.text[:1200]}")
+        audio_content = response.json().get("audioContent")
+        if not audio_content:
+            raise RuntimeError(f"Inworld returned no audio for scene {scene_number}, chunk {chunk_index}.")
+        chunk_path = WORK / f"voice_scene_{scene_number:02}_part_{chunk_index:02}.mp3"
+        chunk_path.write_bytes(base64.b64decode(audio_content))
+        if chunk_path.stat().st_size < 1000:
+            raise RuntimeError("Inworld returned an unexpectedly small audio file.")
+        chunk_paths.append(chunk_path)
+    if len(chunk_paths) == 1:
+        shutil.copy2(chunk_paths[0], destination)
+    else:
+        concat_file = WORK / f"voice_scene_{scene_number:02}_concat.txt"
+        concat_file.write_text("".join(f"file '{p.as_posix()}'\n" for p in chunk_paths), encoding="utf-8")
+        run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(destination)])
+
+
+def concatenate_scene_audio(audio_paths: list[Path], destination: Path) -> None:
+    concat_file = WORK / "voice_all_scenes.txt"
+    concat_file.write_text("".join(f"file '{p.as_posix()}'\n" for p in audio_paths), encoding="utf-8")
+    run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(destination)])
+
+
 def timestamp(seconds: float) -> str:
     milliseconds = max(0, round(seconds * 1000))
     hours, milliseconds = divmod(milliseconds, 3_600_000)
@@ -379,11 +459,17 @@ def main() -> int:
     plan = groq_json(script)
     (OUT / "scene_plan.json").write_text(json.dumps(plan, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    words = [max(1, len(scene["narration"].split())) for scene in plan["scenes"]]
-    # Six-minute target at about 140 spoken words/minute; set TARGET_WPM to adjust.
-    wpm = max(90, int(os.getenv("TARGET_WPM", "140")))
-    total_duration = sum(words) / wpm * 60
-    durations = [total_duration * count / sum(words) for count in words]
+    voice_segments = []
+    durations = []
+    for index, scene in enumerate(plan["scenes"], 1):
+        voice_path = WORK / f"voice_scene_{index:02}.mp3"
+        print(f"Generating Inworld narration for scene {index}/{len(plan['scenes'])}...")
+        synthesize_inworld(scene["narration"], voice_path, index)
+        voice_segments.append(voice_path)
+        durations.append(probe_duration(voice_path))
+
+    voice_track = OUT / "wise_lab_voiceover.mp3"
+    concatenate_scene_audio(voice_segments, voice_track)
     rendered = []
 
     for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
@@ -430,19 +516,24 @@ def main() -> int:
     run([ffmpeg(), "-y", "-i", str(silent), "-vf", caption_filter,
          "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
          "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(content_final)])
+    voiced_content = WORK / "content_with_inworld_voice.mp4"
+    run([ffmpeg(), "-y", "-i", str(content_final), "-i", str(voice_track),
+         "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
+         "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+         "-shortest", "-movflags", "+faststart", str(voiced_content)])
+
     final = OUT / ("wise_lab_shorts.mp4" if vertical else "wise_lab_video.mp4")
     if vertical:
-        # Shorts remain fast-paced: no channel intro/outro and no intro music.
-        shutil.copy2(content_final, final)
-        print("SHORTS MODE: skipped WISE LAB intro/outro and branding music.")
+        shutil.copy2(voiced_content, final)
+        print("SHORTS MODE: Inworld narration included; skipped intro/outro.")
     else:
-        add_wise_lab_branding(content_final, final, width, height)
-        print("LONG VIDEO MODE: WISE LAB intro/outro and original synthesized BGM are included.")
+        add_wise_lab_branding(voiced_content, final, width, height)
+        print("LONG VIDEO MODE: Inworld narration and WISE LAB intro/outro included.")
 
     (OUT / "title.txt").write_text(plan.get("title", "WISE LAB video") + "\n", encoding="utf-8")
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
     print(f"VIDEO READY: {final}")
-    print("The main video section is silent for your own narration.")
+    print(f"Narration generated with Inworld voice: {os.getenv('INWORLD_VOICE_ID', 'Dennis')}")
     return 0
 
 
