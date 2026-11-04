@@ -1,0 +1,37 @@
+name: Deploy cloud voice service
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "voice-service/**"
+      - "voice/sndp_reference.mp3"
+      - ".github/workflows/deploy-voice.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+      VOICE_API_TOKEN: ${{ secrets.VOICE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Modal
+        run: python -m pip install --upgrade modal
+      - name: Validate deployment secrets
+        run: |
+          test -n "$MODAL_TOKEN_ID" || (echo "Missing MODAL_TOKEN_ID Actions secret" && exit 1)
+          test -n "$MODAL_TOKEN_SECRET" || (echo "Missing MODAL_TOKEN_SECRET Actions secret" && exit 1)
+          test -n "$VOICE_API_TOKEN" || (echo "Missing VOICE_API_TOKEN Actions secret" && exit 1)
+          test -s voice/sndp_reference.mp3 || (echo "Missing voice/sndp_reference.mp3" && exit 1)
+      - name: Deploy Chatterbox voice API
+        run: modal deploy voice-service/modal_tts.py
