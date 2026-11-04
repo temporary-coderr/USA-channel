@@ -344,7 +344,8 @@ def main() -> int:
          "-c", "copy", str(silent)])
 
     captions = OUT / "captions.srt"
-    intro_seconds = 5.0
+    # Long videos have a 5-second branded intro; Shorts start immediately.
+    intro_seconds = 0.0 if vertical else 5.0
     make_captions(plan["scenes"], captions, durations, offset=intro_seconds)
     content_captions = WORK / "content_captions.srt"
     make_captions(plan["scenes"], content_captions, durations)
@@ -360,12 +361,18 @@ def main() -> int:
          "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
          "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(content_final)])
     final = OUT / ("wise_lab_shorts.mp4" if vertical else "wise_lab_video.mp4")
-    add_wise_lab_branding(content_final, final, width, height)
+    if vertical:
+        # Shorts remain fast-paced: no channel intro/outro and no intro music.
+        shutil.copy2(content_final, final)
+        print("SHORTS MODE: skipped WISE LAB intro/outro and branding music.")
+    else:
+        add_wise_lab_branding(content_final, final, width, height)
+        print("LONG VIDEO MODE: WISE LAB intro/outro and original synthesized BGM are included.")
 
     (OUT / "title.txt").write_text(plan.get("title", "WISE LAB video") + "\n", encoding="utf-8")
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
     print(f"VIDEO READY: {final}")
-    print("WISE LAB intro/outro and original synthesized BGM are included. The main section is silent for your own narration.")
+    print("The main video section is silent for your own narration.")
     return 0
 
 
