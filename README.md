@@ -12,7 +12,7 @@ This repository turns an English psychology script into a documentary-style vide
 
 ## What the renderer does
 
-- Uses Groq to plan ordered scenes while instructing it to preserve the supplied narration wording.
+- Uses Gemini Flash as the primary scene planner and automatically falls back to Groq if Gemini is unavailable or returns an invalid plan. Both planners preserve the supplied narration wording.
 - Searches Pixabay for relevant stock video and falls back to still photos when needed.
 - Adds gentle movement to still images, light colour treatment and fades.
 - Burns phrase-sized captions into the video and exports a separate `captions.srt`.
@@ -26,10 +26,11 @@ Add these in **Settings → Secrets and variables → Actions → New repository
 
 | Secret | Purpose |
 | --- | --- |
-| `GROQ_API_KEY` | Script-to-scene planning |
+| `GEMINI_API_KEY` | Primary script-to-scene planning (Gemini Flash) |
+| `GROQ_API_KEY` | Automatic fallback scene planner if Gemini fails |
 | `PIXABAY_API_KEY` | Stock video and image search |
 
-Do not paste secrets into chat, scripts, workflow files, or commits. No voice-cloning or paid TTS service is required.
+Gemini uses the `gemini-3.8-flash` model by default. Do not paste secrets into chat, scripts, workflow files, or commits. The existing video-rendering and voice-generation steps are unchanged.
 
 ## Important limitations
 
