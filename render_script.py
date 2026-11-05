@@ -435,31 +435,118 @@ def concatenate_scene_audio(audio_paths: list[Path], destination: Path) -> None:
     run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(destination)])
 
 
-def mix_background_music(voice_track: Path, destination: Path) -> None:
-    """Create an original atmospheric psychology bed and duck it under narration."""
+def choose_openverse_music(script: str, destination: Path) -> dict:
+    """Fetch a distinct, instrumental, commercially usable track from Openverse."""
+    history_path = ROOT / "visual_history" / "used_music.json"
+    try:
+        history = json.loads(history_path.read_text(encoding="utf-8")) if history_path.exists() else {"tracks": []}
+    except (OSError, json.JSONDecodeError):
+        history = {"tracks": []}
+    recent_ids = {str(item.get("id")) for item in history.get("tracks", [])[-50:]}
+
+    lower = script.lower()
+    if any(word in lower for word in ("grief", "lonely", "trauma", "healing", "sadness", "anxiety")):
+        mood_queries = ["reflective cinematic piano instrumental", "emotional ambient documentary instrumental"]
+        mood = "reflective"
+    elif any(word in lower for word in ("fear", "stress", "danger", "overthinking", "manipulation", "mystery")):
+        mood_queries = ["subtle suspense cinematic instrumental", "psychological documentary ambient instrumental"]
+        mood = "subtle suspense"
+    elif any(word in lower for word in ("goal", "habit", "success", "confidence", "discipline", "growth")):
+        mood_queries = ["uplifting cinematic documentary instrumental", "inspiring ambient piano instrumental"]
+        mood = "uplifting"
+    else:
+        mood_queries = ["calm cinematic documentary instrumental", "thoughtful ambient piano instrumental"]
+        mood = "calm documentary"
+
+    candidates = []
+    seen = set()
+    for query in mood_queries:
+        try:
+            response = SESSION.get(
+                "https://api.openverse.org/v1/audio/",
+                params={
+                    "q": query,
+                    "category": "music",
+                    "license": "cc0,pdm,by,by-sa",
+                    "license_type": "commercial,modification",
+                    "length": "long",
+                    "page_size": 20,
+                    "filter_dead": "true",
+                },
+                timeout=25,
+            )
+            response.raise_for_status()
+            for item in response.json().get("results", []):
+                track_id = str(item.get("id") or "")
+                license_code = str(item.get("license") or "").lower()
+                tags = " ".join(str(tag.get("name", "")) for tag in item.get("tags", []) if isinstance(tag, dict)).lower()
+                title = str(item.get("title") or "Untitled instrumental")
+                if (not track_id or track_id in seen or license_code not in {"cc0", "pdm", "by", "by-sa"}
+                        or not item.get("url") or not item.get("foreign_landing_url")
+                        or any(term in (title + " " + tags).lower() for term in ("vocal", "singing", "spoken word", "speech"))):
+                    continue
+                seen.add(track_id)
+                candidates.append(item)
+        except Exception as exc:
+            print(f"Openverse music search unavailable for '{query}': {exc}")
+
+    fresh = [item for item in candidates if str(item.get("id")) not in recent_ids]
+    if not fresh:
+        raise RuntimeError("No unused Openverse music track with an allowed commercial-use licence was found. No synthetic music fallback will be used.")
+    # Pick a track deterministically from the current script, so reruns are stable.
+    seed = int(hashlib.sha256(script.encode("utf-8")).hexdigest()[:8], 16)
+    selected = fresh[seed % len(fresh)]
+    response = SESSION.get(selected["url"], stream=True, timeout=60)
+    response.raise_for_status()
+    total = 0
+    with destination.open("wb") as handle:
+        for chunk in response.iter_content(chunk_size=1024 * 256):
+            if not chunk:
+                continue
+            total += len(chunk)
+            if total > 60 * 1024 * 1024:
+                handle.close()
+                destination.unlink(missing_ok=True)
+                raise RuntimeError("Selected background music exceeded the 60 MB safety limit.")
+            handle.write(chunk)
+    if total < 20_000:
+        destination.unlink(missing_ok=True)
+        raise RuntimeError("Openverse returned an unexpectedly small music file.")
+    track = {
+        "id": str(selected["id"]),
+        "title": str(selected.get("title") or "Untitled"),
+        "creator": str(selected.get("creator") or "Unknown creator"),
+        "creator_url": str(selected.get("creator_url") or ""),
+        "landing_url": str(selected["foreign_landing_url"]),
+        "license": str(selected.get("license") or "").upper(),
+        "license_version": str(selected.get("license_version") or ""),
+        "license_url": str(selected.get("license_url") or "https://creativecommons.org/"),
+        "attribution": str(selected.get("attribution") or ""),
+        "mood": mood,
+    }
+    history.setdefault("tracks", []).append(track)
+    history["tracks"] = history["tracks"][-100:]
+    history_path.parent.mkdir(parents=True, exist_ok=True)
+    history_path.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Selected Openverse background track: {track['title']} — {track['creator']} ({track['license']})")
+    return track
+
+
+def mix_background_music(voice_track: Path, music_file: Path, destination: Path) -> None:
+    """Mix a licensed music track quietly beneath narration with automatic voice ducking."""
     ff = ffmpeg()
     duration = probe_duration(voice_track)
-    # Original synthesized ambient bed: warm low pad, soft harmonic shimmer and a
-    # slow pulse. No downloaded song, external API, or extra dependency is required.
-    music_source = (
-        "aevalsrc=0.19*sin(2*PI*110*t)+0.105*sin(2*PI*164.81*t)"
-        "+0.085*sin(2*PI*220*t)+0.055*sin(2*PI*261.63*t)"
-        "+0.035*sin(2*PI*329.63*t)+0.018*sin(2*PI*440*t):s=48000:d="
-        f"{duration:.3f}"
-    )
-    fade_out = max(0.1, duration - 1.2)
+    fade_out = max(0.1, duration - 1.5)
     filter_graph = (
-        "[1:a]volume=0.95,highpass=f=65,lowpass=f=2400,"
-        "tremolo=f=0.10:d=0.16,"
-        f"afade=t=in:st=0:d=1.2,afade=t=out:st={fade_out:.3f}:d=1.2[music];"
-        "[music][0:a]sidechaincompress=threshold=0.025:ratio=7:"
-        "attack=18:release=520:makeup=1[ducked];"
-        "[0:a][ducked]amix=inputs=2:weights='1 0.90':normalize=0,"
+        "[1:a]volume=0.24,highpass=f=75,lowpass=f=14000,"
+        f"afade=t=in:st=0:d=1.5,afade=t=out:st={fade_out:.3f}:d=1.5[music];"
+        "[music][0:a]sidechaincompress=threshold=0.035:ratio=9:"
+        "attack=20:release=650:makeup=1[ducked];"
+        "[0:a][ducked]amix=inputs=2:weights='1 0.55':normalize=0,"
         "alimiter=limit=0.95:level=disabled[a]"
     )
     run([
-        ff, "-y", "-i", str(voice_track),
-        "-f", "lavfi", "-i", music_source,
+        ff, "-y", "-i", str(voice_track), "-stream_loop", "-1", "-i", str(music_file),
         "-filter_complex", filter_graph,
         "-map", "[a]", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
         "-t", f"{duration:.3f}", "-movflags", "+faststart", str(destination)
@@ -771,7 +858,8 @@ def make_video_title(script: str) -> str:
 
 
 def make_video_description(title: str, scenes: list[dict], durations: list[float],
-                           vertical: bool, assets: list[dict] | None = None) -> str:
+                           vertical: bool, assets: list[dict] | None = None,
+                           music_info: dict | None = None) -> str:
     lines = [
         title, "",
         "Welcome to WISE LAB — clear, thoughtful explainers about psychology, human behaviour,",
@@ -796,6 +884,15 @@ def make_video_description(title: str, scenes: list[dict], durations: list[float
             credits.append(f"Pixabay media: {asset.get('page_url') or 'https://pixabay.com/'}")
     if credits:
         lines += ["", "VISUAL CREDITS"] + list(dict.fromkeys(credits))
+    if music_info:
+        music_credit = music_info.get("attribution") or (
+            f'"{music_info.get("title", "Background music")}" by {music_info.get("creator", "Unknown creator")}'
+            f' — {music_info.get("license", "Creative Commons")} {music_info.get("license_version", "")}.'
+            f' Source: {music_info.get("landing_url", "")}'
+        )
+        lines += ["", "BACKGROUND MUSIC CREDITS", music_credit,
+                  f"Track page: {music_info.get('landing_url', '')}",
+                  f"Licence: {music_info.get('license', '')} {music_info.get('license_version', '')} — {music_info.get('license_url', '')}"]
     lines += [
         "", "WISE LAB shares educational content for general information and self-reflection.",
         "It is not medical advice or a substitute for care from a qualified professional.", "",
@@ -877,9 +974,18 @@ def main() -> int:
 
     voice_track = OUT / "wise_lab_voiceover.mp3"
     concatenate_scene_audio(voice_segments, voice_track)
+    music_file = WORK / "wise_lab_background_music"
+    music_info = choose_openverse_music(script, music_file)
     mixed_voice_track = WORK / "wise_lab_voice_with_bgm.m4a"
-    print("Creating original WISE LAB ambient music bed and ducking it under narration...")
-    mix_background_music(voice_track, mixed_voice_track)
+    print(f"Mixing rotating {music_info['mood']} music under narration with voice ducking...")
+    mix_background_music(voice_track, music_file, mixed_voice_track)
+    (OUT / "background_music_credit.txt").write_text(
+        (music_info.get("attribution") or music_info["title"] + " by " + music_info["creator"])
+        + "\\nTrack: " + music_info["landing_url"]
+        + "\\nLicence: " + music_info["license"] + " " + music_info["license_version"]
+        + " — " + music_info["license_url"] + "\\n",
+        encoding="utf-8",
+    )
     rendered = []
 
     for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
@@ -1015,7 +1121,7 @@ def main() -> int:
     video_title = make_video_title(script)
     (OUT / "title.txt").write_text(video_title + "\n", encoding="utf-8")
     (OUT / "description.txt").write_text(
-        make_video_description(video_title, plan["scenes"], durations, vertical, selected_assets),
+        make_video_description(video_title, plan["scenes"], durations, vertical, selected_assets, music_info),
         encoding="utf-8"
     )
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
