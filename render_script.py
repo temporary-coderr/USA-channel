@@ -265,6 +265,40 @@ def find_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict
     return None
 
 
+def pexels_search(endpoint: str, params: dict, key: str) -> dict:
+    response = SESSION.get(endpoint, params=params, headers={"Authorization": key}, timeout=60)
+    response.raise_for_status()
+    return response.json()
+
+def find_pexels_video(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
+    orientation = "portrait" if vertical else "landscape"
+    data = pexels_search("https://api.pexels.com/v1/videos/search", {"query": query, "orientation": orientation, "per_page": 80, "page": 1}, key)
+    for hit in data.get("videos", []):
+        asset_id = f"pexels:{hit.get('id', '')}"
+        if asset_id == "pexels:" or asset_id in used_ids:
+            continue
+        files = []
+        for item in hit.get("video_files", []):
+            width, height, link = item.get("width") or 0, item.get("height") or 0, item.get("link")
+            if link and width and height and ((height > width) if vertical else (width >= height)):
+                files.append((width * height, link))
+        if files:
+            files.sort(reverse=True)
+            user = hit.get("user") or {}
+            return {"id": asset_id, "url": files[0][1], "type": "video", "source": "Pexels", "query": query, "page_url": hit.get("url", ""), "creator": user.get("name", ""), "creator_url": user.get("url", "")}
+    return None
+
+def find_pexels_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
+    orientation = "portrait" if vertical else "landscape"
+    data = pexels_search("https://api.pexels.com/v1/search", {"query": query, "orientation": orientation, "per_page": 80, "page": 1}, key)
+    for hit in data.get("photos", []):
+        asset_id = f"pexels:{hit.get('id', '')}"
+        src = hit.get("src") or {}
+        url = src.get("large2x") or src.get("large")
+        if url and asset_id != "pexels:" and asset_id not in used_ids:
+            return {"id": asset_id, "url": url, "type": "image", "source": "Pexels", "query": query, "page_url": hit.get("url", ""), "creator": hit.get("photographer", ""), "creator_url": hit.get("photographer_url", "")}
+    return None
+
 def download(url: str, destination: Path) -> None:
     # Always download the newly selected asset; no local media cache is used.
     with SESSION.get(url, stream=True, timeout=(20, 180)) as response:
@@ -594,7 +628,7 @@ def make_video_title(script: str) -> str:
 
 
 def make_video_description(title: str, scenes: list[dict], durations: list[float],
-                           vertical: bool) -> str:
+                           vertical: bool, assets: list[dict] | None = None) -> str:
     lines = [
         title, "",
         "Welcome to WISE LAB — clear, thoughtful explainers about psychology, human behaviour,",
@@ -609,6 +643,16 @@ def make_video_description(title: str, scenes: list[dict], durations: list[float
         heading = re.sub(r"\s+", " ", str(scene.get("heading") or "Key idea")).strip()
         lines.append(f"{stamp} {heading[:65].rstrip(' ,:;.-')}")
         cursor += duration
+    credits = []
+    for asset in assets or []:
+        if (asset.get("source") or "").lower() == "pexels":
+            creator = asset.get("creator") or "Pexels contributor"
+            creator_url = asset.get("creator_url") or asset.get("page_url") or "https://www.pexels.com/"
+            credits.append(f"Photo/video by {creator} on Pexels: {creator_url}")
+        else:
+            credits.append(f"Pixabay media: {asset.get('page_url') or 'https://pixabay.com/'}")
+    if credits:
+        lines += ["", "VISUAL CREDITS"] + list(dict.fromkeys(credits))
     lines += [
         "", "WISE LAB shares educational content for general information and self-reflection.",
         "It is not medical advice or a substitute for care from a qualified professional.", "",
@@ -670,6 +714,8 @@ def main() -> int:
     vertical = FORMAT == "shorts"
     width, height = (1080, 1920) if vertical else (1920, 1080)
     key = required_env("PIXABAY_API_KEY")
+    pexels_key = os.getenv("PEXELS_API_KEY", "").strip()
+    print("Optional Pexels fallback enabled." if pexels_key else "Pexels fallback not configured; using Pixabay only.")
     # Deterministic local scene planning; no Gemini/Groq agent is used.
     plan = plan_scenes(script)
     history, historical_ids = load_visual_history()
@@ -696,22 +742,53 @@ def main() -> int:
         # Try the scene's specific query first, then broader alternatives.
         queries = [query, f"{query} documentary", f"{query} lifestyle"]
         asset = None
+        source_errors = []
         for candidate_query in dict.fromkeys(q for q in queries if q.strip()):
-            asset = find_video(candidate_query, key, vertical, used_ids)
+            try:
+                asset = find_video(candidate_query, key, vertical, used_ids)
+            except Exception as exc:
+                source_errors.append(f"Pixabay video: {exc}")
+                print(f"Pixabay video search failed; moving to fallback: {exc}")
+                break
             if asset:
                 break
+        if not asset and pexels_key:
+            for candidate_query in dict.fromkeys(q for q in queries if q.strip()):
+                try:
+                    asset = find_pexels_video(candidate_query, pexels_key, vertical, used_ids)
+                except Exception as exc:
+                    source_errors.append(f"Pexels video: {exc}")
+                    print(f"Pexels video search failed: {exc}")
+                    break
+                if asset:
+                    break
         is_image = False
+        image_queries = [image_query, query, f"{query} photography"]
         if not asset:
-            for candidate_query in dict.fromkeys(q for q in [image_query, query, f"{query} photography"] if q.strip()):
-                asset = find_image(candidate_query, key, vertical, used_ids)
+            for candidate_query in dict.fromkeys(q for q in image_queries if q.strip()):
+                try:
+                    asset = find_image(candidate_query, key, vertical, used_ids)
+                except Exception as exc:
+                    source_errors.append(f"Pixabay image: {exc}")
+                    print(f"Pixabay image search failed; moving to fallback: {exc}")
+                    break
                 if asset:
                     break
             is_image = asset is not None
+        if not asset and pexels_key:
+            for candidate_query in dict.fromkeys(q for q in image_queries if q.strip()):
+                try:
+                    asset = find_pexels_image(candidate_query, pexels_key, vertical, used_ids)
+                except Exception as exc:
+                    source_errors.append(f"Pexels image: {exc}")
+                    print(f"Pexels image search failed: {exc}")
+                    break
+                if asset:
+                    is_image = True
+                    break
         if not asset:
-            raise RuntimeError(
-                f"No unused Pixabay visual found for scene '{query}'. "
-                "No previously used asset was reused; try a more specific or different script."
-            )
+            detail = " | ".join(source_errors[-3:])
+            raise RuntimeError(f"No unused stock visual found for scene '{query}'. " + detail)
         used_ids.add(str(asset["id"]))
         selected_assets.append(asset)
         scene["visual_asset"] = asset
@@ -786,7 +863,7 @@ def main() -> int:
     video_title = make_video_title(script)
     (OUT / "title.txt").write_text(video_title + "\n", encoding="utf-8")
     (OUT / "description.txt").write_text(
-        make_video_description(video_title, plan["scenes"], durations, vertical),
+        make_video_description(video_title, plan["scenes"], durations, vertical, selected_assets),
         encoding="utf-8"
     )
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
