@@ -80,6 +80,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Validate Python syntax before rendering
+        run: python -m py_compile editorial_gate.py render_script.py quality_check.py upload_youtube.py
+
       - name: Check script and API secrets
         run: |
           test -s scripts/script.txt || (echo "Upload your script to scripts/script.txt first." && exit 1)
