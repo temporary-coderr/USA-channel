@@ -94,12 +94,16 @@ jobs:
       - name: Create edited WISE LAB video
         run: python render_script.py
 
-      # Save the finished render before attempting YouTube upload.
+      - name: Run technical quality checks and prepare human review pack
+        run: python quality_check.py
+
+      # Save the finished render and review reports before attempting YouTube upload.
       # This preserves a downloadable MP4 even if OAuth or YouTube is temporarily unavailable.
       - name: Upload WISE LAB video, logo and captions
         uses: actions/upload-artifact@v4
         with:
           name: wise-lab-video-${{ github.run_number }}
+          if-no-files-found: warn
           path: |
             output/wise_lab_*.mp4
             output/captions.srt
@@ -114,10 +118,12 @@ jobs:
             output/editorial_review.txt
             output/editorial_gate.txt
             output/editorial_gate.json
+            output/technical_quality.txt
+            output/technical_quality.json
+            output/review_checklist.md
             output/wise_lab_logo.svg
             output/wise_lab_thumbnail.jpg
             output/youtube_video_url.txt
-          if-no-files-found: error
           retention-days: 7
 
       - name: Upload video to YouTube (private)
