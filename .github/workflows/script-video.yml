@@ -81,27 +81,8 @@ jobs:
       - name: Create edited WISE LAB video
         run: python render_script.py
 
-      - name: Upload video to YouTube (private)
-        run: python upload_youtube.py
-        env:
-          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
-          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          YOUTUBE_PRIVACY_STATUS: private
-          VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
-
-      - name: Save visual usage history
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add visual_history/used_assets.json
-          if git diff --cached --quiet; then
-            echo "Visual history has no changes."
-          else
-            git commit -m "Update WISE LAB visual usage history"
-            git push
-          fi
-
+      # Save the finished render before attempting YouTube upload.
+      # This preserves a downloadable MP4 even if OAuth or YouTube is temporarily unavailable.
       - name: Upload WISE LAB video, logo and captions
         uses: actions/upload-artifact@v4
         with:
@@ -119,3 +100,25 @@ jobs:
             output/youtube_video_url.txt
           if-no-files-found: error
           retention-days: 7
+
+      - name: Upload video to YouTube (private)
+        run: python upload_youtube.py
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_PRIVACY_STATUS: private
+          VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
+
+      - name: Save visual usage history
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add visual_history/used_assets.json
+          if git diff --cached --quiet; then
+            echo "Visual history has no changes."
+          else
+            git commit -m "Update WISE LAB visual usage history"
+            git push
+          fi
