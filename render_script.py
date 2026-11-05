@@ -435,7 +435,7 @@ def concatenate_scene_audio(audio_paths: list[Path], destination: Path) -> None:
     run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(destination)])
 
 
-def choose_openverse_music(script: str, destination: Path) -> dict:
+def choose_openverse_music(script: str, destination: Path) -> dict | None:
     """Fetch a distinct, instrumental, commercially usable track from Openverse."""
     history_path = ROOT / "visual_history" / "used_music.json"
     try:
@@ -492,7 +492,8 @@ def choose_openverse_music(script: str, destination: Path) -> dict:
 
     fresh = [item for item in candidates if str(item.get("id")) not in recent_ids]
     if not fresh:
-        raise RuntimeError("No unused Openverse music track with an allowed commercial-use licence was found. No synthetic music fallback will be used.")
+        print("WARNING: No unused, suitably licensed Openverse music track was available. Rendering narration without BGM rather than using the old synthetic tone.") 
+        return None
     # Pick a track deterministically from the current script, so reruns are stable.
     seed = int(hashlib.sha256(script.encode("utf-8")).hexdigest()[:8], 16)
     selected = fresh[seed % len(fresh)]
@@ -975,18 +976,27 @@ def main() -> int:
     voice_track = OUT / "wise_lab_voiceover.mp3"
     concatenate_scene_audio(voice_segments, voice_track)
     music_file = WORK / "wise_lab_background_music"
-    music_info = choose_openverse_music(script, music_file)
     mixed_voice_track = WORK / "wise_lab_voice_with_bgm.m4a"
-    print(f"Mixing rotating {music_info['mood']} music under narration with voice ducking...")
-    mix_background_music(voice_track, music_file, mixed_voice_track)
-    (OUT / "background_music_credit.txt").write_text(
-        (music_info.get("attribution") or music_info["title"] + " by " + music_info["creator"])
-        + "\nTrack: " + music_info["landing_url"]
-        + "\nCreator: " + music_info["creator"] + " — " + music_info["creator_url"]
-        + "\nLicence: " + music_info["license"] + " " + music_info["license_version"]
-        + " — " + music_info["license_url"] + "\n",
-        encoding="utf-8",
-    )
+    try:
+        music_info = choose_openverse_music(script, music_file)
+    except Exception as exc:
+        print(f"WARNING: Could not retrieve a suitable licensed music track: {exc}")
+        music_info = None
+    if music_info:
+        print(f"Mixing rotating {music_info['mood']} music under narration with voice ducking...")
+        mix_background_music(voice_track, music_file, mixed_voice_track)
+        credit_text = (
+            (music_info.get("attribution") or music_info["title"] + " by " + music_info["creator"])
+            + "\nTrack: " + music_info["landing_url"]
+            + "\nCreator: " + music_info["creator"] + " — " + music_info["creator_url"]
+            + "\nLicence: " + music_info["license"] + " " + music_info["license_version"]
+            + " — " + music_info["license_url"] + "\n"
+        )
+    else:
+        print("Continuing without BGM; the old synthetic tone has been removed.")
+        shutil.copy2(voice_track, mixed_voice_track)
+        credit_text = "No background music was added: no suitable unused track was available.\n"
+    (OUT / "background_music_credit.txt").write_text(credit_text, encoding="utf-8")
     rendered = []
 
     for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
