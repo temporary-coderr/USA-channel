@@ -34,7 +34,7 @@ def main() -> int:
 
     title_file = OUT / "title.txt"
     title = title_file.read_text(encoding="utf-8").strip() if title_file.exists() else "WISE LAB"
-    title = re.sub(r"\\s+", " ", title).strip()[:100] or "WISE LAB"
+    title = re.sub(r"\s+", " ", title).strip()[:100] or "WISE LAB"
 
     description = (
         "Explore the mind and understand human behaviour with WISE LAB.\n\n"
