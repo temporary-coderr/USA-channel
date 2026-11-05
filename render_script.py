@@ -158,14 +158,17 @@ def plan_scenes(script: str) -> dict:
     groups, current, word_count = [], [], 0
     for sentence in sentences:
         count = len(sentence.split())
-        if current and word_count + count > 65:
+        # Keep stock footage moving: aim for roughly 30–35 spoken words per visual.
+        if current and word_count + count > 35:
             groups.append(" ".join(current))
             current, word_count = [], 0
         current.append(sentence)
         word_count += count
     if current:
         groups.append(" ".join(current))
-    while len(groups) > 14:
+    # Typical 1,000–1,350 word scripts now produce about 29–40 visual scenes.
+    # Cap extreme scripts at 40 scenes to keep stock searches and render time manageable.
+    while len(groups) > 40:
         merged = []
         for i in range(0, len(groups), 2):
             merged.append((groups[i] + " " + groups[i + 1]).strip() if i + 1 < len(groups) else groups[i])
