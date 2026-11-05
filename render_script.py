@@ -499,6 +499,30 @@ def add_wise_lab_branding(content_video: Path, final_video: Path,
         "-movflags", "+faststart", str(final_video)
     ])
 
+def make_thumbnail(video_path: Path, destination: Path, title: str, vertical: bool) -> None:
+    """Create a branded still thumbnail from the finished render."""
+    ff = ffmpeg()
+    WORK.mkdir(parents=True, exist_ok=True)
+    title_file = WORK / "thumbnail_title.txt"
+    title_file.write_text(title.strip()[:90], encoding="utf-8")
+    text_path = title_file.resolve().as_posix().replace(":", r"\:")
+    font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+    seek = "0.5" if vertical else "5.5"
+    width, height = (1080, 1920) if vertical else (1280, 720)
+    vf = (
+        f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+        f"crop={width}:{height},"
+        "drawbox=x=0:y=ih*0.57:w=iw:h=ih*0.43:color=0x081321@0.78:t=fill,"
+        f"drawtext=fontfile={font}:textfile='{text_path}':fontcolor=white:"
+        f"fontsize={72 if vertical else 58}:line_spacing=12:"
+        "x=(w-text_w)/2:y=h-text_h-90"
+    )
+    run([ff, "-y", "-ss", seek, "-i", str(video_path), "-frames:v", "1",
+         "-vf", vf, "-q:v", "2", str(destination)])
+    if not destination.exists() or destination.stat().st_size < 4000:
+        raise RuntimeError("Thumbnail generation failed or produced an empty image.")
+
+
 def main() -> int:
     if not SCRIPT.exists():
         raise RuntimeError(f"Script file not found: {SCRIPT}. Upload your text to scripts/script.txt.")
@@ -622,6 +646,9 @@ def main() -> int:
     )
     (OUT / "title.txt").write_text(plan.get("title", "WISE LAB video") + "\n", encoding="utf-8")
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
+    thumbnail = OUT / "wise_lab_thumbnail.jpg"
+    make_thumbnail(final, thumbnail, plan.get("title", "WISE LAB"), vertical)
+    print(f"THUMBNAIL READY: {thumbnail}")
     print(f"VIDEO READY: {final}")
     print(f"Narration generated with Edge-TTS voice: {os.getenv('EDGE_TTS_VOICE', 'en-US-AndrewNeural')}")
     return 0
