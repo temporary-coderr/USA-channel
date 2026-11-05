@@ -106,7 +106,7 @@ jobs:
             output/visual_manifest.json
             output/description.txt
             output/background_music_credit.txt
-            output/editorial_review.txt
+            output/editorial_review.txt\n            output/editorial_gate.txt\n            output/editorial_gate.json
             output/wise_lab_logo.svg
             output/wise_lab_thumbnail.jpg
             output/youtube_video_url.txt
