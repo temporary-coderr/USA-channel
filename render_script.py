@@ -365,6 +365,107 @@ def visual_query_from_text(text: str, fallback: str) -> str:
     return " ".join(terms) or "human psychology everyday life"
 
 
+def build_ai_image_prompt(shot_text: str, query: str, vertical: bool, groq_key: str = "") -> str:
+    """Create a concise, editorially useful visual prompt; Groq refines it when configured."""
+    base = (
+        "Create a photorealistic cinematic documentary still for a premium US psychology "
+        "YouTube explainer. Show a believable everyday human situation that visually "
+        "communicates this idea: " + shot_text[:700] + ". "
+        "Visual subject keywords: " + query + ". "
+        "Use natural human expressions, realistic anatomy, subtle emotion, tasteful "
+        "cinematic lighting, authentic contemporary environments, clear composition, "
+        "editorial photography, nuanced colors, and a visually interesting foreground. "
+        "No text, no letters, no logos, no watermark, no infographic, no collage, "
+        "no split screen, no exaggerated facial expressions, no surreal anatomy."
+    )
+    if groq_key:
+        try:
+            response = SESSION.post(
+                GROQ_URL,
+                headers={"Authorization": "Bearer " + groq_key, "Content-Type": "application/json"},
+                json={
+                    "model": "openai/gpt-oss-20b",
+                    "messages": [
+                        {"role": "system", "content": "You are a senior documentary art director. Return only one polished image-generation prompt. Do not add text or facts to the image. Preserve the meaning; never depict a real identifiable public figure."},
+                        {"role": "user", "content": base + (" Compose for a vertical 9:16 frame." if vertical else " Compose for a wide 16:9 frame.")},
+                    ],
+                    "temperature": 0.5,
+                    "max_completion_tokens": 220,
+                },
+                timeout=45,
+            )
+            response.raise_for_status()
+            refined = response.json()["choices"][0]["message"]["content"].strip()
+            if len(refined) >= 80:
+                return refined[:1800]
+        except Exception as exc:
+            print(f"Groq prompt refinement unavailable; using local prompt: {exc}")
+    return base + (" Compose for a vertical 9:16 frame." if vertical else " Compose for a wide 16:9 frame.")
+
+
+def generate_gemini_image(prompt: str, destination: Path, api_key: str, vertical: bool) -> dict:
+    """Generate one 1K custom still using Gemini Flash Image, with bounded retries."""
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent"
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "responseModalities": ["IMAGE"],
+            "imageConfig": {
+                "aspectRatio": "9:16" if vertical else "16:9",
+                "imageSize": "1K",
+            },
+        },
+    }
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = SESSION.post(
+                endpoint,
+                headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+                json=payload,
+                timeout=(20, 180),
+            )
+            if response.status_code in (429, 500, 502, 503, 504):
+                last_error = RuntimeError(f"Gemini HTTP {response.status_code}: {response.text[:500]}")
+                if attempt < 2:
+                    import time
+                    time.sleep(2 ** (attempt + 1))
+                    continue
+            response.raise_for_status()
+            body = response.json()
+            for candidate in body.get("candidates", []):
+                for part in (candidate.get("content") or {}).get("parts", []):
+                    inline = part.get("inlineData") or part.get("inline_data") or {}
+                    data = inline.get("data")
+                    mime = (inline.get("mimeType") or inline.get("mime_type") or "image/png").lower()
+                    if data:
+                        raw = base64.b64decode(data)
+                        if len(raw) < 4000:
+                            raise RuntimeError("Gemini returned an unexpectedly small image.")
+                        ext = ".jpg" if "jpeg" in mime or "jpg" in mime else ".png"
+                        actual_destination = destination.with_suffix(ext)
+                        actual_destination.write_bytes(raw)
+                        return {"path": actual_destination, "mime_type": mime}
+            raise RuntimeError("Gemini returned no image data in its response.")
+        except Exception as exc:
+            last_error = exc
+            if attempt < 2:
+                import time
+                time.sleep(2 ** (attempt + 1))
+    raise RuntimeError(f"Gemini image generation failed after 3 attempts: {last_error}")
+
+
+def choose_ai_shot_indices(total_shots: int, requested: int = 6) -> set[int]:
+    """Distribute 5–7 AI stills evenly across the full video."""
+    if total_shots <= 0:
+        return set()
+    count = min(total_shots, max(5, min(7, requested)))
+    if count == total_shots:
+        return set(range(total_shots))
+    return {min(total_shots - 1, int((i + 0.5) * total_shots / count)) for i in range(count)}
+
+
+
 def download(url: str, destination: Path) -> None:
     # Always download the newly selected asset; no local media cache is used.
     with SESSION.get(url, stream=True, timeout=(20, 180)) as response:
@@ -1026,7 +1127,11 @@ def main() -> int:
     width, height = (1080, 1920) if vertical else (1920, 1080)
     key = required_env("PIXABAY_API_KEY")
     pexels_key = os.getenv("PEXELS_API_KEY", "").strip()
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    groq_key = os.getenv("GROQ_API_KEY", "").strip()
     print("Optional Pexels fallback enabled." if pexels_key else "Pexels fallback not configured; using Pixabay only.")
+    print("Selective Gemini image generation enabled (5–7 images)." if gemini_key else "Gemini image generation disabled; GEMINI_API_KEY is not configured.")
+    print("Groq art-direction prompt refinement enabled." if groq_key else "Groq prompt refinement disabled; local prompts will be used.")
     # Deterministic local scene planning; no Gemini/Groq agent is used.
     plan = plan_scenes(script)
     history, historical_ids = load_visual_history()
@@ -1071,6 +1176,16 @@ def main() -> int:
 
     shot_number = 0
     target_shot_seconds = 3.0
+    estimated_shot_counts = [
+        min(max(1, int((seconds + target_shot_seconds - 0.001) // target_shot_seconds)),
+            max(1, len(re.findall(r"\\S+", scene["narration"]))))
+        for scene, seconds in zip(plan["scenes"], durations)
+    ]
+    total_shots = sum(estimated_shot_counts)
+    ai_shot_indices = choose_ai_shot_indices(
+        total_shots, int(os.getenv("AI_IMAGES_PER_VIDEO", "6"))
+    ) if gemini_key else set()
+    print(f"Planning {len(ai_shot_indices)} selective AI visuals across {total_shots} stock-style cuts.")
     for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
         words = re.findall(r"\S+", scene["narration"])
         if not words:
@@ -1094,7 +1209,30 @@ def main() -> int:
             asset = None
             source_errors = []
             queries = list(dict.fromkeys([query, f"{query} documentary", scene["visual_query"]]))
-            for provider in provider_order:
+            is_image = False
+
+            # Use a small number of bespoke AI stills for abstract psychology concepts
+            # while keeping the majority of the edit grounded in real stock footage.
+            if gemini_key and shot_number in ai_shot_indices:
+                prompt = build_ai_image_prompt(shot_text, query, vertical, groq_key)
+                try:
+                    generated = generate_gemini_image(
+                        prompt, WORK / f"gemini_visual_{shot_number:04}", gemini_key, vertical
+                    )
+                    asset = {
+                        "id": f"gemini:{hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:16]}",
+                        "url": "", "type": "image", "source": "Gemini 3.1 Flash Image",
+                        "query": query, "page_url": "https://ai.google.dev/gemini-api/docs/image-generation",
+                        "prompt": prompt, "mime_type": generated["mime_type"],
+                        "local_path": str(generated["path"]),
+                    }
+                    is_image = True
+                    print(f"Generated custom Gemini visual for shot {shot_number + 1}/{total_shots}.")
+                except Exception as exc:
+                    source_errors.append(f"Gemini image: {exc}")
+                    print(f"WARNING: Gemini image failed; falling back to stock sources: {exc}")
+
+            for provider in (() if asset else provider_order):
                 if provider == "pexels" and not pexels_key:
                     continue
                 for candidate_query in queries:
@@ -1112,7 +1250,6 @@ def main() -> int:
                 if asset:
                     break
 
-            is_image = False
             if not asset:
                 image_queries = list(dict.fromkeys([image_query, query, scene.get("image_query", query)]))
                 image_providers = ("pixabay", "pexels", "openverse")
@@ -1148,7 +1285,10 @@ def main() -> int:
             scene["visual_asset"] = asset
             suffix = ".jpg" if is_image else ".mp4"
             media_path = WORK / f"source_{shot_number:04}{suffix}"
-            download(asset["url"], media_path)
+            if asset.get("local_path"):
+                shutil.copy2(asset["local_path"], media_path)
+            else:
+                download(asset["url"], media_path)
             fingerprint = sha256_file(media_path)
             if fingerprint in used_hashes:
                 media_path.unlink(missing_ok=True)
