@@ -317,26 +317,70 @@ def split_tts_text(text: str, limit: int = 1800) -> list[str]:
 
 
 def synthesize_edge_tts(text: str, destination: Path, scene_number: int) -> None:
-    """Use the same Edge-TTS fallback voice as the user's working bot.py."""
+    """Generate a complete scene with Edge-TTS, retrying transient failures and trying backup voices."""
     import asyncio
     import edge_tts
-    voice = os.getenv("EDGE_TTS_VOICE", "en-US-AndrewNeural").strip() or "en-US-AndrewNeural"
+
+    primary = os.getenv("EDGE_TTS_VOICE", "en-US-AndrewNeural").strip() or "en-US-AndrewNeural"
+    configured = os.getenv("EDGE_TTS_FALLBACK_VOICES", "en-US-GuyNeural,en-US-BrianNeural")
+    voices = list(dict.fromkeys([primary] + [v.strip() for v in configured.split(",") if v.strip()]))
     rate = os.getenv("EDGE_TTS_RATE", "+5%").strip() or "+5%"
-    chunk_paths = []
-    async def generate() -> None:
-        for chunk_index, chunk in enumerate(split_tts_text(text), 1):
+    chunks = split_tts_text(text)
+    if not chunks:
+        raise RuntimeError(f"Scene {scene_number} has no narration text.")
+
+    async def generate_with_voice(voice: str) -> list[Path]:
+        paths = []
+        for chunk_index, chunk in enumerate(chunks, 1):
             chunk_path = WORK / f"edge_voice_scene_{scene_number:02}_part_{chunk_index:02}.mp3"
-            await edge_tts.Communicate(chunk, voice, rate=rate).save(str(chunk_path))
-            if not chunk_path.exists() or chunk_path.stat().st_size < 1000:
-                raise RuntimeError(f"Edge-TTS returned an empty audio file for scene {scene_number}, chunk {chunk_index}.")
-            chunk_paths.append(chunk_path)
-    asyncio.run(generate())
+            chunk_path.unlink(missing_ok=True)
+            last_error = None
+            for attempt in range(1, 4):
+                try:
+                    print(f"Edge-TTS scene {scene_number}, chunk {chunk_index}/{len(chunks)}, voice {voice}, attempt {attempt}/3")
+                    await edge_tts.Communicate(chunk, voice, rate=rate).save(str(chunk_path))
+                    if not chunk_path.exists() or chunk_path.stat().st_size < 1000:
+                        raise RuntimeError("Edge-TTS returned an empty or incomplete MP3.")
+                    paths.append(chunk_path)
+                    last_error = None
+                    break
+                except Exception as exc:
+                    last_error = exc
+                    chunk_path.unlink(missing_ok=True)
+                    if attempt < 3:
+                        await asyncio.sleep(2 ** attempt)
+            if last_error is not None:
+                raise RuntimeError(
+                    f"Edge-TTS failed for scene {scene_number}, chunk {chunk_index}, voice {voice}: {last_error}"
+                ) from last_error
+        return paths
+
+    errors = []
+    chunk_paths = []
+    for voice in voices:
+        try:
+            # Regenerate the entire scene with one voice to avoid mixing voices between chunks.
+            chunk_paths = asyncio.run(generate_with_voice(voice))
+            print(f"Edge-TTS narration ready for scene {scene_number} using {voice}.")
+            break
+        except Exception as exc:
+            errors.append(f"{voice}: {exc}")
+            for chunk_index in range(1, len(chunks) + 1):
+                (WORK / f"edge_voice_scene_{scene_number:02}_part_{chunk_index:02}.mp3").unlink(missing_ok=True)
+            print(f"Voice {voice} failed for scene {scene_number}; trying the next available voice.")
+    else:
+        raise RuntimeError(
+            f"All Edge-TTS voices failed for scene {scene_number}. " + " | ".join(errors)
+        )
+
     if len(chunk_paths) == 1:
         shutil.copy2(chunk_paths[0], destination)
     else:
         concat_file = WORK / f"edge_voice_scene_{scene_number:02}_concat.txt"
-        concat_file.write_text("".join(f"file '{p.as_posix()}'\n" for p in chunk_paths), encoding="utf-8")
+        concat_file.write_text("".join(f"file '{p.as_posix()}'\\n" for p in chunk_paths), encoding="utf-8")
         run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(destination)])
+    if not destination.exists() or destination.stat().st_size < 1000:
+        raise RuntimeError(f"Final narration MP3 for scene {scene_number} is missing or empty.")
 
 
 def concatenate_scene_audio(audio_paths: list[Path], destination: Path) -> None:
