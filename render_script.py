@@ -1052,6 +1052,8 @@ def make_video_description(title: str, scenes: list[dict], durations: list[float
                 f'— {asset.get("license", "CC BY")} {asset.get("license_version", "")}. '
                 f'{asset.get("page_url", "")} Licence: {asset.get("license_url", "")}'
             )
+        elif source.startswith("gemini"):
+            credits.append("AI-generated visual created with Google Gemini (not stock footage).")
         else:
             credits.append(f"Pixabay media: {asset.get('page_url') or 'https://pixabay.com/'}")
     if credits:
@@ -1283,7 +1285,7 @@ def main() -> int:
             used_ids.add(str(asset["id"]))
             selected_assets.append(asset)
             scene["visual_asset"] = asset
-            suffix = ".jpg" if is_image else ".mp4"
+            suffix = Path(asset["local_path"]).suffix if asset.get("local_path") else (".jpg" if is_image else ".mp4")
             media_path = WORK / f"source_{shot_number:04}{suffix}"
             if asset.get("local_path"):
                 shutil.copy2(asset["local_path"], media_path)
@@ -1352,16 +1354,21 @@ def main() -> int:
     existing_history_ids = {str(item.get("id")) for item in history_assets if item.get("id") is not None}
     for asset in selected_assets:
         if str(asset["id"]) not in existing_history_ids:
+            history_item = {key: value for key, value in asset.items() if key not in {"local_path", "url", "prompt"}}
             history_assets.append({
-                **asset,
+                **history_item,
                 "used_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
                 "format": FORMAT,
                 "script_file": str(SCRIPT),
             })
             existing_history_ids.add(str(asset["id"]))
     HISTORY_FILE.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_assets = [
+        {key: value for key, value in asset.items() if key != "local_path"}
+        for asset in selected_assets
+    ]
     (OUT / "visual_manifest.json").write_text(
-        json.dumps(selected_assets, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        json.dumps(manifest_assets, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     (OUT / "scene_plan.json").write_text(
         json.dumps(plan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
