@@ -219,15 +219,19 @@ def _pick_video_hit(hits: list[dict], used_ids: set[str], vertical: bool, query:
         if not asset_id or asset_id in used_ids:
             continue
         variants = []
+        target_area = 1080 * (1920 if vertical else 1080)
         for variant in hit.get("videos", {}).values():
             w, h = variant.get("width", 0), variant.get("height", 0)
             url = variant.get("url")
             if url and w and h and ((h > w) if vertical else (w >= h)):
                 variants.append((w * h, url))
         if variants:
-            variants.sort(reverse=True)
-            candidates.append((variants[0][0], {
-                "id": asset_id, "url": variants[0][1], "type": "video",
+            # Prefer the smallest rendition that meets the output resolution to
+            # avoid downloading oversized 4K files for every three-second shot.
+            above = [item for item in variants if item[0] >= target_area]
+            chosen = min(above, key=lambda item: item[0]) if above else max(variants, key=lambda item: item[0])
+            candidates.append((chosen[0], {
+                "id": asset_id, "url": chosen[1], "type": "video",
                 "query": query, "page_url": hit.get("pageURL", "")
             }))
     candidates.sort(key=lambda item: item[0], reverse=True)
@@ -287,9 +291,11 @@ def find_pexels_video(query: str, key: str, vertical: bool, used_ids: set[str]) 
             if link and width and height and ((height > width) if vertical else (width >= height)):
                 files.append((width * height, link))
         if files:
-            files.sort(reverse=True)
+            target_area = 1080 * (1920 if vertical else 1080)
+            above = [item for item in files if item[0] >= target_area]
+            chosen = min(above, key=lambda item: item[0]) if above else max(files, key=lambda item: item[0])
             user = hit.get("user") or {}
-            return {"id": asset_id, "url": files[0][1], "type": "video", "source": "Pexels", "query": query, "page_url": hit.get("url", ""), "creator": user.get("name", ""), "creator_url": user.get("url", "")}
+            return {"id": asset_id, "url": chosen[1], "type": "video", "source": "Pexels", "query": query, "page_url": hit.get("url", ""), "creator": user.get("name", ""), "creator_url": user.get("url", "")}
     return None
 
 def find_pexels_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
@@ -302,6 +308,62 @@ def find_pexels_image(query: str, key: str, vertical: bool, used_ids: set[str]) 
         if url and asset_id != "pexels:" and asset_id not in used_ids:
             return {"id": asset_id, "url": url, "type": "image", "source": "Pexels", "query": query, "page_url": hit.get("url", ""), "creator": hit.get("photographer", ""), "creator_url": hit.get("photographer_url", "")}
     return None
+
+def find_openverse_image(query: str, vertical: bool, used_ids: set[str]) -> dict | None:
+    """Find openly licensed commercial-use still images as a no-key fallback."""
+    response = SESSION.get(
+        "https://api.openverse.org/v1/images/",
+        params={
+            "q": query,
+            "license": "cc0,by",
+            "license_type": "commercial,modification",
+            "size": "large",
+            "aspect_ratio": "tall" if vertical else "wide",
+            "page_size": 20,
+            "filter_dead": "true",
+            "mature": "false",
+        },
+        timeout=35,
+    )
+    response.raise_for_status()
+    for hit in response.json().get("results", []):
+        asset_id = "openverse:" + str(hit.get("id") or "")
+        url = hit.get("url")
+        if not url or asset_id == "openverse:" or asset_id in used_ids:
+            continue
+        license_code = str(hit.get("license") or "").lower()
+        if license_code not in {"cc0", "pdm", "by"}:
+            continue
+        return {
+            "id": asset_id, "url": url, "type": "image", "source": "Openverse",
+            "query": query, "page_url": hit.get("foreign_landing_url", ""),
+            "title": hit.get("title", "Openly licensed image"),
+            "creator": hit.get("creator", "Unknown creator"),
+            "creator_url": hit.get("creator_url", ""),
+            "license": license_code.upper(),
+            "license_version": hit.get("license_version", ""),
+            "license_url": hit.get("license_url", ""),
+            "attribution": hit.get("attribution", ""),
+        }
+    return None
+
+
+def visual_query_from_text(text: str, fallback: str) -> str:
+    stop = set("the a an and or but if then than of in on at to for from with by as is are was were be been being it its this that these those you your we our they their he she his her i me my us them what why how when where who which can could would should will just very more most less much many some any not no do does did have has had about into over after before between through during because while also".split())
+    terms = []
+    for word in re.findall(r"[A-Za-z][A-Za-z'-]{3,}", text.lower()):
+        if word not in stop and word not in terms:
+            terms.append(word)
+        if len(terms) >= 6:
+            break
+    if len(terms) < 2:
+        for word in re.findall(r"[A-Za-z][A-Za-z'-]{3,}", fallback.lower()):
+            if word not in stop and word not in terms:
+                terms.append(word)
+            if len(terms) >= 6:
+                break
+    return " ".join(terms) or "human psychology everyday life"
+
 
 def download(url: str, destination: Path) -> None:
     # Always download the newly selected asset; no local media cache is used.
@@ -877,10 +939,18 @@ def make_video_description(title: str, scenes: list[dict], durations: list[float
         cursor += duration
     credits = []
     for asset in assets or []:
-        if (asset.get("source") or "").lower() == "pexels":
+        source = (asset.get("source") or "Pixabay").lower()
+        if source == "pexels":
             creator = asset.get("creator") or "Pexels contributor"
             creator_url = asset.get("creator_url") or asset.get("page_url") or "https://www.pexels.com/"
             credits.append(f"Photo/video by {creator} on Pexels: {creator_url}")
+        elif source == "openverse":
+            credits.append(
+                asset.get("attribution") or
+                f'"{asset.get("title", "Image")}" by {asset.get("creator", "Unknown creator")} '
+                f'— {asset.get("license", "CC BY")} {asset.get("license_version", "")}. '
+                f'{asset.get("page_url", "")} Licence: {asset.get("license_url", "")}'
+            )
         else:
             credits.append(f"Pixabay media: {asset.get('page_url') or 'https://pixabay.com/'}")
     if credits:
@@ -999,77 +1069,101 @@ def main() -> int:
     (OUT / "background_music_credit.txt").write_text(credit_text, encoding="utf-8")
     rendered = []
 
+    shot_number = 0
+    target_shot_seconds = 3.0
     for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
-        query = re.sub(r"[^a-zA-Z0-9 ]", " ", scene["visual_query"]).strip()[:90]
-        image_query = re.sub(r"[^a-zA-Z0-9 ]", " ", scene.get("image_query", query)).strip()[:90]
-        print(f"Scene {index}/{len(plan['scenes'])}: {query}")
-        # Try the scene's specific query first, then broader alternatives.
-        queries = [query, f"{query} documentary", f"{query} lifestyle"]
-        asset = None
-        source_errors = []
-        for candidate_query in dict.fromkeys(q for q in queries if q.strip()):
-            try:
-                asset = find_video(candidate_query, key, vertical, used_ids)
-            except Exception as exc:
-                source_errors.append(f"Pixabay video: {exc}")
-                print(f"Pixabay video search failed; moving to fallback: {exc}")
-                break
-            if asset:
-                break
-        if not asset and pexels_key:
-            for candidate_query in dict.fromkeys(q for q in queries if q.strip()):
-                try:
-                    asset = find_pexels_video(candidate_query, pexels_key, vertical, used_ids)
-                except Exception as exc:
-                    source_errors.append(f"Pexels video: {exc}")
-                    print(f"Pexels video search failed: {exc}")
-                    break
+        words = re.findall(r"\\S+", scene["narration"])
+        if not words:
+            words = re.findall(r"\\S+", scene.get("heading", "psychology"))
+        shot_count = max(1, int((seconds + target_shot_seconds - 0.001) // target_shot_seconds))
+        shot_count = min(shot_count, max(1, len(words)))
+        shot_paths = []
+        shot_durations = []
+        for shot_index in range(shot_count):
+            left = (shot_index * len(words)) // shot_count
+            right = ((shot_index + 1) * len(words)) // shot_count
+            shot_words = words[left:right] or words
+            shot_text = " ".join(shot_words)
+            shot_seconds = seconds * len(shot_words) / max(1, len(words))
+            query = visual_query_from_text(shot_text, scene["visual_query"])
+            image_query = query + " photography"
+            print(f"Scene {index}/{len(plan['scenes'])}, shot {shot_index + 1}/{shot_count}: {query}")
+            # Alternate provider priority so a single library does not dominate
+            # every cut. Each shot gets a fresh, narration-specific search.
+            provider_order = ("pixabay", "pexels") if shot_number % 2 == 0 else ("pexels", "pixabay")
+            asset = None
+            source_errors = []
+            queries = list(dict.fromkeys([query, f"{query} documentary", scene["visual_query"]]))
+            for provider in provider_order:
+                if provider == "pexels" and not pexels_key:
+                    continue
+                for candidate_query in queries:
+                    try:
+                        if provider == "pixabay":
+                            asset = find_video(candidate_query, key, vertical, used_ids)
+                        else:
+                            asset = find_pexels_video(candidate_query, pexels_key, vertical, used_ids)
+                    except Exception as exc:
+                        source_errors.append(f"{provider} video: {exc}")
+                        print(f"{provider} video search failed: {exc}")
+                        break
+                    if asset:
+                        break
                 if asset:
                     break
-        is_image = False
-        image_queries = [image_query, query, f"{query} photography"]
-        if not asset:
-            for candidate_query in dict.fromkeys(q for q in image_queries if q.strip()):
-                try:
-                    asset = find_image(candidate_query, key, vertical, used_ids)
-                except Exception as exc:
-                    source_errors.append(f"Pixabay image: {exc}")
-                    print(f"Pixabay image search failed; moving to fallback: {exc}")
-                    break
-                if asset:
-                    break
-            is_image = asset is not None
-        if not asset and pexels_key:
-            for candidate_query in dict.fromkeys(q for q in image_queries if q.strip()):
-                try:
-                    asset = find_pexels_image(candidate_query, pexels_key, vertical, used_ids)
-                except Exception as exc:
-                    source_errors.append(f"Pexels image: {exc}")
-                    print(f"Pexels image search failed: {exc}")
-                    break
-                if asset:
-                    is_image = True
-                    break
-        if not asset:
-            detail = " | ".join(source_errors[-3:])
-            raise RuntimeError(f"No unused stock visual found for scene '{query}'. " + detail)
-        used_ids.add(str(asset["id"]))
-        selected_assets.append(asset)
-        scene["visual_asset"] = asset
-        media_path = WORK / f"source_{index:02}.jpg" if is_image else WORK / f"source_{index:02}.mp4"
-        download(asset["url"], media_path)
-        fingerprint = sha256_file(media_path)
-        if fingerprint in used_hashes:
-            media_path.unlink(missing_ok=True)
-            raise RuntimeError(
-                f"Duplicate visual content detected for scene '{query}'. "
-                "The bot stopped rather than reuse a previously downloaded asset."
-            )
-        asset["sha256"] = fingerprint
-        used_hashes.add(fingerprint)
+
+            is_image = False
+            if not asset:
+                image_queries = list(dict.fromkeys([image_query, query, scene.get("image_query", query)]))
+                image_providers = ("pixabay", "pexels", "openverse")
+                for provider in image_providers:
+                    if provider == "pexels" and not pexels_key:
+                        continue
+                    for candidate_query in image_queries:
+                        try:
+                            if provider == "pixabay":
+                                asset = find_image(candidate_query, key, vertical, used_ids)
+                            elif provider == "pexels":
+                                asset = find_pexels_image(candidate_query, pexels_key, vertical, used_ids)
+                            else:
+                                asset = find_openverse_image(candidate_query, vertical, used_ids)
+                        except Exception as exc:
+                            source_errors.append(f"{provider} image: {exc}")
+                            print(f"{provider} image search failed: {exc}")
+                            break
+                        if asset:
+                            is_image = True
+                            break
+                    if asset:
+                        break
+            if not asset:
+                detail = " | ".join(source_errors[-3:])
+                raise RuntimeError(f"No unused visual found for three-second shot '{query}'. " + detail)
+
+            used_ids.add(str(asset["id"]))
+            selected_assets.append(asset)
+            scene["visual_asset"] = asset
+            suffix = ".jpg" if is_image else ".mp4"
+            media_path = WORK / f"source_{shot_number:04}{suffix}"
+            download(asset["url"], media_path)
+            fingerprint = sha256_file(media_path)
+            if fingerprint in used_hashes:
+                media_path.unlink(missing_ok=True)
+                raise RuntimeError(
+                    f"Duplicate visual content detected for shot '{query}'. "
+                    "The bot stopped rather than reuse a previously downloaded asset."
+                )
+            asset["sha256"] = fingerprint
+            used_hashes.add(fingerprint)
+
+            shot_path = WORK / f"scene_{index:02}_shot_{shot_index:02}.mp4"
+            render_scene(media_path, shot_path, shot_seconds, width, height, is_image)
+            shot_paths.append(shot_path)
+            shot_durations.append(shot_seconds)
+            shot_number += 1
 
         scene_path = WORK / f"scene_{index:02}.mp4"
-        render_scene(media_path, scene_path, seconds, width, height, is_image)
+        merge_scene_transitions(shot_paths, shot_durations, scene_path)
         rendered.append(scene_path)
 
     silent = OUT / "video_base.mp4"
