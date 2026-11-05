@@ -574,8 +574,19 @@ def main() -> int:
         raise RuntimeError(f"Script file not found: {SCRIPT}. Upload your text to scripts/script.txt.")
     script = SCRIPT.read_text(encoding="utf-8").strip()
     script = re.sub(r"\[EXTRO\]", "", script, flags=re.IGNORECASE).strip()
-    if len(script.split()) < 100:
-        raise RuntimeError("Script is too short. Add at least 100 words.")
+    word_count = len(script.split())
+    if word_count < 100:
+        raise RuntimeError(f"Script is too short ({word_count} words). Add at least 100 words.")
+
+    # YouTube Shorts are limited to 3 minutes. Keep a safety margin at 140 WPM
+    # so a vertical upload is not accidentally rendered as a regular long video.
+    if FORMAT == "shorts" and word_count > 400:
+        estimated_minutes = word_count / 140
+        raise RuntimeError(
+            f"This script has {word_count} words (about {estimated_minutes:.1f} minutes at 140 WPM). "
+            "That is too long for a YouTube Short. Choose landscape for this script, "
+            "or prepare a Shorts script of 400 words or fewer."
+        )
     OUT.mkdir(exist_ok=True)
     WORK.mkdir(exist_ok=True)
     vertical = FORMAT == "shorts"
