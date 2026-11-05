@@ -1140,6 +1140,9 @@ def main() -> int:
                 detail = " | ".join(source_errors[-3:])
                 raise RuntimeError(f"No unused visual found for three-second shot '{query}'. " + detail)
 
+            asset["shot_duration_seconds"] = round(shot_seconds, 3)
+            asset["scene_number"] = index
+            asset["shot_number"] = shot_number + 1
             used_ids.add(str(asset["id"]))
             selected_assets.append(asset)
             scene["visual_asset"] = asset
