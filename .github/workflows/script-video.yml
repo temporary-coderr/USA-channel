@@ -119,11 +119,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add visual_history/used_assets.json
+          git add -A visual_history/
           if git diff --cached --quiet; then
-            echo "Visual history has no changes."
+            echo "Visual and music history have no changes."
           else
-            git commit -m "Update WISE LAB visual usage history"
+            git commit -m "Update WISE LAB visual and music usage history"
             # A script update or another workflow may have advanced main while this
             # render was running. Rebase this history-only commit before pushing.
             for attempt in 1 2 3; do
