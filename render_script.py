@@ -148,118 +148,48 @@ def normalize_scene_plan(plan: dict, script: str) -> dict:
     return plan
 
 
-def gemini_json(script: str) -> dict:
-    api_key = required_env("GEMINI_API_KEY")
-    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip() or "gemini-3.8-flash"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-    response = SESSION.post(
-        url,
-        headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-        json={
-            "systemInstruction": {
-                "parts": [{"text": SCENE_SYSTEM_PROMPT}]
-            },
-            "contents": [{
-                "role": "user",
-                "parts": [{"text": scene_prompt(script)}]
-            }],
-            "generationConfig": {
-                "temperature": 0.25,
-                "responseMimeType": "application/json",
-                "responseJsonSchema": {
-                    "type": "object",
-                    "properties": {
-                        "title": {"type": "string"},
-                        "scenes": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "heading": {"type": "string"},
-                                    "narration": {"type": "string"},
-                                    "visual_query": {"type": "string"},
-                                    "image_query": {"type": "string"}
-                                },
-                                "required": ["heading", "narration", "visual_query", "image_query"]
-                            }
-                        }
-                    },
-                    "required": ["title", "scenes"]
-                },
-                "maxOutputTokens": 8192
-            }
-        },
-        timeout=180,
-    )
-    if not response.ok:
-        raise RuntimeError(f"Gemini API error {response.status_code}: {response.text[:1200]}")
-    payload = response.json()
-    candidates = payload.get("candidates") or []
-    if not candidates:
-        raise RuntimeError("Gemini returned no candidate (possibly blocked by safety filters).")
-    parts = candidates[0].get("content", {}).get("parts", [])
-    data = "".join(part.get("text", "") for part in parts if part.get("text"))
-    if not data.strip():
-        raise RuntimeError("Gemini returned an empty scene plan.")
-    return json.loads(data)
-
-
-def groq_json(script: str) -> dict:
-    response = SESSION.post(
-        GROQ_URL,
-        headers={"Authorization": f"Bearer {required_env('GROQ_API_KEY')}"},
-        json={
-            "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
-            "temperature": 0.25,
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "wise_lab_scene_plan",
-                    "strict": True,
-                    "schema": SCENE_SCHEMA
-                }
-            },
-            "messages": [
-                {"role": "system", "content": SCENE_SYSTEM_PROMPT},
-                {"role": "user", "content": scene_prompt(script)}
-            ],
-        },
-        timeout=180,
-    )
-    if not response.ok:
-        raise RuntimeError(f"Groq API error {response.status_code}: {response.text[:1200]}")
-    data = response.json()["choices"][0]["message"]["content"]
-    return json.loads(data)
-
-
 def plan_scenes(script: str) -> dict:
-    errors = []
+    """Create a deterministic scene plan locally; no external AI planner is required."""
+    stop = set("the a an and or but if then than of in on at to for from with by as is are was were be been being it its this that these those you your we our they their he she his her i me my us them what why how when where who which can could would should will just very more most less much many some any not no do does did have has had about into over after before between through during because while also".split())
+    sentences = [part.strip() for part in re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", script.strip()) if part.strip()]
+    if not sentences:
+        raise RuntimeError("The script contains no readable sentences.")
+    groups, current, word_count = [], [], 0
+    for sentence in sentences:
+        count = len(sentence.split())
+        if current and word_count + count > 65:
+            groups.append(" ".join(current))
+            current, word_count = [], 0
+        current.append(sentence)
+        word_count += count
+    if current:
+        groups.append(" ".join(current))
+    while len(groups) > 14:
+        merged = []
+        for i in range(0, len(groups), 2):
+            merged.append((groups[i] + " " + groups[i + 1]).strip() if i + 1 < len(groups) else groups[i])
+        groups = merged
+    if len(groups) < 5:
+        words = script.split()
+        count = max(1, (len(words) + 4) // 5)
+        groups = [" ".join(words[i:i + count]) for i in range(0, len(words), count)]
+        while len(groups) < 5:
+            groups.append(groups[-1])
+    scenes = []
+    for index, narration in enumerate(groups, 1):
+        terms = []
+        for word in re.findall(r"[A-Za-z][A-Za-z'-]{3,}", narration.lower()):
+            if word not in stop and word not in terms:
+                terms.append(word)
+            if len(terms) >= 5:
+                break
+        query = " ".join(terms) or "human psychology everyday life"
+        heading = " ".join(narration.split()[:7]).strip(" ,.!?—-")
+        scenes.append({"heading": heading or f"Scene {index}", "narration": narration,
+                       "visual_query": query, "image_query": query + " photography"})
+    print(f"Local scene planner: created {len(scenes)} scenes; no external AI agent/API used.")
+    return {"title": " ".join(script.split()[:10]).strip(" ,.!?") or "WISE LAB", "scenes": scenes}
 
-    if os.getenv("GEMINI_API_KEY", "").strip():
-        try:
-            print("Scene planner: trying Gemini Flash (primary)...")
-            plan = normalize_scene_plan(gemini_json(script), script)
-            print("Scene planner selected: Gemini Flash.")
-            return plan
-        except Exception as error:
-            errors.append(f"Gemini: {error}")
-            print(f"Gemini Flash failed; switching to Groq fallback. Reason: {error}")
-    else:
-        print("GEMINI_API_KEY is not configured; skipping Gemini primary.")
-
-    if os.getenv("GROQ_API_KEY", "").strip():
-        try:
-            print("Scene planner: trying Groq (fallback)...")
-            plan = normalize_scene_plan(groq_json(script), script)
-            print("Scene planner selected: Groq fallback.")
-            return plan
-        except Exception as error:
-            errors.append(f"Groq: {error}")
-
-    raise RuntimeError(
-        "No scene planner succeeded. Add a valid GEMINI_API_KEY and/or GROQ_API_KEY. "
-        + " | ".join(errors)
-    )
 
 def load_visual_history() -> tuple[dict, set[str]]:
     if not HISTORY_FILE.exists():
@@ -386,36 +316,25 @@ def split_tts_text(text: str, limit: int = 1800) -> list[str]:
     return chunks
 
 
-def synthesize_inworld(text: str, destination: Path, scene_number: int) -> None:
-    api_key = required_env("INWORLD_API_KEY")
-    voice_id = os.getenv("INWORLD_VOICE_ID", "Dennis").strip() or "Dennis"
-    model_id = os.getenv("INWORLD_MODEL_ID", "inworld-tts-2").strip() or "inworld-tts-2"
+def synthesize_edge_tts(text: str, destination: Path, scene_number: int) -> None:
+    """Use the same Edge-TTS fallback voice as the user's working bot.py."""
+    import asyncio
+    import edge_tts
+    voice = os.getenv("EDGE_TTS_VOICE", "en-US-AndrewNeural").strip() or "en-US-AndrewNeural"
+    rate = os.getenv("EDGE_TTS_RATE", "+5%").strip() or "+5%"
     chunk_paths = []
-    for chunk_index, chunk in enumerate(split_tts_text(text), 1):
-        response = SESSION.post(
-            "https://api.inworld.ai/tts/v1/voice",
-            headers={"Authorization": f"Basic {api_key}", "Content-Type": "application/json"},
-            json={
-                "text": chunk, "voiceId": voice_id, "modelId": model_id,
-                "language": os.getenv("INWORLD_LANGUAGE", "en-US"),
-                "audioConfig": {"audioEncoding": "MP3", "sampleRateHertz": 48000},
-                "speakingRate": float(os.getenv("INWORLD_SPEAKING_RATE", "1.0")),
-            }, timeout=180,
-        )
-        if not response.ok:
-            raise RuntimeError(f"Inworld TTS error in scene {scene_number}, chunk {chunk_index}: HTTP {response.status_code}: {response.text[:1200]}")
-        audio_content = response.json().get("audioContent")
-        if not audio_content:
-            raise RuntimeError(f"Inworld returned no audio for scene {scene_number}, chunk {chunk_index}.")
-        chunk_path = WORK / f"voice_scene_{scene_number:02}_part_{chunk_index:02}.mp3"
-        chunk_path.write_bytes(base64.b64decode(audio_content))
-        if chunk_path.stat().st_size < 1000:
-            raise RuntimeError("Inworld returned an unexpectedly small audio file.")
-        chunk_paths.append(chunk_path)
+    async def generate() -> None:
+        for chunk_index, chunk in enumerate(split_tts_text(text), 1):
+            chunk_path = WORK / f"edge_voice_scene_{scene_number:02}_part_{chunk_index:02}.mp3"
+            await edge_tts.Communicate(chunk, voice, rate=rate).save(str(chunk_path))
+            if not chunk_path.exists() or chunk_path.stat().st_size < 1000:
+                raise RuntimeError(f"Edge-TTS returned an empty audio file for scene {scene_number}, chunk {chunk_index}.")
+            chunk_paths.append(chunk_path)
+    asyncio.run(generate())
     if len(chunk_paths) == 1:
         shutil.copy2(chunk_paths[0], destination)
     else:
-        concat_file = WORK / f"voice_scene_{scene_number:02}_concat.txt"
+        concat_file = WORK / f"edge_voice_scene_{scene_number:02}_concat.txt"
         concat_file.write_text("".join(f"file '{p.as_posix()}'\n" for p in chunk_paths), encoding="utf-8")
         run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(destination)])
 
@@ -563,7 +482,7 @@ def add_wise_lab_branding(content_video: Path, final_video: Path,
         "KEEP THINKING. STAY CURIOUS.", "Understand the mind. Understand the world.",
         "SUBSCRIBE TO WISE LAB"
     )
-    # Preserve the Inworld narration audio when preparing the branded sequence.
+    # Preserve narration audio when preparing the branded sequence.
     run([
         ffmpeg(), "-y", "-i", str(content_video),
         "-map", "0:v:0", "-map", "0:a:0", "-c:v", "copy",
@@ -584,6 +503,7 @@ def main() -> int:
     if not SCRIPT.exists():
         raise RuntimeError(f"Script file not found: {SCRIPT}. Upload your text to scripts/script.txt.")
     script = SCRIPT.read_text(encoding="utf-8").strip()
+    script = re.sub(r"\[EXTRO\]", "", script, flags=re.IGNORECASE).strip()
     if len(script.split()) < 100:
         raise RuntimeError("Script is too short. Add at least 100 words.")
     OUT.mkdir(exist_ok=True)
@@ -591,7 +511,7 @@ def main() -> int:
     vertical = FORMAT == "shorts"
     width, height = (1080, 1920) if vertical else (1920, 1080)
     key = required_env("PIXABAY_API_KEY")
-    # Gemini Flash is primary; Groq is the automatic fallback.
+    # Deterministic local scene planning; no Gemini/Groq agent is used.
     plan = plan_scenes(script)
     history, historical_ids = load_visual_history()
     used_ids = set(historical_ids)
@@ -601,8 +521,8 @@ def main() -> int:
     durations = []
     for index, scene in enumerate(plan["scenes"], 1):
         voice_path = WORK / f"voice_scene_{index:02}.mp3"
-        print(f"Generating Inworld narration for scene {index}/{len(plan['scenes'])}...")
-        synthesize_inworld(scene["narration"], voice_path, index)
+        print(f"Generating Edge-TTS narration for scene {index}/{len(plan['scenes'])}...")
+        synthesize_edge_tts(scene["narration"], voice_path, index)
         voice_segments.append(voice_path)
         durations.append(probe_duration(voice_path))
 
@@ -666,7 +586,7 @@ def main() -> int:
     run([ffmpeg(), "-y", "-i", str(silent), "-vf", caption_filter,
          "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
          "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(content_final)])
-    voiced_content = WORK / "content_with_inworld_voice.mp4"
+    voiced_content = WORK / "content_with_edge_voice.mp4"
     run([ffmpeg(), "-y", "-i", str(content_final), "-i", str(voice_track),
          "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
          "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
@@ -675,10 +595,10 @@ def main() -> int:
     final = OUT / ("wise_lab_shorts.mp4" if vertical else "wise_lab_video.mp4")
     if vertical:
         shutil.copy2(voiced_content, final)
-        print("SHORTS MODE: Inworld narration included; skipped intro/outro.")
+        print("SHORTS MODE: Edge-TTS narration included; skipped intro/outro.")
     else:
         add_wise_lab_branding(voiced_content, final, width, height)
-        print("LONG VIDEO MODE: Inworld narration and WISE LAB intro/outro included.")
+        print("LONG VIDEO MODE: Edge-TTS narration and WISE LAB intro/outro included.")
 
     # Persist asset IDs only after the complete video has rendered successfully.
     HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -703,7 +623,7 @@ def main() -> int:
     (OUT / "title.txt").write_text(plan.get("title", "WISE LAB video") + "\n", encoding="utf-8")
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
     print(f"VIDEO READY: {final}")
-    print(f"Narration generated with Inworld voice: {os.getenv('INWORLD_VOICE_ID', 'Dennis')}")
+    print(f"Narration generated with Edge-TTS voice: {os.getenv('EDGE_TTS_VOICE', 'en-US-AndrewNeural')}")
     return 0
 
 
