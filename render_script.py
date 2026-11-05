@@ -527,8 +527,10 @@ def merge_scene_transitions(scene_paths: list[Path], durations: list[float],
         command += ["-i", str(path)]
     filters = []
     for index in range(len(scene_paths)):
+        initial_fade = ",fade=t=in:st=0:d=0.35" if index == 0 else ""
         filters.append(
-            f"[{index}:v]settb=AVTB,setpts=PTS-STARTPTS,fps={FPS},format=yuv420p[v{index}]"
+            f"[{index}:v]settb=AVTB,setpts=PTS-STARTPTS,fps={FPS},format=yuv420p"
+            f"{initial_fade}[v{index}]"
         )
     previous = "v0"
     elapsed = durations[0]
@@ -558,9 +560,7 @@ def render_scene(media: Path, destination: Path, seconds: float,
         f"scale={int(width * 1.08)}:{int(height * 1.08)}:force_original_aspect_ratio=increase,"
         f"crop={width}:{height}:x='(in_w-out_w)/2+sin(t*0.45)*((in_w-out_w)/4)':"
         f"y='(in_h-out_h)/2+cos(t*0.35)*((in_h-out_h)/5)',setsar=1,fps={FPS},"
-        "eq=contrast=1.04:saturation=1.06:brightness=0.01,"
-        "fade=t=in:st=0:d=0.35,"
-        f"fade=t=out:st={fade_out_start:.3f}:d=0.35"
+        "eq=contrast=1.04:saturation=1.06:brightness=0.01"
     )
     preset = "ultrafast" if FORMAT == "shorts" else "veryfast"
     crf = "22" if FORMAT == "shorts" else "21"
@@ -573,9 +573,7 @@ def render_scene(media: Path, destination: Path, seconds: float,
             f"zoompan=z='min(zoom+0.0007,1.12)':d={frames}:"
             f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
             f"s={width}x{height}:fps={FPS},"
-            "eq=contrast=1.04:saturation=1.06:brightness=0.01,"
-            "fade=t=in:st=0:d=0.35,"
-            f"fade=t=out:st={fade_out_start:.3f}:d=0.35"
+            "eq=contrast=1.04:saturation=1.06:brightness=0.01"
         )
         run([ff, "-y", "-loop", "1", "-i", str(media), "-t", f"{seconds:.3f}",
              "-vf", zoom, "-an", "-c:v", "libx264", "-preset", preset,
