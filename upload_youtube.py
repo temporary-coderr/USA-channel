@@ -103,6 +103,16 @@ def main() -> int:
     (OUT / "youtube_video_url.txt").write_text(
         f"https://www.youtube.com/watch?v={video_id}\n", encoding="utf-8"
     )
+    thumbnail_path = OUT / "wise_lab_thumbnail.jpg"
+    if os.getenv("VIDEO_FORMAT", "landscape").lower() != "shorts" and thumbnail_path.is_file():
+        try:
+            thumbnail_media = MediaFileUpload(str(thumbnail_path), mimetype="image/jpeg", resumable=False)
+            youtube.thumbnails().set(videoId=video_id, media_body=thumbnail_media).execute()
+            print("Custom WISE LAB thumbnail uploaded.")
+        except Exception as thumbnail_error:
+            # Keep the successfully uploaded video even if YouTube rejects its thumbnail.
+            print(f"THUMBNAIL_UPLOAD_WARNING: {thumbnail_error}")
+
     print("YOUTUBE_UPLOAD_SUCCESS")
     print(f"Video URL: https://www.youtube.com/watch?v={video_id}")
     print("Privacy: PRIVATE (review in YouTube Studio before publishing).")
