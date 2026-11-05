@@ -435,6 +435,37 @@ def concatenate_scene_audio(audio_paths: list[Path], destination: Path) -> None:
     run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(destination)])
 
 
+def mix_background_music(voice_track: Path, destination: Path) -> None:
+    """Create an original atmospheric psychology bed and duck it under narration."""
+    ff = ffmpeg()
+    duration = probe_duration(voice_track)
+    # Original synthesized ambient bed: warm low pad, soft harmonic shimmer and a
+    # slow pulse. No downloaded song, external API, or extra dependency is required.
+    music_source = (
+        "aevalsrc=0.19*sin(2*PI*110*t)+0.105*sin(2*PI*164.81*t)"
+        "+0.085*sin(2*PI*220*t)+0.055*sin(2*PI*261.63*t)"
+        "+0.035*sin(2*PI*329.63*t)+0.018*sin(2*PI*440*t):s=48000:d="
+        f"{duration:.3f}"
+    )
+    fade_out = max(0.1, duration - 1.2)
+    filter_graph = (
+        "[1:a]volume=0.95,highpass=f=65,lowpass=f=2400,"
+        "tremolo=f=0.10:d=0.16,"
+        f"afade=t=in:st=0:d=1.2,afade=t=out:st={fade_out:.3f}:d=1.2[music];"
+        "[music][0:a]sidechaincompress=threshold=0.025:ratio=7:"
+        "attack=18:release=520:makeup=1[ducked];"
+        "[0:a][ducked]amix=inputs=2:weights='1 0.90':normalize=0,"
+        "alimiter=limit=0.95:level=disabled[a]"
+    )
+    run([
+        ff, "-y", "-i", str(voice_track),
+        "-f", "lavfi", "-i", music_source,
+        "-filter_complex", filter_graph,
+        "-map", "[a]", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+        "-t", f"{duration:.3f}", "-movflags", "+faststart", str(destination)
+    ])
+
+
 def timestamp(seconds: float) -> str:
     milliseconds = max(0, round(seconds * 1000))
     hours, milliseconds = divmod(milliseconds, 3_600_000)
@@ -833,6 +864,9 @@ def main() -> int:
 
     voice_track = OUT / "wise_lab_voiceover.mp3"
     concatenate_scene_audio(voice_segments, voice_track)
+    mixed_voice_track = WORK / "wise_lab_voice_with_bgm.m4a"
+    print("Creating original WISE LAB ambient music bed and ducking it under narration...")
+    mix_background_music(voice_track, mixed_voice_track)
     rendered = []
 
     for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
@@ -932,7 +966,7 @@ def main() -> int:
          "-an", "-c:v", "libx264", "-preset", caption_preset, "-crf", caption_crf,
          "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(content_final)])
     voiced_content = WORK / "content_with_edge_voice.mp4"
-    run([ffmpeg(), "-y", "-i", str(content_final), "-i", str(voice_track),
+    run([ffmpeg(), "-y", "-i", str(content_final), "-i", str(mixed_voice_track),
          "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
          "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
          "-shortest", "-movflags", "+faststart", str(voiced_content)])
