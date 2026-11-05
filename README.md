@@ -14,15 +14,18 @@ Upload your English psychology script to `scripts/script.txt`, then run the GitH
 
 - Uses the same Edge-TTS fallback voice as the working `bot.py`: `en-US-AndrewNeural`, at `+5%` speaking rate.
 - Creates the scene plan locally from the script. No Gemini, Groq, or Inworld API/agent is used.
-- Searches Pixabay first for stock video and photos, then uses an optional Pexels API key as a fallback for both video and photos.
-- Pexels is optional. Add `PEXELS_API_KEY` only if you already have an approved key; the bot continues with Pixabay if it is absent.
-- Avoids reusing previously selected asset IDs across providers using `visual_history/used_assets.json`; Pexels IDs are provider-prefixed.
+- Cuts to a new, narration-specific visual approximately every 3 seconds while keeping the voiceover continuous; short cross-dissolves soften the cuts.
+- Alternates Pixabay and optional Pexels as the first stock-video search provider so one library does not dominate every shot.
+- Uses Pixabay and Pexels for stock video; if no suitable video is found, it tries their photo libraries and then Openverse for large CC0/CC BY still images with commercial-use/modification filters.
+- Pexels is optional. Keep `PEXELS_API_KEY` only if you already have an approved key; the bot continues with Pixabay and Openverse if it is absent.
+- Avoids reusing previously selected asset IDs across providers using `visual_history/used_assets.json`; Pexels and Openverse IDs are provider-prefixed.
 - Stores SHA-256 fingerprints for downloaded visuals and stops rather than reusing an exact byte-for-byte duplicate; this does not detect visually similar edits or crops.
-- Adds provider/creator visual credits to the generated YouTube description where metadata is available.
+- Adds provider/creator visual credits and Openverse licence/source details to the generated YouTube description where metadata is available.
+- Prefers stock video renditions near the target output resolution instead of unnecessarily downloading the largest available file for every short shot.
 - Saves `description.txt` and `editorial_review.txt` in the downloadable workflow artifact.
-- Adds gentle motion to still images, colour treatment and fades.
+- Adds gentle motion to still images, subtle camera movement to stock clips, colour treatment and cross-dissolves.
 - Creates phrase-sized burned-in captions and a separate `output/captions.srt`. Caption timing is estimated from each narration segment's duration; it is not word-level speech recognition.
-- For landscape videos, adds the 5-second WISE LAB intro and 7-second outro, with original synthesized ambient music.
+- For landscape videos, adds the 5-second WISE LAB intro and 7-second outro, including the animated subscribe end card.
 - Shorts skip the intro and outro.
 - Creates `output/wise_lab_thumbnail.jpg`; for landscape uploads, it also attempts to set that image as the YouTube thumbnail.
 - Upload privacy is locked to **Private**.
