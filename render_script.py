@@ -1134,7 +1134,7 @@ def main() -> int:
     print("Optional Pexels fallback enabled." if pexels_key else "Pexels fallback not configured; using Pixabay only.")
     print("Selective Gemini image generation enabled (5–7 images)." if gemini_key else "Gemini image generation disabled; GEMINI_API_KEY is not configured.")
     print("Groq art-direction prompt refinement enabled." if groq_key else "Groq prompt refinement disabled; local prompts will be used.")
-    # Deterministic local scene planning; no Gemini/Groq agent is used.
+    # Scene planning stays local; Gemini/Groq are used only for selected custom stills.
     plan = plan_scenes(script)
     history, historical_ids = load_visual_history()
     used_ids = set(historical_ids)
@@ -1180,7 +1180,7 @@ def main() -> int:
     target_shot_seconds = 3.0
     estimated_shot_counts = [
         min(max(1, int((seconds + target_shot_seconds - 0.001) // target_shot_seconds)),
-            max(1, len(re.findall(r"\\S+", scene["narration"]))))
+            max(1, len(re.findall(r"\S+", scene["narration"]))))
         for scene, seconds in zip(plan["scenes"], durations)
     ]
     total_shots = sum(estimated_shot_counts)
@@ -1299,6 +1299,8 @@ def main() -> int:
                     "The bot stopped rather than reuse a previously downloaded asset."
                 )
             asset["sha256"] = fingerprint
+            if str(asset.get("source", "")).lower().startswith("gemini"):
+                asset["id"] = "gemini:" + fingerprint[:20]
             used_hashes.add(fingerprint)
 
             shot_path = WORK / f"scene_{index:02}_shot_{shot_index:02}.mp4"
