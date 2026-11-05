@@ -120,5 +120,22 @@ jobs:
             echo "Visual history has no changes."
           else
             git commit -m "Update WISE LAB visual usage history"
-            git push
+            # A script update or another workflow may have advanced main while this
+            # render was running. Rebase this history-only commit before pushing.
+            for attempt in 1 2 3; do
+              git fetch origin main
+              if ! git rebase origin/main; then
+                git rebase --abort || true
+                echo "WARNING: Could not safely rebase visual history; leaving the remote branch untouched."
+                exit 0
+              fi
+              if git push origin HEAD:main; then
+                echo "Visual usage history pushed successfully."
+                exit 0
+              fi
+              echo "Push attempt $attempt failed; retrying after fetching main."
+              sleep 2
+            done
+            echo "WARNING: Visual history could not be pushed after 3 attempts; video output remains available."
+            exit 0
           fi
