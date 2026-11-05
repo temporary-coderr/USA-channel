@@ -470,7 +470,8 @@ def ass_timestamp(seconds: float) -> str:
 
 
 def make_highlight_captions(scenes: list[dict], path: Path,
-                            durations: list[float], vertical: bool) -> None:
+                            durations: list[float], vertical: bool,
+                            offset: float = 0.0) -> None:
     """Create readable ASS captions with a teal karaoke highlight on each estimated spoken word."""
     font_size = 54 if vertical else 48
     margin_v = 170 if vertical else 88
@@ -479,8 +480,8 @@ def make_highlight_captions(scenes: list[dict], path: Path,
         "ScriptType: v4.00+\n"
         "WrapStyle: 2\n"
         "ScaledBorderAndShadow: yes\n"
-        "PlayResX: 1920\n"
-        "PlayResY: 1080\n\n"
+        f"PlayResX: {1080 if vertical else 1920}\n"
+        f"PlayResY: {1920 if vertical else 1080}\n\n"
         "[V4+ Styles]\n"
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
         "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
@@ -491,7 +492,7 @@ def make_highlight_captions(scenes: list[dict], path: Path,
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
     )
     events = []
-    cursor = 0.0
+    cursor = offset
     for scene, duration in zip(scenes, durations):
         words = re.findall(r"\S+", scene["narration"])
         if not words:
@@ -555,7 +556,8 @@ def render_scene(media: Path, destination: Path, seconds: float,
     fade_out_start = max(0.0, seconds - 0.35)
     vf_base = (
         f"scale={int(width * 1.08)}:{int(height * 1.08)}:force_original_aspect_ratio=increase,"
-        f"crop={width}:{height},setsar=1,fps={FPS},"
+        f"crop={width}:{height}:x='(in_w-out_w)/2+sin(t*0.45)*((in_w-out_w)/4)':"
+        f"y='(in_h-out_h)/2+cos(t*0.35)*((in_h-out_h)/5)',setsar=1,fps={FPS},"
         "eq=contrast=1.04:saturation=1.06:brightness=0.01,"
         "fade=t=in:st=0:d=0.35,"
         f"fade=t=out:st={fade_out_start:.3f}:d=0.35"
@@ -918,6 +920,10 @@ def main() -> int:
     make_captions(plan["scenes"], captions, durations, offset=intro_seconds)
     content_captions = WORK / "content_captions.ass"
     make_highlight_captions(plan["scenes"], content_captions, durations, vertical)
+    # Export a styled caption sidecar with the long-form intro offset included.
+    make_highlight_captions(
+        plan["scenes"], OUT / "captions.ass", durations, vertical, offset=intro_seconds
+    )
     caption_filter_path = content_captions.resolve().as_posix().replace(":", r"\\:")
     caption_filter = f"subtitles='{caption_filter_path}'"
     content_final = WORK / ("content_shorts.mp4" if vertical else "content_landscape.mp4")
