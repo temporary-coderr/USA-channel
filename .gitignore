@@ -4,3 +4,5 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+client_secret.json
+youtube_token.json
