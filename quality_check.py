@@ -122,6 +122,16 @@ def main() -> int:
         except Exception as exc:
             errors.append("Could not validate visual manifest: " + str(exc))
 
+    source_ledger = ROOT / "scripts" / "research_notes.md"
+    if not source_ledger.is_file() or not source_ledger.read_text(encoding="utf-8").strip():
+        warnings.append("No episode research ledger was found. Add scripts/research_notes.md and verify factual claims before publication.")
+        metrics["research_ledger_present"] = False
+    else:
+        ledger_text = source_ledger.read_text(encoding="utf-8").strip()
+        metrics["research_ledger_present"] = True
+        if "http://" not in ledger_text and "https://" not in ledger_text and "no specific empirical claims" not in ledger_text.lower():
+            warnings.append("Research ledger has no source URLs or explicit no-claims statement; verify evidence manually.")
+
     captions = OUT / "captions.srt"
     if captions.is_file():
         caption_text = captions.read_text(encoding="utf-8").strip()
