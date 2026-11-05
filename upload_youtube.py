@@ -103,9 +103,14 @@ def main() -> int:
     video_id = response.get("id")
     if not video_id:
         raise RuntimeError("YouTube API returned success without a video ID.")
-    (OUT / "youtube_video_url.txt").write_text(
-        f"https://www.youtube.com/watch?v={video_id}\n", encoding="utf-8"
-    )
+    video_url = f"https://www.youtube.com/watch?v={video_id}"
+    (OUT / "youtube_video_url.txt").write_text(video_url + "\n", encoding="utf-8")
+    review_checklist = OUT / "review_checklist.md"
+    if review_checklist.is_file():
+        with review_checklist.open("a", encoding="utf-8") as checklist:
+            checklist.write("\n## Private YouTube review link\n\n")
+            checklist.write(video_url + "\n")
+            checklist.write("\nThe video remains Private. Publish manually only after completing the checklist.\n")
     thumbnail_path = OUT / "wise_lab_thumbnail.jpg"
     if os.getenv("VIDEO_FORMAT", "landscape").lower() != "shorts" and thumbnail_path.is_file():
         try:
