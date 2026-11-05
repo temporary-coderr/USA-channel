@@ -98,6 +98,7 @@ jobs:
             output/scene_plan.json
             output/visual_manifest.json
             output/description.txt
+            output/background_music_credit.txt
             output/editorial_review.txt
             output/wise_lab_logo.svg
             output/wise_lab_thumbnail.jpg
