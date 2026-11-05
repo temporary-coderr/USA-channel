@@ -121,6 +121,7 @@ jobs:
             output/technical_quality.txt
             output/technical_quality.json
             output/review_checklist.md
+            scripts/research_notes.md
             output/wise_lab_logo.svg
             output/wise_lab_thumbnail.jpg
             output/youtube_video_url.txt
