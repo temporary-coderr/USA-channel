@@ -444,6 +444,7 @@ def timestamp(seconds: float) -> str:
 
 
 def make_captions(scenes: list[dict], path: Path, durations: list[float], offset: float = 0.0) -> None:
+    """Write a standard SRT sidecar; timings are phrase-level estimates."""
     entries = []
     index = 1
     cursor = offset
@@ -454,12 +455,99 @@ def make_captions(scenes: list[dict], path: Path, durations: list[float], offset
         for chunk in chunks:
             start = cursor
             end = cursor + duration * len(chunk) / count
-            # Captions are phrase-synced estimates; user can replace with exact timing after voice recording.
             entries.append(f"{index}\n{timestamp(start)} --> {timestamp(end)}\n{' '.join(chunk)}")
             index += 1
             cursor = end
     path.write_text("\n\n".join(entries) + "\n", encoding="utf-8")
 
+
+def ass_timestamp(seconds: float) -> str:
+    centiseconds = max(0, round(seconds * 100))
+    hours, centiseconds = divmod(centiseconds, 360000)
+    minutes, centiseconds = divmod(centiseconds, 6000)
+    secs, centiseconds = divmod(centiseconds, 100)
+    return f"{hours}:{minutes:02}:{secs:02}.{centiseconds:02}"
+
+
+def make_highlight_captions(scenes: list[dict], path: Path,
+                            durations: list[float], vertical: bool) -> None:
+    """Create readable ASS captions with a teal karaoke highlight on each estimated spoken word."""
+    font_size = 54 if vertical else 48
+    margin_v = 170 if vertical else 88
+    header = (
+        "[Script Info]\n"
+        "ScriptType: v4.00+\n"
+        "WrapStyle: 2\n"
+        "ScaledBorderAndShadow: yes\n"
+        "PlayResX: 1920\n"
+        "PlayResY: 1080\n\n"
+        "[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+        "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+        "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        f"Style: Default,DejaVu Sans,{font_size},&H00FFFFFF,&H00D0D639,&HCC07111C,&H6607111C,"
+        f"1,0,0,0,100,100,0,0,1,3,1.5,2,100,100,{margin_v},1\n\n"
+        "[Events]\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    )
+    events = []
+    cursor = 0.0
+    for scene, duration in zip(scenes, durations):
+        words = re.findall(r"\S+", scene["narration"])
+        if not words:
+            cursor += duration
+            continue
+        chunks = [words[i:i + 6] for i in range(0, len(words), 6)]
+        for chunk in chunks:
+            chunk_duration = duration * len(chunk) / len(words)
+            start, end = cursor, cursor + chunk_duration
+            karaoke = []
+            for word in chunk:
+                safe_word = word.replace("\\", "").replace("{", "").replace("}", "")
+                word_cs = max(1, round((chunk_duration / len(chunk)) * 100))
+                karaoke.append(r"{\kf" + str(word_cs) + "}" + safe_word)
+            events.append(
+                f"Dialogue: 0,{ass_timestamp(start)},{ass_timestamp(end)},Default,,0,0,0,,{' '.join(karaoke)}"
+            )
+            cursor = end
+    path.write_text(header + "\n".join(events) + "\n", encoding="utf-8")
+
+
+def merge_scene_transitions(scene_paths: list[Path], durations: list[float],
+                            destination: Path) -> None:
+    """Join scenes with short cross-dissolves, preserving the full narration runtime."""
+    if len(scene_paths) == 1:
+        shutil.copy2(scene_paths[0], destination)
+        return
+    ff = ffmpeg()
+    transition = 0.38
+    command = [ff, "-y"]
+    for path in scene_paths:
+        command += ["-i", str(path)]
+    filters = []
+    for index in range(len(scene_paths)):
+        filters.append(
+            f"[{index}:v]settb=AVTB,setpts=PTS-STARTPTS,fps={FPS},format=yuv420p[v{index}]"
+        )
+    previous = "v0"
+    elapsed = durations[0]
+    for index in range(1, len(scene_paths)):
+        output = f"x{index}"
+        offset = max(0.0, elapsed - transition * index)
+        filters.append(
+            f"[{previous}][v{index}]xfade=transition=fade:duration={transition}:"
+            f"offset={offset:.3f}[{output}]"
+        )
+        previous = output
+        elapsed += durations[index]
+    overlap = transition * (len(scene_paths) - 1)
+    filters.append(f"[{previous}]tpad=stop_mode=clone:stop_duration={overlap:.3f},format=yuv420p[outv]")
+    command += [
+        "-filter_complex", ";".join(filters), "-map", "[outv]",
+        "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(destination)
+    ]
+    run(command)
 
 def render_scene(media: Path, destination: Path, seconds: float,
                  width: int, height: int, is_image: bool) -> None:
@@ -821,25 +909,17 @@ def main() -> int:
         render_scene(media_path, scene_path, seconds, width, height, is_image)
         rendered.append(scene_path)
 
-    concat = WORK / "concat.txt"
-    concat.write_text("".join(f"file '{p.as_posix()}'\n" for p in rendered), encoding="utf-8")
     silent = OUT / "video_base.mp4"
-    run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat),
-         "-c", "copy", str(silent)])
+    merge_scene_transitions(rendered, durations, silent)
 
     captions = OUT / "captions.srt"
     # Long videos have a 5-second branded intro; Shorts start immediately.
     intro_seconds = 0.0 if vertical else 5.0
     make_captions(plan["scenes"], captions, durations, offset=intro_seconds)
-    content_captions = WORK / "content_captions.srt"
-    make_captions(plan["scenes"], content_captions, durations)
-    caption_filter_path = content_captions.resolve().as_posix().replace(":", r"\:")
-    style = (
-        "FontName=Arial,FontSize=23,PrimaryColour=&H00FFFFFF,"
-        "OutlineColour=&H00101010,BorderStyle=1,Outline=3,Shadow=1,"
-        "Alignment=2,MarginV=75"
-    )
-    caption_filter = f"subtitles='{caption_filter_path}':force_style='{style}'"
+    content_captions = WORK / "content_captions.ass"
+    make_highlight_captions(plan["scenes"], content_captions, durations, vertical)
+    caption_filter_path = content_captions.resolve().as_posix().replace(":", r"\\:")
+    caption_filter = f"subtitles='{caption_filter_path}'"
     content_final = WORK / ("content_shorts.mp4" if vertical else "content_landscape.mp4")
     # Shorts use a faster encoder preset to reduce GitHub runner time while
     # retaining 1080x1920, 30 FPS, and high-quality H.264 output.
