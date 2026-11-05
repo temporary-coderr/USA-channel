@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -310,6 +311,14 @@ def download(url: str, destination: Path) -> None:
     if destination.stat().st_size < 4000:
         destination.unlink(missing_ok=True)
         raise RuntimeError(f"Downloaded media file is unexpectedly small: {destination.name}")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as media:
+        for chunk in iter(lambda: media.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def probe_duration(path: Path) -> float:
@@ -720,6 +729,7 @@ def main() -> int:
     plan = plan_scenes(script)
     history, historical_ids = load_visual_history()
     used_ids = set(historical_ids)
+    used_hashes = {str(item.get('sha256')) for item in history.get('assets', []) if item.get('sha256')}
     selected_assets = []
 
     voice_segments = []
@@ -794,6 +804,15 @@ def main() -> int:
         scene["visual_asset"] = asset
         media_path = WORK / f"source_{index:02}.jpg" if is_image else WORK / f"source_{index:02}.mp4"
         download(asset["url"], media_path)
+        fingerprint = sha256_file(media_path)
+        if fingerprint in used_hashes:
+            media_path.unlink(missing_ok=True)
+            raise RuntimeError(
+                f"Duplicate visual content detected for scene '{query}'. "
+                "The bot stopped rather than reuse a previously downloaded asset."
+            )
+        asset["sha256"] = fingerprint
+        used_hashes.add(fingerprint)
 
         scene_path = WORK / f"scene_{index:02}.mp4"
         render_scene(media_path, scene_path, seconds, width, height, is_image)
