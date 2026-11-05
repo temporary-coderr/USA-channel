@@ -981,9 +981,10 @@ def main() -> int:
     mix_background_music(voice_track, music_file, mixed_voice_track)
     (OUT / "background_music_credit.txt").write_text(
         (music_info.get("attribution") or music_info["title"] + " by " + music_info["creator"])
-        + "\\nTrack: " + music_info["landing_url"]
-        + "\\nLicence: " + music_info["license"] + " " + music_info["license_version"]
-        + " — " + music_info["license_url"] + "\\n",
+        + "\nTrack: " + music_info["landing_url"]
+        + "\nCreator: " + music_info["creator"] + " — " + music_info["creator_url"]
+        + "\nLicence: " + music_info["license"] + " " + music_info["license_version"]
+        + " — " + music_info["license_url"] + "\n",
         encoding="utf-8",
     )
     rendered = []
