@@ -100,6 +100,7 @@ jobs:
       # Save the finished render and review reports before attempting YouTube upload.
       # This preserves a downloadable MP4 even if OAuth or YouTube is temporarily unavailable.
       - name: Upload WISE LAB video, logo and captions
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wise-lab-video-${{ github.run_number }}
