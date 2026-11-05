@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: gemini-3.8-flash
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       INWORLD_API_KEY: ${{ secrets.INWORLD_API_KEY }}
@@ -55,7 +57,10 @@ jobs:
       - name: Check script and API secrets
         run: |
           test -s scripts/script.txt || (echo "Upload your script to scripts/script.txt first." && exit 1)
-          test -n "$GROQ_API_KEY" || (echo "Missing GROQ_API_KEY repository secret." && exit 1)
+          if [ -z "$GEMINI_API_KEY" ] && [ -z "$GROQ_API_KEY" ]; then
+            echo "Add GEMINI_API_KEY (recommended) or GROQ_API_KEY as a repository secret."
+            exit 1
+          fi
           test -n "$PIXABAY_API_KEY" || (echo "Missing PIXABAY_API_KEY repository secret." && exit 1)
           test -n "$INWORLD_API_KEY" || (echo "Missing INWORLD_API_KEY repository secret. Add it in repository Settings > Secrets and variables > Actions." && exit 1)
 
