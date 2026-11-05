@@ -36,13 +36,16 @@ def main() -> int:
     title = title_file.read_text(encoding="utf-8").strip() if title_file.exists() else "WISE LAB"
     title = re.sub(r"\s+", " ", title).strip()[:100] or "WISE LAB"
 
+    description_file = OUT / "description.txt"
     description = (
-        "Explore the mind and understand human behaviour with WISE LAB.\n\n"
-        "Subscribe for more psychology, behaviour, and everyday-life explainers.\n\n"
-        "#WiseLab #Psychology #HumanBehaviour"
+        description_file.read_text(encoding="utf-8").strip()
+        if description_file.exists()
+        else "Welcome to WISE LAB — thoughtful explainers about psychology and human behaviour.\n\n"
+             "Educational content only; not medical advice.\n\n#WiseLab #Psychology #HumanBehaviour"
     )
     tags = ["WISE LAB", "psychology", "human behaviour", "human behavior",
-            "psychology explained", "self awareness", "mind"]
+            "psychology explained", "self awareness", "mental strength",
+            "personal growth", "emotional intelligence"]
     privacy = os.getenv("YOUTUBE_PRIVACY_STATUS", "private").strip().lower()
     if privacy not in {"private", "unlisted", "public"}:
         raise RuntimeError("YOUTUBE_PRIVACY_STATUS must be private, unlisted, or public.")
