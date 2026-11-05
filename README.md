@@ -1,29 +1,33 @@
 # WISE LAB — Automated psychology video production
 
-WISE LAB is designed as a small editorial studio: the production pipeline handles the repetitive work, while a human reviews every finished episode before it is made public.
+WISE LAB is designed as a small editorial studio: the human controls the script and research; the production pipeline handles repetitive video work. Every finished episode remains private until the channel owner approves it.
 
 ## The production loop
 
-1. A fresh English psychology script is prepared for the channel.
-2. The paired research ledger records sources for specific factual claims.
-3. A pre-render editorial gate checks the script against recent episodes and flags evidence claims.
+1. The channel owner supplies and approves `scripts/script.txt`.
+2. The matching research ledger is supplied in `scripts/research_notes.md`, documenting every specific study, statistic, quotation, institution and empirical claim.
+3. The pre-render editorial gate checks the script against recent episodes and flags claims for review.
 4. GitHub Actions renders narration, visuals, captions, music, branding and thumbnail.
-5. A technical QA step checks the finished MP4 and creates a human review checklist.
+5. Technical QA checks the finished MP4 and creates a human review checklist.
 6. The video is saved as a GitHub Actions artifact and, when YouTube OAuth is configured, uploaded as **Private**.
 7. Review the private upload and artifact. Publish manually in YouTube Studio only after approval.
 
-**There is no automatic public publishing.** A passing technical check is not a fact-check, a creative-quality guarantee, or a YouTube Partner Program approval guarantee.
+**There is no automatic script writing, script replacement, or public publishing.** The daily script-writing task has been paused. A passing technical check is not a fact-check, a creative-quality guarantee, or a YouTube Partner Program approval guarantee.
 
-## Daily script workflow
+## Script submission — human-controlled
 
-The scheduled WISE LAB script task prepares one original 7–10 minute English episode (approximately 1,000–1,350 words at 140 WPM), avoids recent topics where history is available, and attempts to commit both files together:
+Do not use a scheduled bot to invent, replace, or commit the channel's scripts. Prepare the script first, fact-check it, and approve it yourself.
 
-- `scripts/script.txt` — narration-ready script.
-- `scripts/research_notes.md` — source ledger for studies, statistics, quotations, named institutions and empirical claims.
+Before starting a render, update both files together:
 
-The GitHub Actions workflow watches `scripts/script.txt`. A successful commit to that path starts a landscape render automatically. If the scheduled task cannot access GitHub or verify its commit, it must report that instead of claiming submission.
+- `scripts/script.txt` — final, narration-ready English script.
+- `scripts/research_notes.md` — source ledger for the claims in that exact script.
 
-For a manual render:
+The source ledger must list the short claim paraphrase, original source title, author/organization, publication date, direct URL, studied population/method, limitations, and whether the narration describes correlation or causation. If the script makes no specific empirical claims, say so explicitly. Never invent sources or rely on search snippets alone.
+
+Only after you approve both files, commit/push them to `main`. The GitHub Actions workflow watches `scripts/script.txt`; a successful commit to that path starts a landscape render automatically.
+
+For a manual render without changing the script:
 1. Open **Actions → Build WISE LAB video from script → Run workflow**.
 2. Choose `landscape` for 16:9 long-form or `shorts` for 9:16.
 3. Wait for the workflow and inspect its artifact and private YouTube upload.
@@ -32,7 +36,7 @@ For a manual render:
 
 - `editorial_gate.py` compares the episode body with up to 20 previous versions in Git history, excluding recurring channel packaging. It stops a near-duplicate at 84% similarity or higher.
 - The gate flags statistics, studies, research language, named institutions, dates, quotations and sweeping/causal wording for source review.
-- `scripts/research_notes.md` is the episode's source ledger. The daily script task is instructed to verify original papers, official reports or authoritative primary sources and map each claim to its evidence.
+- `scripts/research_notes.md` is the source ledger paired with the episode.
 - Automated flags do not browse or fact-check claims. Open each cited source and verify the actual population, method, wording and limitations yourself.
 
 ## Production settings
@@ -55,7 +59,7 @@ After rendering, `quality_check.py` verifies:
 - Caption sidecar structure.
 - That the scene plan preserves the original narration word sequence.
 - Visual manifest completeness, fingerprints and duplicate hashes.
-- Whether the research source ledger is present.
+- Presence of the source ledger.
 
 It writes:
 - `output/technical_quality.txt`
@@ -119,5 +123,3 @@ All three YouTube OAuth secrets are needed for private upload. If all three are 
 - Workflow artifacts are retained for seven days.
 - The voice is generated by Edge-TTS. YouTube monetization eligibility and Microsoft's service/licensing terms are separate questions; verify commercial-use rights for the voice service before scaling.
 - No automated system can guarantee YPP approval. Originality, meaningful human value, accurate research and non-repetitive presentation remain essential.
-
-- After a successful private upload, a second small artifact contains the private YouTube review URL and the checklist with that link appended.
