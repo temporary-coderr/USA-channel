@@ -179,7 +179,7 @@ def main() -> int:
         "",
         "**Important:** a successful technical check is not a fact-check or a YouTube monetization guarantee. This workflow uploads privately for review and never makes a video public automatically.",
         "",
-        "Files to inspect: title.txt, description.txt, voiceover_script.txt, editorial_gate.txt, editorial_review.txt, technical_quality.txt, visual_manifest.json, background_music_credit.txt.",
+        "Files to inspect: title.txt, description.txt, voiceover_script.txt, scripts/research_notes.md, editorial_gate.txt, editorial_review.txt, technical_quality.txt, visual_manifest.json, background_music_credit.txt.",
     ]
     (OUT / "review_checklist.md").write_text("\n".join(checklist) + "\n", encoding="utf-8")
     print("\n".join(report))
