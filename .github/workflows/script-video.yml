@@ -34,6 +34,10 @@ jobs:
       VIDEO_FORMAT: ${{ inputs.format }}
       SCRIPT_FILE: scripts/script.txt
       TARGET_WPM: "140"
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      YOUTUBE_PRIVACY_STATUS: private
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -67,6 +71,15 @@ jobs:
       - name: Create edited WISE LAB video
         run: python render_script.py
 
+      - name: Upload video to YouTube (private)
+        run: python upload_youtube.py
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_PRIVACY_STATUS: private
+          VIDEO_FORMAT: ${{ inputs.format }}
+
       - name: Save visual usage history
         run: |
           git config user.name "github-actions[bot]"
@@ -83,8 +96,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wise-lab-video-${{ github.run_number }}
-          # Upload only the finished video and useful deliverables.
-          # Exclude output/work/ and large intermediate renders/source footage.
           path: |
             output/wise_lab_*.mp4
             output/captions.srt
@@ -94,5 +105,6 @@ jobs:
             output/scene_plan.json
             output/visual_manifest.json
             output/wise_lab_logo.svg
+            output/youtube_video_url.txt
           if-no-files-found: error
           retention-days: 7
