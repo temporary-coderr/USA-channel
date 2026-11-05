@@ -28,6 +28,7 @@ jobs:
     timeout-minutes: 90
     env:
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
       EDGE_TTS_VOICE: en-US-AndrewNeural
       EDGE_TTS_RATE: "+5%"
       VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
@@ -95,6 +96,8 @@ jobs:
             output/voiceover_script.txt
             output/scene_plan.json
             output/visual_manifest.json
+            output/description.txt
+            output/editorial_review.txt
             output/wise_lab_logo.svg
             output/wise_lab_thumbnail.jpg
             output/youtube_video_url.txt
