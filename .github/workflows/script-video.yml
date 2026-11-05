@@ -136,6 +136,17 @@ jobs:
           YOUTUBE_PRIVACY_STATUS: private
           VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
 
+      - name: Save private YouTube review link
+        if: always() && hashFiles('output/youtube_video_url.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: wise-lab-private-review-link-${{ github.run_number }}
+          path: |
+            output/youtube_video_url.txt
+            output/review_checklist.md
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Save visual usage history
         if: always()
         run: |
