@@ -377,7 +377,7 @@ def synthesize_edge_tts(text: str, destination: Path, scene_number: int) -> None
         shutil.copy2(chunk_paths[0], destination)
     else:
         concat_file = WORK / f"edge_voice_scene_{scene_number:02}_concat.txt"
-        concat_file.write_text("".join(f"file '{p.as_posix()}'\\n" for p in chunk_paths), encoding="utf-8")
+        concat_file.write_text("".join(f"file '{p.as_posix()}'\n" for p in chunk_paths), encoding="utf-8")
         run([ffmpeg(), "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file), "-c", "copy", str(destination)])
     if not destination.exists() or destination.stat().st_size < 1000:
         raise RuntimeError(f"Final narration MP3 for scene {scene_number} is missing or empty.")
