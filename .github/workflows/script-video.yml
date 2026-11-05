@@ -97,6 +97,7 @@ jobs:
             output/scene_plan.json
             output/visual_manifest.json
             output/wise_lab_logo.svg
+            output/wise_lab_thumbnail.jpg
             output/youtube_video_url.txt
           if-no-files-found: error
           retention-days: 7
