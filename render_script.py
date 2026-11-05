@@ -555,7 +555,6 @@ def merge_scene_transitions(scene_paths: list[Path], durations: list[float],
 def render_scene(media: Path, destination: Path, seconds: float,
                  width: int, height: int, is_image: bool) -> None:
     ff = ffmpeg()
-    fade_out_start = max(0.0, seconds - 0.35)
     vf_base = (
         f"scale={int(width * 1.08)}:{int(height * 1.08)}:force_original_aspect_ratio=increase,"
         f"crop={width}:{height}:x='(in_w-out_w)/2+sin(t*0.45)*((in_w-out_w)/4)':"
@@ -922,7 +921,7 @@ def main() -> int:
     make_highlight_captions(
         plan["scenes"], OUT / "captions.ass", durations, vertical, offset=intro_seconds
     )
-    caption_filter_path = content_captions.resolve().as_posix().replace(":", r"\\:")
+    caption_filter_path = content_captions.resolve().as_posix().replace(":", r"\:")
     caption_filter = f"subtitles='{caption_filter_path}'"
     content_final = WORK / ("content_shorts.mp4" if vertical else "content_landscape.mp4")
     # Shorts use a faster encoder preset to reduce GitHub runner time while
