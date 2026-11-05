@@ -14,8 +14,11 @@ Upload your English psychology script to `scripts/script.txt`, then run the GitH
 
 - Uses the same Edge-TTS fallback voice as the working `bot.py`: `en-US-AndrewNeural`, at `+5%` speaking rate.
 - Creates the scene plan locally from the script. No Gemini, Groq, or Inworld API/agent is used.
-- Searches Pixabay for relevant stock video and falls back to still photos when needed.
-- Avoids reusing previously selected Pixabay asset IDs using `visual_history/used_assets.json`.
+- Searches Pixabay first for stock video and photos, then uses an optional Pexels API key as a fallback for both video and photos.
+- Pexels is optional. Add `PEXELS_API_KEY` only if you already have an approved key; the bot continues with Pixabay if it is absent.
+- Avoids reusing previously selected asset IDs across providers using `visual_history/used_assets.json`; Pexels IDs are provider-prefixed.
+- Adds provider/creator visual credits to the generated YouTube description where metadata is available.
+- Saves `description.txt` and `editorial_review.txt` in the downloadable workflow artifact.
 - Adds gentle motion to still images, colour treatment and fades.
 - Creates phrase-sized burned-in captions and a separate `output/captions.srt`. Caption timing is estimated from each narration segment's duration; it is not word-level speech recognition.
 - For landscape videos, adds the 5-second WISE LAB intro and 7-second outro, with original synthesized ambient music.
@@ -29,7 +32,8 @@ Add these in **Settings → Secrets and variables → Actions**:
 
 | Secret | Purpose |
 | --- | --- |
-| `PIXABAY_API_KEY` | Required: stock video and image search |
+| `PIXABAY_API_KEY` | Required: primary stock video and image search |
+| `PEXELS_API_KEY` | Optional: fallback stock video and image search (only if you already have an approved key) |
 | `YOUTUBE_CLIENT_ID` | Google OAuth Desktop app client ID |
 | `YOUTUBE_CLIENT_SECRET` | Google OAuth Desktop app client secret |
 | `YOUTUBE_REFRESH_TOKEN` | Google OAuth refresh token |
