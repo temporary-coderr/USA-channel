@@ -1072,9 +1072,9 @@ def main() -> int:
     shot_number = 0
     target_shot_seconds = 3.0
     for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
-        words = re.findall(r"\\S+", scene["narration"])
+        words = re.findall(r"\S+", scene["narration"])
         if not words:
-            words = re.findall(r"\\S+", scene.get("heading", "psychology"))
+            words = re.findall(r"\S+", scene.get("heading", "psychology"))
         shot_count = max(1, int((seconds + target_shot_seconds - 0.001) // target_shot_seconds))
         shot_count = min(shot_count, max(1, len(words)))
         shot_paths = []
