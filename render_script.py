@@ -426,6 +426,8 @@ def render_scene(media: Path, destination: Path, seconds: float,
         "fade=t=in:st=0:d=0.35,"
         f"fade=t=out:st={fade_out_start:.3f}:d=0.35"
     )
+    preset = "ultrafast" if FORMAT == "shorts" else "veryfast"
+    crf = "22" if FORMAT == "shorts" else "21"
     if is_image:
         # Slow Ken Burns zoom. One output frame is generated for each frame of the scene.
         frames = max(1, round(seconds * FPS))
@@ -440,13 +442,13 @@ def render_scene(media: Path, destination: Path, seconds: float,
             f"fade=t=out:st={fade_out_start:.3f}:d=0.35"
         )
         run([ff, "-y", "-loop", "1", "-i", str(media), "-t", f"{seconds:.3f}",
-             "-vf", zoom, "-an", "-c:v", "libx264", "-preset", "veryfast",
-             "-crf", "21", "-pix_fmt", "yuv420p", str(destination)])
+             "-vf", zoom, "-an", "-c:v", "libx264", "-preset", preset,
+             "-crf", crf, "-pix_fmt", "yuv420p", str(destination)])
     else:
         # Slight overscale/crop gives stock clips a restrained push-in feel.
         run([ff, "-y", "-stream_loop", "-1", "-i", str(media), "-t", f"{seconds:.3f}",
-             "-vf", vf_base, "-an", "-c:v", "libx264", "-preset", "veryfast",
-             "-crf", "21", "-pix_fmt", "yuv420p", str(destination)])
+             "-vf", vf_base, "-an", "-c:v", "libx264", "-preset", preset,
+             "-crf", crf, "-pix_fmt", "yuv420p", str(destination)])
 
 
 
@@ -651,8 +653,12 @@ def main() -> int:
     )
     caption_filter = f"subtitles='{caption_filter_path}':force_style='{style}'"
     content_final = WORK / ("content_shorts.mp4" if vertical else "content_landscape.mp4")
+    # Shorts use a faster encoder preset to reduce GitHub runner time while
+    # retaining 1080x1920, 30 FPS, and high-quality H.264 output.
+    caption_preset = "ultrafast" if vertical else "medium"
+    caption_crf = "22" if vertical else "20"
     run([ffmpeg(), "-y", "-i", str(silent), "-vf", caption_filter,
-         "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+         "-an", "-c:v", "libx264", "-preset", caption_preset, "-crf", caption_crf,
          "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(content_final)])
     voiced_content = WORK / "content_with_edge_voice.mp4"
     run([ffmpeg(), "-y", "-i", str(content_final), "-i", str(voice_track),
