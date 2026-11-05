@@ -82,12 +82,12 @@ def scene_prompt(script: str) -> str:
         "(short literal Pixabay stock footage search), and image_query "
         "(short literal photo search). Prefer real-world B-roll and specific actions. "
         "Avoid asking for footage of identifiable real people, logos, or copyrighted characters. "
-        "Return an object with a title and scenes array.\\n\\n"
-        "SCRIPT:\\n" + script
+        "Return an object with a title and scenes array.\n\n"
+        "SCRIPT:\n" + script
     )
 
 
-def normalize_scene_plan(plan: dict) -> dict:
+def normalize_scene_plan(plan: dict, script: str) -> dict:
     if not isinstance(plan, dict):
         raise RuntimeError("Scene planner did not return a JSON object.")
     scenes = plan.get("scenes", [])
@@ -109,10 +109,10 @@ def normalize_scene_plan(plan: dict) -> dict:
         scenes.append(extra_scene)
 
     # Assign narration from the original script in order so no spoken content is lost.
-    sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", script_text_for_plan.strip())
+    sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", script.strip())
     sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
     if len(sentences) < len(scenes):
-        words = script_text_for_plan.split()
+        words = script.split()
         chunk_size = max(1, (len(words) + len(scenes) - 1) // len(scenes))
         narration_chunks = [
             " ".join(words[i:i + chunk_size])
@@ -214,14 +214,12 @@ def groq_json(script: str) -> dict:
 
 
 def plan_scenes(script: str) -> dict:
-    global script_text_for_plan
-    script_text_for_plan = script
     errors = []
 
     if os.getenv("GEMINI_API_KEY", "").strip():
         try:
             print("Scene planner: trying Gemini Flash (primary)...")
-            plan = normalize_scene_plan(gemini_json(script))
+            plan = normalize_scene_plan(gemini_json(script), script)
             print("Scene planner selected: Gemini Flash.")
             return plan
         except Exception as error:
@@ -233,7 +231,7 @@ def plan_scenes(script: str) -> dict:
     if os.getenv("GROQ_API_KEY", "").strip():
         try:
             print("Scene planner: trying Groq (fallback)...")
-            plan = normalize_scene_plan(groq_json(script))
+            plan = normalize_scene_plan(groq_json(script), script)
             print("Scene planner selected: Groq fallback.")
             return plan
         except Exception as error:
