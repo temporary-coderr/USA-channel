@@ -521,7 +521,7 @@ def merge_scene_transitions(scene_paths: list[Path], durations: list[float],
         shutil.copy2(scene_paths[0], destination)
         return
     ff = ffmpeg()
-    transition = 0.38
+    transition = min(0.38, max(0.01, min(durations) * 0.4))
     command = [ff, "-y"]
     for path in scene_paths:
         command += ["-i", str(path)]
