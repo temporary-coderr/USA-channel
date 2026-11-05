@@ -129,7 +129,9 @@ def main() -> int:
     else:
         ledger_text = source_ledger.read_text(encoding="utf-8").strip()
         metrics["research_ledger_present"] = True
-        if "http://" not in ledger_text and "https://" not in ledger_text and "no specific empirical claims" not in ledger_text.lower():
+        has_source_url = "http://" in ledger_text or "https://" in ledger_text
+        declares_no_claims = bool(re.search(r"(?im)^no specific empirical claims\\b", ledger_text))
+        if not has_source_url and not declares_no_claims:
             warnings.append("Research ledger has no source URLs or explicit no-claims statement; verify evidence manually.")
 
     captions = OUT / "captions.srt"
