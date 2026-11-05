@@ -1,6 +1,9 @@
 name: Build WISE LAB video from script
 
 on:
+  push:
+    paths:
+      - "scripts/script.txt"
   workflow_dispatch:
     inputs:
       format:
@@ -27,7 +30,7 @@ jobs:
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       EDGE_TTS_VOICE: en-US-AndrewNeural
       EDGE_TTS_RATE: "+5%"
-      VIDEO_FORMAT: ${{ inputs.format }}
+      VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
       SCRIPT_FILE: scripts/script.txt
       TARGET_WPM: "140"
       YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
@@ -70,7 +73,7 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           YOUTUBE_PRIVACY_STATUS: private
-          VIDEO_FORMAT: ${{ inputs.format }}
+          VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
 
       - name: Save visual usage history
         run: |
