@@ -10,7 +10,7 @@ Upload your English psychology script to `scripts/script.txt`, then run the GitH
 4. Wait for the workflow to finish. The MP4, captions, thumbnail, title and visual manifest are saved as a downloadable artifact.
 5. If YouTube OAuth is configured, the MP4 is uploaded automatically as **Private**. Review it in YouTube Studio before publishing.
 
-## What runs automatically
+## Editorial safeguards\n\n- Runs `editorial_gate.py` before rendering. It compares the main script body against up to 20 previous versions in Git history, excluding recurring channel intro/outro text, and stops a near-duplicate episode (84% or higher similarity).\n- Flags statistics, named institutions, research language, years, quotations and absolute/causal claims for source verification. These are review prompts—not fact-checking and not proof that a claim is false or true.\n- Saves `output/editorial_gate.txt` and `output/editorial_gate.json` with the artifact. Read these alongside the video and `editorial_review.txt` before making anything public.\n- Private YouTube upload is a review copy only. A human must verify sources, originality, usefulness, visuals, captions and licensing before publishing.\n- The checks cannot determine whether a video is genuinely insightful or whether a visual is contextually appropriate; human review remains essential.\n\n## What runs automatically
 
 - Uses the same Edge-TTS fallback voice as the working `bot.py`: `en-US-AndrewNeural`, at `+5%` speaking rate.
 - Creates the scene plan locally from the script; the existing Edge-TTS narration remains unchanged.
