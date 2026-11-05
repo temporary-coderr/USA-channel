@@ -569,6 +569,84 @@ def make_thumbnail(video_path: Path, destination: Path, title: str, vertical: bo
         raise RuntimeError("Thumbnail generation failed or produced an empty image.")
 
 
+def make_video_title(script: str) -> str:
+    """Choose a human-readable title from the script hook instead of the channel greeting."""
+    clean = re.sub(r"\s+", " ", script).strip()
+    patterns = [
+        r"(?:today,?\s+i['’]m\s+)?breaking down\s+(.+?)(?:[.!?]|$)",
+        r"(?:today,?\s+we(?:'re| are)\s+looking at\s+)(.+?)(?:[.!?]|$)",
+    ]
+    candidate = ""
+    for pattern in patterns:
+        match = re.search(pattern, clean, flags=re.IGNORECASE)
+        if match:
+            candidate = match.group(1).strip(" \"'.,!?")
+            break
+    if not candidate:
+        sentences = [s.strip() for s in re.findall(r"[^.!?]+[.!?]+", clean)]
+        candidate = next((s for s in sentences if "?" in s and "welcome to" not in s.lower()), "")
+    if not candidate:
+        candidate = "Psychology That Helps You Understand Yourself"
+    candidate = re.sub(r"\s+", " ", candidate).strip()
+    if len(candidate) > 88:
+        candidate = candidate[:85].rsplit(" ", 1)[0].rstrip(" ,:;") + "…"
+    return candidate[:100]
+
+
+def make_video_description(title: str, scenes: list[dict], durations: list[float],
+                           vertical: bool) -> str:
+    lines = [
+        title, "",
+        "Welcome to WISE LAB — clear, thoughtful explainers about psychology, human behaviour,",
+        "and the habits that shape everyday life.", "",
+        "In this video, we explore the ideas behind the topic and practical questions you can",
+        "use to reflect on your own experiences.", "", "CHAPTERS",
+    ]
+    cursor = 0.0 if vertical else 5.0
+    for scene, duration in zip(scenes, durations):
+        total = int(cursor)
+        stamp = f"{total // 60}:{total % 60:02}"
+        heading = re.sub(r"\s+", " ", str(scene.get("heading") or "Key idea")).strip()
+        lines.append(f"{stamp} {heading[:65].rstrip(' ,:;.-')}")
+        cursor += duration
+    lines += [
+        "", "WISE LAB shares educational content for general information and self-reflection.",
+        "It is not medical advice or a substitute for care from a qualified professional.", "",
+        "What stood out to you? Share your perspective respectfully in the comments.",
+        "Subscribe to WISE LAB for more psychology and human-behaviour explainers.", "",
+        "#WiseLab #Psychology #HumanBehaviour",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def make_editorial_review(script: str, destination: Path) -> None:
+    """Flag claims a human editor should verify; these flags are not fact-checks."""
+    patterns = [
+        (r"\b\d+(?:%| percent)\b", "Specific percentage/statistic: verify the original study and population."),
+        (r"\b(?:study|research|researchers|survey|tracked|tracking|found)\b", "Research claim: add a traceable source before publication."),
+        (r"\b(?:Stanford|Harvard|Yale|Oxford|University of|American Psychological Association)\b",
+         "Institution named: verify the exact publication, date and wording."),
+        (r"\b(?:proves?|guarantees?|always|never|number one predictor|unbreakable)\b",
+         "Absolute or causal wording: check whether the evidence supports this strength of claim."),
+    ]
+    findings = []
+    for pattern, note in patterns:
+        if re.search(pattern, script, flags=re.IGNORECASE) and note not in findings:
+            findings.append(note)
+    report = [
+        "WISE LAB — EDITORIAL REVIEW", "",
+        "Automated pre-publication flags only. This is NOT a fact-check and does not verify sources.",
+        "A human editor should review every named study, statistic, quotation and causal claim.", "",
+    ] + [f"- {item}" for item in findings]
+    if not findings:
+        report.append("- No obvious trigger phrases detected; this does not establish factual accuracy.")
+    report += [
+        "", "Before publishing: confirm quotations against primary sources, avoid overstating correlations,",
+        "and ensure stock footage and captions match the narration.",
+    ]
+    destination.write_text("\n".join(report) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     if not SCRIPT.exists():
         raise RuntimeError(f"Script file not found: {SCRIPT}. Upload your text to scripts/script.txt.")
@@ -705,10 +783,16 @@ def main() -> int:
     (OUT / "scene_plan.json").write_text(
         json.dumps(plan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
-    (OUT / "title.txt").write_text(plan.get("title", "WISE LAB video") + "\n", encoding="utf-8")
+    video_title = make_video_title(script)
+    (OUT / "title.txt").write_text(video_title + "\n", encoding="utf-8")
+    (OUT / "description.txt").write_text(
+        make_video_description(video_title, plan["scenes"], durations, vertical),
+        encoding="utf-8"
+    )
     (OUT / "voiceover_script.txt").write_text(script + "\n", encoding="utf-8")
+    make_editorial_review(script, OUT / "editorial_review.txt")
     thumbnail = OUT / "wise_lab_thumbnail.jpg"
-    make_thumbnail(final, thumbnail, plan.get("title", "WISE LAB"), vertical)
+    make_thumbnail(final, thumbnail, video_title, vertical)
     print(f"THUMBNAIL READY: {thumbnail}")
     print(f"VIDEO READY: {final}")
     print(f"Narration generated with Edge-TTS voice: {os.getenv('EDGE_TTS_VOICE', 'en-US-AndrewNeural')}")
