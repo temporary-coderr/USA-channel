@@ -45,89 +45,74 @@ def run(command: list[str]) -> None:
         raise RuntimeError("Command failed:\n" + result.stderr[-3000:])
 
 
-def groq_json(script: str) -> dict:
-    response = SESSION.post(
-        GROQ_URL,
-        headers={"Authorization": f"Bearer {required_env('GROQ_API_KEY')}"},
-        json={
-            "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
-            "temperature": 0.25,
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "wise_lab_scene_plan",
-                    "strict": True,
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "title": {"type": "string"},
-                            "scenes": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "heading": {"type": "string"},
-                                        "narration": {"type": "string"},
-                                        "visual_query": {"type": "string"},
-                                        "image_query": {"type": "string"}
-                                    },
-                                    "required": ["heading", "narration", "visual_query", "image_query"],
-                                    "additionalProperties": False
-                                }
-                            }
-                        },
-                        "required": ["title", "scenes"],
-                        "additionalProperties": False
-                    }
-                }
-            },
-            "messages": [
-                {"role": "system", "content": (
-                    "You are a documentary video editor. Break the supplied script into 8-14 "
-                    "chronological visual scenes. Keep every narration sentence in the same order "
-                    "and do not invent facts. Return JSON only."
-                )},
-                {"role": "user", "content": (
-                    "Create a scene plan for this exact script. For every scene provide: "
-                    "heading, narration (verbatim excerpts, no rewriting), visual_query "
-                    "(short literal Pixabay stock footage search), and image_query "
-                    "(short literal photo search). Prefer real-world B-roll and specific actions. "
-                    "Avoid asking for footage of identifiable real people, logos, or copyrighted characters. "
-                    "JSON shape: {\"title\":\"...\",\"scenes\":[{\"heading\":\"...\","
-                    "\"narration\":\"...\",\"visual_query\":\"...\",\"image_query\":\"...\"}]}\n\n"
-                    "SCRIPT:\n" + script
-                )},
-            ],
-        },
-        timeout=180,
+SCENE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string"},
+        "scenes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "heading": {"type": "string"},
+                    "narration": {"type": "string"},
+                    "visual_query": {"type": "string"},
+                    "image_query": {"type": "string"}
+                },
+                "required": ["heading", "narration", "visual_query", "image_query"],
+                "additionalProperties": False
+            }
+        }
+    },
+    "required": ["title", "scenes"],
+    "additionalProperties": False
+}
+
+SCENE_SYSTEM_PROMPT = (
+    "You are a documentary video editor. Break the supplied script into 8-14 "
+    "chronological visual scenes. Keep every narration sentence in the same order "
+    "and do not invent facts. Return JSON only."
+)
+
+
+def scene_prompt(script: str) -> str:
+    return (
+        "Create a scene plan for this exact script. For every scene provide: "
+        "heading, narration (verbatim excerpts, no rewriting), visual_query "
+        "(short literal Pixabay stock footage search), and image_query "
+        "(short literal photo search). Prefer real-world B-roll and specific actions. "
+        "Avoid asking for footage of identifiable real people, logos, or copyrighted characters. "
+        "Return an object with a title and scenes array.\\n\\n"
+        "SCRIPT:\\n" + script
     )
-    if not response.ok:
-        raise RuntimeError(f"Groq API error {response.status_code}: {response.text[:1200]}")
-    data = response.json()["choices"][0]["message"]["content"]
-    plan = json.loads(data)
+
+
+def normalize_scene_plan(plan: dict) -> dict:
+    if not isinstance(plan, dict):
+        raise RuntimeError("Scene planner did not return a JSON object.")
     scenes = plan.get("scenes", [])
-    if not scenes or len(scenes) > 16:
-        raise RuntimeError(f"Scene planner returned {len(scenes)} scenes; expected 1–16.")
+    if not isinstance(scenes, list) or not scenes or len(scenes) > 16:
+        count = len(scenes) if isinstance(scenes, list) else 0
+        raise RuntimeError(f"Scene planner returned {count} scenes; expected 1–16.")
     for scene in scenes:
-        if not scene.get("visual_query"):
+        if not isinstance(scene, dict) or not scene.get("visual_query"):
             raise RuntimeError("A scene is missing a visual search query.")
-    # Some valid model responses contain only a few broad scenes. Expand them
-    # into at least five visual segments; narration is reassigned from the
-    # complete original script below, so no spoken content is lost.
+        scene.setdefault("heading", "Scene")
+        scene.setdefault("image_query", scene["visual_query"])
+
+    # Expand very short plans into at least five visual segments.
     original_scene_count = len(scenes)
     while len(scenes) < 5:
         source_scene = scenes[(len(scenes) - original_scene_count) % original_scene_count]
         extra_scene = dict(source_scene)
         extra_scene["heading"] = (source_scene.get("heading") or "Scene") + " — continued"
         scenes.append(extra_scene)
-    # Use the model for visual planning, but assign narration ourselves.
-    # This guarantees that every original sentence is included, in order, even
-    # when the model returns incomplete or shortened narration excerpts.
-    sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", script.strip())
+
+    # Assign narration from the original script in order so no spoken content is lost.
+    sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", script_text_for_plan.strip())
     sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
     if len(sentences) < len(scenes):
-        # For scripts with very long sentences, split on word boundaries as a fallback.
-        words = script.split()
+        words = script_text_for_plan.split()
         chunk_size = max(1, (len(words) + len(scenes) - 1) // len(scenes))
         narration_chunks = [
             " ".join(words[i:i + chunk_size])
@@ -155,10 +140,109 @@ def groq_json(script: str) -> dict:
                     group.append(remaining.pop(0))
                     count += len(candidate.split())
             narration_chunks.append(" ".join(group))
+
     for scene, narration in zip(scenes, narration_chunks):
         scene["narration"] = narration
+    plan["title"] = str(plan.get("title") or "WISE LAB video")
+    plan["scenes"] = scenes
     return plan
 
+
+def gemini_json(script: str) -> dict:
+    api_key = required_env("GEMINI_API_KEY")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip() or "gemini-3.8-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    response = SESSION.post(
+        url,
+        headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+        json={
+            "systemInstruction": {
+                "parts": [{"text": SCENE_SYSTEM_PROMPT}]
+            },
+            "contents": [{
+                "role": "user",
+                "parts": [{"text": scene_prompt(script)}]
+            }],
+            "generationConfig": {
+                "temperature": 0.25,
+                "responseMimeType": "application/json",
+                "responseJsonSchema": SCENE_SCHEMA,
+                "maxOutputTokens": 8192
+            }
+        },
+        timeout=180,
+    )
+    if not response.ok:
+        raise RuntimeError(f"Gemini API error {response.status_code}: {response.text[:1200]}")
+    payload = response.json()
+    candidates = payload.get("candidates") or []
+    if not candidates:
+        raise RuntimeError("Gemini returned no candidate (possibly blocked by safety filters).")
+    parts = candidates[0].get("content", {}).get("parts", [])
+    data = "".join(part.get("text", "") for part in parts if part.get("text"))
+    if not data.strip():
+        raise RuntimeError("Gemini returned an empty scene plan.")
+    return json.loads(data)
+
+
+def groq_json(script: str) -> dict:
+    response = SESSION.post(
+        GROQ_URL,
+        headers={"Authorization": f"Bearer {required_env('GROQ_API_KEY')}"},
+        json={
+            "model": os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),
+            "temperature": 0.25,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "wise_lab_scene_plan",
+                    "strict": True,
+                    "schema": SCENE_SCHEMA
+                }
+            },
+            "messages": [
+                {"role": "system", "content": SCENE_SYSTEM_PROMPT},
+                {"role": "user", "content": scene_prompt(script)}
+            ],
+        },
+        timeout=180,
+    )
+    if not response.ok:
+        raise RuntimeError(f"Groq API error {response.status_code}: {response.text[:1200]}")
+    data = response.json()["choices"][0]["message"]["content"]
+    return json.loads(data)
+
+
+def plan_scenes(script: str) -> dict:
+    global script_text_for_plan
+    script_text_for_plan = script
+    errors = []
+
+    if os.getenv("GEMINI_API_KEY", "").strip():
+        try:
+            print("Scene planner: trying Gemini Flash (primary)...")
+            plan = normalize_scene_plan(gemini_json(script))
+            print("Scene planner selected: Gemini Flash.")
+            return plan
+        except Exception as error:
+            errors.append(f"Gemini: {error}")
+            print(f"Gemini Flash failed; switching to Groq fallback. Reason: {error}")
+    else:
+        print("GEMINI_API_KEY is not configured; skipping Gemini primary.")
+
+    if os.getenv("GROQ_API_KEY", "").strip():
+        try:
+            print("Scene planner: trying Groq (fallback)...")
+            plan = normalize_scene_plan(groq_json(script))
+            print("Scene planner selected: Groq fallback.")
+            return plan
+        except Exception as error:
+            errors.append(f"Groq: {error}")
+
+    raise RuntimeError(
+        "No scene planner succeeded. Add a valid GEMINI_API_KEY and/or GROQ_API_KEY. "
+        + " | ".join(errors)
+    )
 
 def load_visual_history() -> tuple[dict, set[str]]:
     if not HISTORY_FILE.exists():
@@ -490,8 +574,8 @@ def main() -> int:
     vertical = FORMAT == "shorts"
     width, height = (1080, 1920) if vertical else (1920, 1080)
     key = required_env("PIXABAY_API_KEY")
-    # Plan each run afresh. Visual history, not a media cache, prevents repeats.
-    plan = groq_json(script)
+    # Gemini Flash is primary; Groq is the automatic fallback.
+    plan = plan_scenes(script)
     history, historical_ids = load_visual_history()
     used_ids = set(historical_ids)
     selected_assets = []
