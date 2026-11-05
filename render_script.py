@@ -467,7 +467,7 @@ def choose_openverse_music(script: str, destination: Path) -> dict | None:
                 params={
                     "q": query,
                     "category": "music",
-                    "license": "cc0,pdm,by,by-sa",
+                    "license": "cc0,pdm,by",
                     "license_type": "commercial,modification",
                     "length": "long",
                     "page_size": 20,
@@ -481,7 +481,7 @@ def choose_openverse_music(script: str, destination: Path) -> dict | None:
                 license_code = str(item.get("license") or "").lower()
                 tags = " ".join(str(tag.get("name", "")) for tag in item.get("tags", []) if isinstance(tag, dict)).lower()
                 title = str(item.get("title") or "Untitled instrumental")
-                if (not track_id or track_id in seen or license_code not in {"cc0", "pdm", "by", "by-sa"}
+                if (not track_id or track_id in seen or license_code not in {"cc0", "pdm", "by"}
                         or not item.get("url") or not item.get("foreign_landing_url")
                         or any(term in (title + " " + tags).lower() for term in ("vocal", "singing", "spoken word", "speech"))):
                     continue
