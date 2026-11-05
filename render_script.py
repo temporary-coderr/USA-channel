@@ -166,7 +166,26 @@ def gemini_json(script: str) -> dict:
             "generationConfig": {
                 "temperature": 0.25,
                 "responseMimeType": "application/json",
-                "responseJsonSchema": SCENE_SCHEMA,
+                "responseJsonSchema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "scenes": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "heading": {"type": "string"},
+                                    "narration": {"type": "string"},
+                                    "visual_query": {"type": "string"},
+                                    "image_query": {"type": "string"}
+                                },
+                                "required": ["heading", "narration", "visual_query", "image_query"]
+                            }
+                        }
+                    },
+                    "required": ["title", "scenes"]
+                },
                 "maxOutputTokens": 8192
             }
         },
