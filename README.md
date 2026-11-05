@@ -17,6 +17,7 @@ Upload your English psychology script to `scripts/script.txt`, then run the GitH
 - Searches Pixabay first for stock video and photos, then uses an optional Pexels API key as a fallback for both video and photos.
 - Pexels is optional. Add `PEXELS_API_KEY` only if you already have an approved key; the bot continues with Pixabay if it is absent.
 - Avoids reusing previously selected asset IDs across providers using `visual_history/used_assets.json`; Pexels IDs are provider-prefixed.
+- Stores SHA-256 fingerprints for downloaded visuals and stops rather than reusing an exact byte-for-byte duplicate; this does not detect visually similar edits or crops.
 - Adds provider/creator visual credits to the generated YouTube description where metadata is available.
 - Saves `description.txt` and `editorial_review.txt` in the downloadable workflow artifact.
 - Adds gentle motion to still images, colour treatment and fades.
