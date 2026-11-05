@@ -634,6 +634,19 @@ def make_brand_clip(destination: Path, duration: float, width: int, height: int,
     subtitle_size = int(min(width * 0.045, height * 0.033))
     headline_size = int(min(width * 0.045, height * 0.043))
     footer_size = int(min(width * 0.025, height * 0.025))
+    subscribe_outro = "SUBSCRIBE" in footer.upper()
+    cta_size = int(min(width * 0.040, height * 0.040))
+    footer_layer = (
+        f"drawbox=x=iw*0.34:y=ih*0.805:w=iw*0.32:h=ih*0.075:"
+        f"color=0xFF3045@0.98:t=fill:enable='between(t,1.0,{duration - 0.3:.3f})',"
+        f"drawtext=fontfile={font}:text='SUBSCRIBE':fontcolor=white:fontsize={cta_size}:"
+        "x=(main_w-text_w)/2:y=main_h*0.824:"
+        "alpha='if(lt(t,1.45),max(0,(t-1.0)/0.45),1)':"
+        f"enable='between(t,1.0,{duration - 0.3:.3f})'"
+    ) if subscribe_outro else (
+        f"drawtext=fontfile={regular}:text='{footer}':fontcolor=white@0.78:"
+        f"fontsize={footer_size}:x=(main_w-text_w)/2:y=main_h*0.79"
+    )
     video_filter = (
         "noise=alls=7:allf=t+u,"
         "drawbox=x=0:y=0:w=iw:h=ih:color=0x081321@0.18:t=fill,"
@@ -646,8 +659,7 @@ def make_brand_clip(destination: Path, duration: float, width: int, height: int,
         f"fontsize={subtitle_size}:x=(main_w-text_w)/2:y=main_h*0.565,"
         f"drawtext=fontfile={font}:text='{headline}':fontcolor=0x39D6D0:"
         f"fontsize={headline_size}:x=(main_w-text_w)/2:y=main_h*0.69,"
-        f"drawtext=fontfile={regular}:text='{footer}':fontcolor=white@0.78:"
-        f"fontsize={footer_size}:x=(main_w-text_w)/2:y=main_h*0.79,"
+        f"{footer_layer},"
         "fade=t=in:st=0:d=0.65,"
         f"fade=t=out:st={max(0.0, duration - 0.65):.3f}:d=0.65,"
         "format=yuv420p"
