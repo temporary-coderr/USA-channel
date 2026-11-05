@@ -13,7 +13,10 @@ Upload your English psychology script to `scripts/script.txt`, then run the GitH
 ## What runs automatically
 
 - Uses the same Edge-TTS fallback voice as the working `bot.py`: `en-US-AndrewNeural`, at `+5%` speaking rate.
-- Creates the scene plan locally from the script. No Gemini, Groq, or Inworld API/agent is used.
+- Creates the scene plan locally from the script; the existing Edge-TTS narration remains unchanged.
+- When `GEMINI_API_KEY` is configured, generates six selective 1K custom psychology images with Gemini 3.1 Flash Image, evenly distributed through the video (configurable from 5–7). These supplement—not replace—Pixabay, Pexels and Openverse stock footage/images.
+- When `GROQ_API_KEY` is configured, Groq GPT-OSS 20B refines the prompts for those AI stills; if Groq is unavailable, local prompts are used. Groq does not generate the images.
+- If Gemini is unavailable or generation fails, that shot automatically falls back to the normal stock-media search. AI image generation is optional and can incur Gemini API charges.
 - Cuts to a new, narration-specific visual approximately every 3 seconds while keeping the voiceover continuous; short cross-dissolves soften the cuts.
 - Alternates Pixabay and optional Pexels as the first stock-video search provider so one library does not dominate every shot.
 - Uses Pixabay and Pexels for stock video; if no suitable video is found, it tries their photo libraries and then Openverse for large CC0/CC BY still images with commercial-use/modification filters.
@@ -37,6 +40,8 @@ Add these in **Settings → Secrets and variables → Actions**:
 | Secret | Purpose |
 | --- | --- |
 | `PIXABAY_API_KEY` | Required: primary stock video and image search |
+| `GEMINI_API_KEY` | Optional: generates 5–7 custom psychology still images per video; paid API usage may apply |
+| `GROQ_API_KEY` | Optional: refines prompts for Gemini-generated images; Groq does not generate images |
 | `PEXELS_API_KEY` | Optional: fallback stock video and image search (only if you already have an approved key) |
 | `YOUTUBE_CLIENT_ID` | Google OAuth Desktop app client ID |
 | `YOUTUBE_CLIENT_SECRET` | Google OAuth Desktop app client secret |
@@ -68,5 +73,6 @@ The three YouTube secrets are only needed for automatic upload. If they are all 
 - Voice: `en-US-AndrewNeural`; change the workflow's `EDGE_TTS_VOICE` only if you intentionally want another voice.
 - FFmpeg runs on GitHub-hosted Ubuntu; your Windows PC does not need to stay on.
 - The workflow requires the Pixabay secret even if the YouTube upload secrets are not configured.
+- Gemini and Groq are optional; without Gemini, the workflow uses the existing stock-only visual pipeline. Keep an eye on Google AI Studio usage and billing.
 - Review narration, stock footage, captions, claims and licensing before making a video public.
 - Workflow artifacts are retained for 7 days.
