@@ -124,15 +124,15 @@ def main() -> int:
 
     source_ledger = ROOT / "scripts" / "research_notes.md"
     if not source_ledger.is_file() or not source_ledger.read_text(encoding="utf-8").strip():
-        warnings.append("No episode research ledger was found. Add scripts/research_notes.md and verify factual claims before publication.")
+        errors.append("Missing episode research ledger: add scripts/research_notes.md before rendering. Human-approved scripts must include a source ledger or an explicit no-empirical-claims statement.")
         metrics["research_ledger_present"] = False
     else:
         ledger_text = source_ledger.read_text(encoding="utf-8").strip()
         metrics["research_ledger_present"] = True
         has_source_url = "http://" in ledger_text or "https://" in ledger_text
-        declares_no_claims = bool(re.search(r"(?im)^no specific empirical claims\\b", ledger_text))
+        declares_no_claims = bool(re.search(r"(?im)^no specific empirical claims\b", ledger_text))
         if not has_source_url and not declares_no_claims:
-            warnings.append("Research ledger has no source URLs or explicit no-claims statement; verify evidence manually.")
+            errors.append("Research ledger needs source URLs or an explicit no-specific-empirical-claims statement before rendering.")
 
     captions = OUT / "captions.srt"
     if captions.is_file():
