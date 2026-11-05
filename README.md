@@ -8,7 +8,7 @@ This repository turns an English psychology script into a documentary-style vide
 2. Open **Actions → Build WISE LAB video from script → Run workflow**.
 3. Choose **landscape** for a normal YouTube video (16:9, 1080p) or **shorts** (9:16).
 4. Download the `wise-lab-video-...` artifact when the run completes.
-5. Add your own recorded narration over the main video section in your editor. The intro and outro already have a custom music bed.
+5. Download the finished video and review the narration, captions, and selected visuals before publishing.
 
 ## What the renderer does
 
@@ -18,7 +18,7 @@ This repository turns an English psychology script into a documentary-style vide
 - Burns phrase-sized captions into the video and exports a separate `captions.srt`.
 - For **landscape long videos only**, adds a custom WISE LAB vector W mark, a 5-second intro, a 7-second outro, and original synthesized ambient welcome music.
 - The long-video intro says **“Explore the Mind. Understand Human Behaviour.”** and the outro says **“Keep Thinking. Stay Curious. Subscribe to WISE LAB.”**
-- **Shorts skip the intro, outro, and branding music** so they begin immediately. The main video section is silent so you can add your own voice recording.
+- **Shorts skip the intro, outro, and branding music** so they begin immediately. The Inworld-generated narration is included in both formats.
 
 ## Required repository secrets
 
@@ -29,8 +29,9 @@ Add these in **Settings → Secrets and variables → Actions → New repository
 | `GEMINI_API_KEY` | Primary script-to-scene planning (Gemini Flash) |
 | `GROQ_API_KEY` | Automatic fallback scene planner if Gemini fails |
 | `PIXABAY_API_KEY` | Stock video and image search |
+| `INWORLD_API_KEY` | Inworld text-to-speech narration |
 
-Gemini uses the `gemini-3.8-flash` model by default. Do not paste secrets into chat, scripts, workflow files, or commits. The existing video-rendering and voice-generation steps are unchanged.
+Gemini uses the `gemini-3.8-flash` model by default. Do not paste secrets into chat, scripts, workflow files, or commits. The existing Pixabay media search, Inworld narration, captions, and video-rendering steps remain unchanged.
 
 ## Important limitations
 
