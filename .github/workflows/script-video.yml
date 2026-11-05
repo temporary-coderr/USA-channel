@@ -91,6 +91,7 @@ jobs:
           path: |
             output/wise_lab_*.mp4
             output/captions.srt
+            output/captions.ass
             output/wise_lab_voiceover.mp3
             output/title.txt
             output/voiceover_script.txt
