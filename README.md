@@ -30,7 +30,10 @@ Only after you approve both files, commit/push them to `main`. The GitHub Action
 For a manual render without changing the script:
 1. Open **Actions → Build WISE LAB video from script → Run workflow**.
 2. Choose `landscape` for 16:9 long-form or `shorts` for 9:16.
-3. Wait for the workflow and inspect its artifact and private YouTube upload.
+3. For Shorts, supply a dedicated short script (the renderer currently accepts 100–400 words); aim initially for a finished narration of about 30–60 seconds.
+4. Wait for the workflow and inspect its artifact and private YouTube upload.
+
+The Shorts format uses the same approved voice and asset-history protections, but follows a separate editorial specification in `shorts_policy.json`: immediate hook, one focused idea, portrait-first visuals, mobile-safe captions, no intro/outro, and a complete takeaway. It is intended to feel like a fast psychology explainer—not a cropped long-form episode. The 30–60 second range is a starting editorial target, not a hard platform limit; the technical maximum enforced by the current renderer is three minutes.
 
 ## Editorial safeguards
 
@@ -43,7 +46,7 @@ For a manual render without changing the script:
 
 - **Narration:** Microsoft Edge-TTS, `en-US-AndrewNeural`, rate `+5%`. This setting is intentionally kept unchanged.
 - **Long-form:** 1920×1080, 30 fps, 5-second WISE LAB intro and 7-second branded outro.
-- **Shorts:** 1080×1920, 30 fps, no intro or outro; the renderer rejects scripts longer than 400 words.
+- **Shorts:** 1080×1920, 30 fps, no intro or outro; the renderer rejects scripts longer than 400 words. Preferred initial runtime is 30–60 seconds, with one idea, an immediate hook, portrait-first visuals and mobile-safe captions. See `shorts_policy.json`.
 - **Audience direction:** English-language psychology and human-behaviour explainers for a primarily US audience. Use natural US English and US-relevant everyday settings/examples when the script calls for them; do not force US references into universal topics.
 - **Visuals:** Pixabay first, optional Pexels fallback, Openverse still-image fallback, and up to six selective OpenAI-generated stills when `OPENAI_API_KEY` is configured. The renderer also creates up to three original topic diagrams per episode (loop, comparison, process or concept-map layouts) when the cut count supports them. These are explanatory concept illustrations, not scientific data charts. Every episode should use topic-specific visual storytelling and varied male character poses. The approved male Edge-TTS voice remains unchanged.
 - **Editing:** narration-specific visual cuts targeted around every three seconds, restrained motion, colour treatment and short cross-dissolves.
@@ -57,6 +60,7 @@ For a manual render without changing the script:
 
 After rendering, `quality_check.py` verifies:
 - Expected resolution and approximately 30 fps.
+- For Shorts, the three-minute maximum and warnings when runtime falls outside the preferred 30–60 second starting range.
 - Presence of video and audio streams and plausible MP4 size/duration.
 - Caption sidecar structure.
 - That the scene plan preserves the original narration word sequence.
