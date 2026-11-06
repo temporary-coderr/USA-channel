@@ -84,7 +84,7 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Validate Python syntax before rendering
-        run: python -m py_compile editorial_gate.py render_script.py visual_uniqueness.py quality_check.py upload_youtube.py
+        run: python -m py_compile editorial_gate.py render_script.py visual_uniqueness.py custom_diagrams.py quality_check.py upload_youtube.py
 
       - name: Check script and API secrets
         run: |
@@ -134,6 +134,8 @@ jobs:
             output/wise_lab_logo.svg
             output/work/wise_lab_character/*.svg
             output/work/wise_lab_character/*.png
+            output/work/wise_lab_diagram_*.png
+            output/work/wise_lab_diagram_*.svg
             output/wise_lab_thumbnail.jpg
             output/youtube_video_url.txt
           retention-days: 7
