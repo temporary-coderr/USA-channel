@@ -5,3 +5,4 @@ google-auth-oauthlib>=1.2.1
 google-auth-httplib2>=0.2.0
 edge-tts>=7.0.0
 CairoSVG>=2.7.1
+Pillow>=10.4.0
