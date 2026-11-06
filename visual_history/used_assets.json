@@ -396,5 +396,8 @@
       "format": "landscape",
       "script_file": "scripts/script.txt"
     }
+  ],
+  "rejected_ids": [
+    "349094"
   ]
 }
