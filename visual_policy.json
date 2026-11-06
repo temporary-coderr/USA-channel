@@ -23,13 +23,26 @@
     "male_character_library": {
       "planned_count": 6,
       "gender_presentation": "male",
-      "roles": ["professor", "researcher", "thinker", "observer", "everyday man", "mentor"],
+      "roles": [
+        "professor",
+        "researcher",
+        "thinker",
+        "observer",
+        "everyday man",
+        "mentor"
+      ],
       "reuse_character_identity_but_vary_pose_expression_and_composition": true
     },
     "stock_footage_is_not_filler": true,
     "avoid_repeating_scene_sequences": true,
     "consistent_branding_with_episode_specific_art_direction": true,
-    "visuals_must_support_or_explain_narration": true
+    "visuals_must_support_or_explain_narration": true,
+    "episode_visual_targets": {
+      "long_form_ai_generated_stills": "about 5–7 when OpenAI image generation is enabled and the story benefits from them",
+      "long_form_original_diagrams": "about 3 topic-specific diagrams; add more only when the explanation genuinely needs them",
+      "visual_cut_target_seconds": 3,
+      "stock_footage_role": "contextual documentary B-roll, never filler"
+    }
   },
   "commercial_safety": {
     "record_source_and_license": true,
