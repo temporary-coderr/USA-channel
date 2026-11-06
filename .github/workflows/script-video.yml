@@ -38,7 +38,7 @@ jobs:
       WISE_LAB_VISUAL_UNIQUENESS: strict
       EDGE_TTS_VOICE: en-US-AndrewNeural
       EDGE_TTS_RATE: "+5%"
-      VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
+      VIDEO_FORMAT: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[shorts]') && 'shorts' || inputs.format || 'landscape' }}
       SCRIPT_FILE: scripts/script.txt
       TARGET_WPM: "140"
       YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
