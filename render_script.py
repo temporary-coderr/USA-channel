@@ -277,42 +277,6 @@ def find_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict
     return None
 
 
-def pexels_search(endpoint: str, params: dict, key: str) -> dict:
-    response = SESSION.get(endpoint, params=params, headers={"Authorization": key}, timeout=60)
-    response.raise_for_status()
-    return response.json()
-
-def find_pexels_video(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
-    orientation = "portrait" if vertical else "landscape"
-    data = pexels_search("https://api.pexels.com/v1/videos/search", {"query": query, "orientation": orientation, "per_page": 80, "page": 1}, key)
-    for hit in data.get("videos", []):
-        asset_id = f"pexels:{hit.get('id', '')}"
-        if asset_id == "pexels:" or asset_id in used_ids:
-            continue
-        files = []
-        for item in hit.get("video_files", []):
-            width, height, link = item.get("width") or 0, item.get("height") or 0, item.get("link")
-            if link and width and height and ((height > width) if vertical else (width >= height)):
-                files.append((width * height, link))
-        if files:
-            target_area = 1080 * (1920 if vertical else 1080)
-            above = [item for item in files if item[0] >= target_area]
-            chosen = min(above, key=lambda item: item[0]) if above else max(files, key=lambda item: item[0])
-            user = hit.get("user") or {}
-            return {"id": asset_id, "url": chosen[1], "type": "video", "source": "Pexels", "query": query, "page_url": hit.get("url", ""), "creator": user.get("name", ""), "creator_url": user.get("url", "")}
-    return None
-
-def find_pexels_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
-    orientation = "portrait" if vertical else "landscape"
-    data = pexels_search("https://api.pexels.com/v1/search", {"query": query, "orientation": orientation, "per_page": 80, "page": 1}, key)
-    for hit in data.get("photos", []):
-        asset_id = f"pexels:{hit.get('id', '')}"
-        src = hit.get("src") or {}
-        url = src.get("large2x") or src.get("large")
-        if url and asset_id != "pexels:" and asset_id not in used_ids:
-            return {"id": asset_id, "url": url, "type": "image", "source": "Pexels", "query": query, "page_url": hit.get("url", ""), "creator": hit.get("photographer", ""), "creator_url": hit.get("photographer_url", "")}
-    return None
-
 def find_openverse_image(query: str, vertical: bool, used_ids: set[str]) -> dict | None:
     """Find openly licensed commercial-use still images as a no-key fallback."""
     response = SESSION.get(
@@ -1351,134 +1315,173 @@ def main() -> int:
             query = visual_query_from_text(shot_text, scene["visual_query"])
             image_query = query + " photography"
             print(f"Scene {index}/{len(plan['scenes'])}, shot {shot_index + 1}/{shot_count}: {query}")
-            # Alternate provider priority so a single library does not dominate
-            # every cut. Each shot gets a fresh, narration-specific search.
-            provider_order = ("pixabay", "pexels") if shot_number % 2 == 0 else ("pexels", "pixabay")
+            # Use only no-cost sources already integrated in WISE-LAB:
+            # Pixabay stock video/photos, Openverse CC0/CC-BY images, OpenAI stills,
+            # and original WISE-LAB diagrams. Pexels is intentionally not used.
             asset = None
+            media_path = None
+            is_image = False
             source_errors = []
             queries = list(dict.fromkeys([query, f"{query} documentary", scene["visual_query"]]))
-            is_image = False
+            image_queries = list(dict.fromkeys([image_query, query, scene.get("image_query", query)]))
+            max_visual_attempts = 12
 
-            # Original diagrams are reserved for concepts that benefit from a clear explainer graphic.
-            if shot_number in diagram_shot_indices:
-                try:
-                    diagram_path = build_topic_diagram(shot_text, WORK / f"wise_lab_diagram_{shot_number:04}.png", vertical, shot_number + 1)
-                    asset = {
-                        "id": "diagram:" + hashlib.sha256(diagram_path.read_bytes()).hexdigest()[:20],
-                        "url": "", "type": "image", "source": "WISE-LAB Original Diagram",
-                        "query": query, "page_url": "", "local_path": str(diagram_path),
-                    }
-                    is_image = True
-                    print(f"Created original WISE-LAB topic diagram for shot {shot_number + 1}/{total_shots}.")
-                except Exception as exc:
-                    source_errors.append(f"Original diagram: {exc}")
-                    print(f"WARNING: Diagram generation failed; falling back to other visual sources: {exc}")
+            for asset_attempt in range(1, max_visual_attempts + 1):
+                asset = None
+                is_image = False
 
-            # Use bespoke AI stills for selected abstract psychology concepts while keeping
-            # most of the edit grounded in fresh stock footage and original diagrams.
-            if not asset and openai_key and shot_number in ai_shot_indices:
-                prompt = build_ai_image_prompt(shot_text, query, vertical, groq_key)
-                try:
-                    generated = generate_openai_image(
-                        prompt, WORK / f"openai_visual_{shot_number:04}", openai_key, vertical
-                    )
-                    asset = {
-                        "id": f"openai:{hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:16]}",
-                        "url": "", "type": "image", "source": "OpenAI GPT Image",
-                        "query": query, "page_url": "https://developers.openai.com/api/docs/guides/image-generation",
-                        "prompt": prompt, "mime_type": generated["mime_type"],
-                        "local_path": str(generated["path"]),
-                    }
-                    is_image = True
-                    print(f"Generated custom OpenAI visual for shot {shot_number + 1}/{total_shots}.")
-                except Exception as exc:
-                    source_errors.append(f"OpenAI image: {exc}")
-                    print(f"WARNING: OpenAI image failed; falling back to stock sources: {exc}")
-
-            for provider in (() if asset else provider_order):
-                if provider == "pexels" and not pexels_key:
-                    continue
-                for candidate_query in queries:
+                # Try the original diagram and selected AI visual once. If either is
+                # a duplicate, the next attempt moves on to stock sources.
+                if asset_attempt == 1 and shot_number in diagram_shot_indices:
                     try:
-                        if provider == "pixabay":
-                            asset = find_video(candidate_query, key, vertical, used_ids)
-                        else:
-                            asset = find_pexels_video(candidate_query, pexels_key, vertical, used_ids)
+                        diagram_path = build_topic_diagram(
+                            shot_text, WORK / f"wise_lab_diagram_{shot_number:04}.png",
+                            vertical, shot_number + 1
+                        )
+                        asset = {
+                            "id": "diagram:" + hashlib.sha256(diagram_path.read_bytes()).hexdigest()[:20],
+                            "url": "", "type": "image", "source": "WISE-LAB Original Diagram",
+                            "query": query, "page_url": "", "local_path": str(diagram_path),
+                        }
+                        is_image = True
+                        print(f"Created original WISE-LAB topic diagram for shot {shot_number + 1}/{total_shots}.")
                     except Exception as exc:
-                        source_errors.append(f"{provider} video: {exc}")
-                        print(f"{provider} video search failed: {exc}")
-                        break
-                    if asset:
-                        break
-                if asset:
-                    break
+                        source_errors.append(f"Original diagram: {exc}")
+                        print(f"WARNING: Diagram generation failed; trying other visual sources: {exc}")
 
-            if not asset:
-                image_queries = list(dict.fromkeys([image_query, query, scene.get("image_query", query)]))
-                image_providers = ("pixabay", "pexels", "openverse")
-                for provider in image_providers:
-                    if provider == "pexels" and not pexels_key:
-                        continue
-                    for candidate_query in image_queries:
+                if asset_attempt == 1 and not asset and openai_key and shot_number in ai_shot_indices:
+                    prompt = build_ai_image_prompt(shot_text, query, vertical, groq_key)
+                    try:
+                        generated = generate_openai_image(
+                            prompt, WORK / f"openai_visual_{shot_number:04}", openai_key, vertical
+                        )
+                        asset = {
+                            "id": f"openai:{hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:16]}",
+                            "url": "", "type": "image", "source": "OpenAI GPT Image",
+                            "query": query, "page_url": "https://developers.openai.com/api/docs/guides/image-generation",
+                            "prompt": prompt, "mime_type": generated["mime_type"],
+                            "local_path": str(generated["path"]),
+                        }
+                        is_image = True
+                        print(f"Generated custom OpenAI visual for shot {shot_number + 1}/{total_shots}.")
+                    except Exception as exc:
+                        source_errors.append(f"OpenAI image: {exc}")
+                        print(f"WARNING: OpenAI image failed; falling back to Pixabay/Openverse: {exc}")
+
+                # Pixabay is the free stock-video source. Search alternate query
+                # variants and let used_ids exclude every previously rejected result.
+                if not asset:
+                    for candidate_query in queries:
                         try:
-                            if provider == "pixabay":
-                                asset = find_image(candidate_query, key, vertical, used_ids)
-                            elif provider == "pexels":
-                                asset = find_pexels_image(candidate_query, pexels_key, vertical, used_ids)
-                            else:
-                                asset = find_openverse_image(candidate_query, vertical, used_ids)
+                            asset = find_video(candidate_query, key, vertical, used_ids)
                         except Exception as exc:
-                            source_errors.append(f"{provider} image: {exc}")
-                            print(f"{provider} image search failed: {exc}")
+                            source_errors.append(f"Pixabay video: {exc}")
+                            print(f"Pixabay video search failed: {exc}")
                             break
                         if asset:
-                            is_image = True
                             break
-                    if asset:
-                        break
-            if not asset:
-                detail = " | ".join(source_errors[-3:])
-                raise RuntimeError(f"No unused visual found for three-second shot '{query}'. " + detail)
 
-            asset["shot_duration_seconds"] = round(shot_seconds, 3)
-            asset["scene_number"] = index
-            asset["shot_number"] = shot_number + 1
+                # Still-image fallback: Pixabay first, then Openverse's commercially
+                # usable CC0/CC-BY library. No Pexels key or paid provider is required.
+                if not asset:
+                    for provider in ("pixabay", "openverse"):
+                        for candidate_query in image_queries:
+                            try:
+                                if provider == "pixabay":
+                                    asset = find_image(candidate_query, key, vertical, used_ids)
+                                else:
+                                    asset = find_openverse_image(candidate_query, vertical, used_ids)
+                            except Exception as exc:
+                                source_errors.append(f"{provider} image: {exc}")
+                                print(f"{provider} image search failed: {exc}")
+                                break
+                            if asset:
+                                is_image = True
+                                break
+                        if asset:
+                            break
+
+                if not asset:
+                    break
+
+                asset["shot_duration_seconds"] = round(shot_seconds, 3)
+                asset["scene_number"] = index
+                asset["shot_number"] = shot_number + 1
+                suffix = Path(asset["local_path"]).suffix if asset.get("local_path") else (".jpg" if is_image else ".mp4")
+                media_path = WORK / f"source_{shot_number:04}_try_{asset_attempt:02}{suffix}"
+                try:
+                    if asset.get("local_path"):
+                        shutil.copy2(asset["local_path"], media_path)
+                    else:
+                        download(asset["url"], media_path)
+                    fingerprint = sha256_file(media_path)
+                    if fingerprint in used_hashes:
+                        raise ValueError("exact file hash already used")
+                    asset_visual_hashes = visual_fingerprints(media_path, is_video=not is_image)
+                    duplicate = find_visual_duplicate(
+                        asset_visual_hashes,
+                        historical_visual_hashes + current_visual_hashes,
+                        max_distance=5
+                    )
+                    if duplicate:
+                        raise ValueError(f"perceptual duplicate (distance {duplicate['distance']})")
+                except ValueError as exc:
+                    media_path.unlink(missing_ok=True)
+                    rejected_id = str(asset.get("id"))
+                    used_ids.add(rejected_id)
+                    rejected_ids = history.setdefault("rejected_ids", [])
+                    if rejected_id not in rejected_ids:
+                        rejected_ids.append(rejected_id)
+                    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+                    HISTORY_FILE.write_text(
+                        json.dumps(history, indent=2, ensure_ascii=False) + "\\n",
+                        encoding="utf-8"
+                    )
+                    print(
+                        f"Rejected duplicate visual for shot '{query}': {exc}. "
+                        f"Trying another available visual source/result ({asset_attempt}/{max_visual_attempts})."
+                    )
+                    asset = None
+                    media_path = None
+                    continue
+                except Exception as exc:
+                    media_path.unlink(missing_ok=True)
+                    source_errors.append(f"{asset.get('source', 'visual')} download/check: {exc}")
+                    rejected_id = str(asset.get("id"))
+                    used_ids.add(rejected_id)
+                    rejected_ids = history.setdefault("rejected_ids", [])
+                    if rejected_id not in rejected_ids:
+                        rejected_ids.append(rejected_id)
+                    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+                    HISTORY_FILE.write_text(
+                        json.dumps(history, indent=2, ensure_ascii=False) + "\\n",
+                        encoding="utf-8"
+                    )
+                    print(f"Visual candidate failed validation/download: {exc}; trying another candidate.")
+                    asset = None
+                    media_path = None
+                    continue
+
+                # This candidate passed both exact-hash and perceptual uniqueness checks.
+                asset["sha256"] = fingerprint
+                asset["visual_hashes"] = asset_visual_hashes
+                if str(asset.get("source", "")).lower().startswith("openai"):
+                    asset["id"] = "openai:" + fingerprint[:20]
+                break
+
+            if not asset or not media_path or not media_path.exists():
+                detail = " | ".join(source_errors[-5:])
+                raise RuntimeError(
+                    f"No unique visual could be found for shot '{query}' after "
+                    f"{max_visual_attempts} attempts across Pixabay, Openverse, AI stills, "
+                    f"and original diagrams. {detail}"
+                )
+
             used_ids.add(str(asset["id"]))
             selected_assets.append(asset)
             scene["visual_asset"] = asset
-            suffix = Path(asset["local_path"]).suffix if asset.get("local_path") else (".jpg" if is_image else ".mp4")
-            media_path = WORK / f"source_{shot_number:04}{suffix}"
-            if asset.get("local_path"):
-                shutil.copy2(asset["local_path"], media_path)
-            else:
-                download(asset["url"], media_path)
-            fingerprint = sha256_file(media_path)
-            if fingerprint in used_hashes:
-                media_path.unlink(missing_ok=True)
-                raise RuntimeError(
-                    f"Duplicate visual content detected for shot '{query}'. "
-                    "The bot stopped rather than reuse a previously downloaded asset."
-                )
-            asset["sha256"] = fingerprint
-            asset_visual_hashes = visual_fingerprints(media_path, is_video=not is_image)
-            duplicate = find_visual_duplicate(asset_visual_hashes, historical_visual_hashes + current_visual_hashes, max_distance=5)
-            if duplicate:
-                media_path.unlink(missing_ok=True)
-                # Persist the rejected provider ID so the next run can move on to a fresh result.
-                rejected_ids = history.setdefault("rejected_ids", [])
-                if str(asset.get("id")) not in rejected_ids:
-                    rejected_ids.append(str(asset.get("id")))
-                HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
-                HISTORY_FILE.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-                raise RuntimeError(
-                    f"Near-duplicate visual detected for shot '{query}' (perceptual distance {duplicate['distance']}). "
-                    "The renderer stopped rather than reuse a visually similar asset."
-                )
-            asset["visual_hashes"] = asset_visual_hashes
-            current_visual_hashes.extend(asset_visual_hashes)
-            if str(asset.get("source", "")).lower().startswith("openai"):
-                asset["id"] = "openai:" + fingerprint[:20]
             used_hashes.add(fingerprint)
+            current_visual_hashes.extend(asset_visual_hashes)
 
             shot_path = WORK / f"scene_{index:02}_shot_{shot_index:02}.mp4"
             render_scene(media_path, shot_path, shot_seconds, width, height, is_image)
