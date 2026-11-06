@@ -121,6 +121,7 @@ jobs:
             output/scene_plan.json
             output/visual_manifest.json
             visual_policy.json
+            shorts_policy.json
             visual_history/used_assets.json
             output/description.txt
             output/background_music_credit.txt
