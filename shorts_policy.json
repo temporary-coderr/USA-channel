@@ -1,0 +1,62 @@
+{
+  "channel": "WISE-LAB",
+  "format": "YouTube Shorts",
+  "audience": "United States",
+  "language": "en-US",
+  "video": {
+    "aspect_ratio": "9:16",
+    "resolution": "1080x1920",
+    "frame_rate": 30,
+    "preferred_duration_seconds": "30-60",
+    "platform_maximum_seconds": 180,
+    "initial_script_guidance_words_at_140_wpm": "about 70-140; rendered narration duration is authoritative"
+  },
+  "story": {
+    "opening": "Begin immediately with a strong, specific hook. No channel intro.",
+    "body": "Cover one psychology idea, ground it in a relatable example, and explain the insight accurately.",
+    "ending": "Close with a memorable takeaway or thoughtful question. Use a subtle follow prompt only when natural.",
+    "do_not": [
+      "Do not simply crop a long-form video into a Short.",
+      "Do not cram several unrelated psychology topics into one Short.",
+      "Do not use unsupported study claims or present correlation as causation.",
+      "Do not force a CTA that interrupts the story."
+    ]
+  },
+  "visuals": {
+    "portrait_first": true,
+    "prefer_native_portrait_stock_and_ai_assets": true,
+    "avoid_landscape_crop_when_a_suitable_portrait_asset_exists": true,
+    "visual_change_target_seconds": "about 1-3 when it helps the story; clarity takes priority over a rigid cut timer",
+    "use_topic_specific_vertical_diagrams_when_helpful": true,
+    "use_original_male_character_library_with_varied_poses": true,
+    "no_repeated_visual_sequences": true,
+    "share_asset_history_with_long_form_to_avoid_cross_format_reuse": true
+  },
+  "captions": {
+    "burned_in": true,
+    "large_and_mobile_readable": true,
+    "high_contrast": true,
+    "respect_top_and_bottom_platform_ui_safe_areas": true,
+    "highlight_key_words_selectively": true
+  },
+  "audio": {
+    "voice": "Keep the approved en-US-AndrewNeural male voice and current rate unchanged.",
+    "music": "Choose mood-matched instrumental music, rotate tracks, verify commercial-use licence, and keep narration clearly above music.",
+    "intro_outro": "None"
+  },
+  "brand": {
+    "identity": "WISE-LAB psychology and human behaviour",
+    "editing_identity": "Fast, cinematic psychology explainers, distinct from long-form documentary pacing.",
+    "consistent_branding_episode_specific_art_direction": true
+  },
+  "human_review": [
+    "Does the first second create a clear reason to keep watching?",
+    "Does every visual illustrate the exact narration?",
+    "Are captions readable and outside interface overlays?",
+    "Is the narration always intelligible above music?",
+    "Does the ending complete the idea rather than cut off?",
+    "Does this Short offer an original angle rather than duplicate a long-form edit?",
+    "Are all research claims verified and all media licences checked?"
+  ],
+  "note": "These are editorial targets, not fixed quotas or a guarantee of reach, monetization, or YouTube Partner Program approval."
+}
