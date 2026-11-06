@@ -929,9 +929,15 @@ def overlay_wise_lab_character(video: Path, pose_png: Path, seconds: float,
     margin = int(width * (0.035 if vertical else 0.025))
     side = "right" if (shot_number // 3) % 2 else "left"
     if side == "left":
-        x_expr = f"if(lt(t,0.32),-overlay_w+(overlay_w+{margin})*t/0.32,{margin})"
+        x_expr = (
+            f"if(lt(t,0.32),-overlay_w+(overlay_w+{margin})*t/0.32,"
+            f"if(gt(t,{seconds:.3f}-0.32),{margin}-(overlay_w+{margin})*(t-({seconds:.3f}-0.32))/0.32,{margin}))"
+        )
     else:
-        x_expr = f"if(lt(t,0.32),main_w-(overlay_w+{margin})*t/0.32,main_w-overlay_w-{margin})"
+        x_expr = (
+            f"if(lt(t,0.32),main_w-(overlay_w+{margin})*t/0.32,"
+            f"if(gt(t,{seconds:.3f}-0.32),main_w-overlay_w-{margin}+(overlay_w+{margin})*(t-({seconds:.3f}-0.32))/0.32,main_w-overlay_w-{margin}))"
+        )
     temp = video.with_name(video.stem + "_character.mp4")
     enable_end = max(0.08, seconds - 0.08)
     filter_graph = (
