@@ -44,11 +44,13 @@ For a manual render without changing the script:
 - **Narration:** Microsoft Edge-TTS, `en-US-AndrewNeural`, rate `+5%`. This setting is intentionally kept unchanged.
 - **Long-form:** 1920×1080, 30 fps, 5-second WISE LAB intro and 7-second branded outro.
 - **Shorts:** 1080×1920, 30 fps, no intro or outro; the renderer rejects scripts longer than 400 words.
-- **Visuals:** Pixabay first, optional Pexels fallback, Openverse still-image fallback, and up to six selective OpenAI-generated stills when `OPENAI_API_KEY` is configured.
+- **Audience direction:** English-language psychology and human-behaviour explainers for a primarily US audience. Use natural US English and US-relevant everyday settings/examples when the script calls for them; do not force US references into universal topics.
+- **Visuals:** Pixabay first, optional Pexels fallback, Openverse still-image fallback, and up to six selective OpenAI-generated stills when `OPENAI_API_KEY` is configured. Every episode should use topic-specific visual storytelling, original diagrams/graphics where they genuinely explain an idea, and varied male character poses. The approved male Edge-TTS voice remains unchanged.
 - **Editing:** narration-specific visual cuts targeted around every three seconds, restrained motion, colour treatment and short cross-dissolves.
 - **Captions:** burned-in phrase captions plus SRT/ASS sidecars. Timing is estimated from narration segment duration; it is not word-level speech recognition.
 - **Music:** rotating Openverse tracks filtered for CC0/CC BY and commercial-use/modification permissions when a suitable unused track is available. If no suitable track is found, the video renders without BGM rather than using the old synthetic bed.
-- **Asset history:** provider IDs and SHA-256 fingerprints are recorded to reduce exact asset reuse. Hashes do not detect visually similar crops, edits or re-encodes.
+- **Asset history:** provider IDs and SHA-256 fingerprints are recorded. New assets also receive perceptual difference-hash fingerprints (three sampled frames for video) to reject many resized/re-encoded or near-identical visuals. This is a practical similarity guard, not perfect visual understanding; old history entries without perceptual hashes remain protected by provider IDs and exact hashes.
+- **Visual freshness:** the renderer fails closed when it detects a near-duplicate rather than silently recycling it. A failed visual check may require a fresh render/search result; do not delete history to bypass the guard.
 - **Upload:** YouTube privacy is locked to **Private** in `upload_youtube.py`. Public publishing must be done manually by the channel owner.
 
 ## Technical QA and review pack
