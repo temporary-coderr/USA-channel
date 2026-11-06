@@ -34,6 +34,9 @@ jobs:
       OPENAI_IMAGE_QUALITY: medium
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       AI_IMAGES_PER_VIDEO: "6"
+      WISE_LAB_TARGET_MARKET: US
+      WISE_LAB_CONTENT_LANGUAGE: en-US
+      WISE_LAB_VISUAL_UNIQUENESS: strict
       EDGE_TTS_VOICE: en-US-AndrewNeural
       EDGE_TTS_RATE: "+5%"
       VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
