@@ -82,8 +82,13 @@ def main() -> int:
                 errors.append("Final MP4 duration or file size is implausibly small.")
             if not VERTICAL and duration < 240:
                 warnings.append("Long-form video is under 4 minutes; check whether the script/render is complete.")
-            if VERTICAL and duration > 180:
-                errors.append("Shorts render exceeds YouTube's 3-minute limit.")
+            if VERTICAL:
+                if duration > 180:
+                    errors.append("Shorts render exceeds YouTube's 3-minute limit.")
+                if duration < 30:
+                    warnings.append("Short is under the preferred 30-second starting target; check whether the idea feels complete.")
+                elif duration > 60:
+                    warnings.append("Short is over the preferred 60-second starting target; tighten only if doing so preserves the explanation.")
         except Exception as exc:
             errors.append("ffprobe could not validate the final MP4: " + str(exc))
 
@@ -169,6 +174,13 @@ def main() -> int:
         "- [ ] Check every visual against the exact narration; remove irrelevant, repeated, awkward or misleading shots.",
         "- [ ] Check captions for spelling, timing, readability, safe margins and correct names.",
         "- [ ] Check transitions, pacing, no unintended black/frozen frames, and no abrupt audio cuts.",
+        *([
+            "- [ ] Confirm the opening works immediately without an intro and the first frame communicates the topic.",
+            "- [ ] Confirm vertical captions and key visuals stay clear of top/bottom app interface safe areas.",
+            "- [ ] Check for purposeful visual changes roughly every 1–3 seconds where appropriate; do not sacrifice clarity for speed.",
+            "- [ ] Confirm this is a Short-specific story/edit, not merely a landscape video cropped to 9:16.",
+            "- [ ] Confirm there is no long-form intro/outro and the final thought is complete."
+        ] if VERTICAL else []),
         "- [ ] Check thumbnail, title and description accurately represent the episode; no exaggerated promise or misleading claim.",
         "",
         "## Evidence and rights",
