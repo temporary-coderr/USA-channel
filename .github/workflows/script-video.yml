@@ -100,6 +100,19 @@ jobs:
       - name: Create edited WISE LAB video
         run: python render_script.py
 
+      - name: Record script only after a video has rendered
+        run: |
+          python editorial_gate.py --record-rendered
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add editorial_history/rendered_scripts.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Record successfully rendered WISE LAB script"
+            git push origin HEAD:main
+          else
+            echo "Rendered script was already recorded."
+          fi
+
       - name: Run technical quality checks and prepare human review pack
         run: python quality_check.py
 
