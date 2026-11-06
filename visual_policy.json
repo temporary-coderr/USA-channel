@@ -49,5 +49,53 @@
     "do_not_present_ai_images_as_real_evidence": true,
     "verify_research_claims_against_primary_sources": true
   },
-  "note": "Editorial targets guide creative production; they are not YouTube monetization guarantees or fixed visual quotas."
+  "note": "Editorial targets guide creative production; they are not YouTube monetization guarantees or fixed visual quotas.",
+  "shorts_editorial_rules": {
+    "format": "vertical 9:16, 1080x1920, 30 fps",
+    "positioning": "fast, cinematic psychology explainers; distinct from long-form documentary edits",
+    "initial_duration_target_seconds": {
+      "minimum": 30,
+      "maximum": 60,
+      "hard_platform_limit_seconds": 180
+    },
+    "script_word_guidance_at_140_wpm": "approximately 70–140 words for the preferred 30–60 second cut; actual duration is determined by rendered narration",
+    "opening": "start immediately with a specific curiosity gap, surprising observation, relatable moment or question; no channel intro",
+    "story_shape": [
+      "one focused psychological idea",
+      "one concrete example or mini-scenario",
+      "one clear explanation or evidence-aware insight",
+      "one memorable takeaway or thoughtful closing question"
+    ],
+    "ending": "finish with a complete thought; optional subtle WISE-LAB follow/next-video prompt only when it fits naturally",
+    "editing": {
+      "visual_change_target_seconds": "about 1–3 seconds when the narration and available footage support it; do not force cuts that weaken comprehension",
+      "use_portrait_assets_first": true,
+      "generate_portrait_ai_stills_when_useful": true,
+      "avoid_landscape_crop_when_a_portrait_asset_is_available": true,
+      "use_custom_vertical_diagrams_for_explanations": true,
+      "vary_shot_scale_motion_and_character_pose": true,
+      "no_long_form_intro_or_outro": true
+    },
+    "captions": {
+      "burned_in": true,
+      "large_mobile_readable": true,
+      "high_contrast": true,
+      "keep_away_from_platform_ui_safe_areas": true,
+      "emphasize_only_key_words": true
+    },
+    "audio": {
+      "keep_approved_male_en_us_voice_unchanged": true,
+      "use_short_form_mood_matched_instrumental": true,
+      "rotate_tracks_and_check_commercial_license": true,
+      "voice_must_remain_clear_above_music": true
+    },
+    "originality": {
+      "do_not_repurpose_long_form_as_a_simple_crop": true,
+      "do_not_repeat_the_same_visual_sequence": true,
+      "check_visual_history_across_both_formats": true,
+      "reuse_brand_character_identity_only_with_new_pose_expression_and_composition": true,
+      "every_short_must_add_a_distinct_angle_or_new_explanation": true
+    },
+    "review": "Check hook strength, first-frame clarity, caption safe areas, pacing, ending completeness, music balance, and whether every shot supports the narration."
+  }
 }
