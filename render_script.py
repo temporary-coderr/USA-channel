@@ -1434,7 +1434,7 @@ def main() -> int:
                         rejected_ids.append(rejected_id)
                     HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
                     HISTORY_FILE.write_text(
-                        json.dumps(history, indent=2, ensure_ascii=False) + "\\n",
+                        json.dumps(history, indent=2, ensure_ascii=False) + "\n",
                         encoding="utf-8"
                     )
                     print(
@@ -1454,7 +1454,7 @@ def main() -> int:
                         rejected_ids.append(rejected_id)
                     HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
                     HISTORY_FILE.write_text(
-                        json.dumps(history, indent=2, ensure_ascii=False) + "\\n",
+                        json.dumps(history, indent=2, ensure_ascii=False) + "\n",
                         encoding="utf-8"
                     )
                     print(f"Visual candidate failed validation/download: {exc}; trying another candidate.")
