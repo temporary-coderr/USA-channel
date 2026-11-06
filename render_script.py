@@ -829,6 +829,127 @@ def merge_scene_transitions(scene_paths: list[Path], durations: list[float],
     ]
     run(command)
 
+
+def prepare_wise_lab_character(work_dir: Path) -> dict[str, Path]:
+    """Render four original transparent SVG poses for the recurring WISE LAB guide."""
+    converter = shutil.which("rsvg-convert")
+    if not converter:
+        raise RuntimeError("rsvg-convert is required for the WISE LAB 2D character. Install librsvg2-bin.")
+    target = work_dir / "wise_lab_character"
+    target.mkdir(parents=True, exist_ok=True)
+    poses = {
+        "explaining": (
+            '<path d="M168 468 Q105 520 128 620 L155 660" fill="none" stroke="#F1F5F9" stroke-width="42" stroke-linecap="round"/>'
+            '<path d="M350 465 Q405 430 415 365 L426 330" fill="none" stroke="#F1F5F9" stroke-width="42" stroke-linecap="round"/>'
+            '<circle cx="428" cy="316" r="25" fill="#E8B98D" stroke="#26364A" stroke-width="7"/>'
+        ),
+        "pointing": (
+            '<path d="M168 468 Q105 520 128 620 L155 660" fill="none" stroke="#F1F5F9" stroke-width="42" stroke-linecap="round"/>'
+            '<path d="M350 465 Q410 450 445 430 L480 420" fill="none" stroke="#F1F5F9" stroke-width="42" stroke-linecap="round"/>'
+            '<path d="M466 419 L505 408" fill="none" stroke="#E8B98D" stroke-width="17" stroke-linecap="round"/>'
+        ),
+        "thinking": (
+            '<path d="M168 468 Q105 520 128 620 L155 660" fill="none" stroke="#F1F5F9" stroke-width="42" stroke-linecap="round"/>'
+            '<path d="M350 465 Q405 430 370 350 L330 315" fill="none" stroke="#F1F5F9" stroke-width="42" stroke-linecap="round"/>'
+            '<circle cx="320" cy="306" r="24" fill="#E8B98D" stroke="#26364A" stroke-width="7"/>'
+        ),
+        "surprised": (
+            '<path d="M168 468 Q95 430 82 350 L75 315" fill="none" stroke="#F1F5F9" stroke-width="42" stroke-linecap="round"/>'
+            '<circle cx="73" cy="300" r="25" fill="#E8B98D" stroke="#26364A" stroke-width="7"/>'
+            '<path d="M350 465 Q425 430 438 350 L445 315" fill="none" stroke="#F1F5F9" stroke-width="42" stroke-linecap="round"/>'
+            '<circle cx="447" cy="300" r="25" fill="#E8B98D" stroke="#26364A" stroke-width="7"/>'
+        ),
+    }
+    for name, arms in poses.items():
+        svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="520" height="900" viewBox="0 0 520 900">
+<defs>
+ <linearGradient id="coat" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE7F0"/></linearGradient>
+ <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#39D6D0"/><stop offset="1" stop-color="#159B9A"/></linearGradient>
+</defs>
+<!-- Original WISE LAB guide: transparent background, clean editorial vector style -->
+<ellipse cx="260" cy="858" rx="130" ry="19" fill="#071321" opacity=".18"/>
+<!-- legs -->
+<path d="M205 735 L195 830 Q194 850 218 850 L245 850 L260 744" fill="#23364D"/>
+<path d="M285 744 L300 830 Q301 850 324 850 L351 850 Q358 831 337 824 L324 735" fill="#23364D"/>
+<path d="M194 838 Q215 827 247 840 L247 861 L184 861 Q180 848 194 838Z" fill="#101F31"/>
+<path d="M302 838 Q326 827 351 840 L365 861 L303 861Z" fill="#101F31"/>
+<!-- coat silhouette -->
+<path d="M176 420 Q130 444 124 535 L139 760 Q260 792 381 760 L396 535 Q390 444 344 420 L305 400 L215 400Z" fill="url(#coat)" stroke="#26364A" stroke-width="9" stroke-linejoin="round"/>
+<!-- shirt and collar -->
+<path d="M213 405 L260 458 L307 405 L292 390 L228 390Z" fill="#14283E"/>
+<path d="M238 414 L260 449 L282 414 L272 400 L248 400Z" fill="url(#teal)"/>
+<path d="M260 449 L248 490 L260 515 L272 490Z" fill="#159B9A"/>
+<!-- arms, pose-specific -->
+{arms}
+<!-- coat lapels and pocket -->
+<path d="M213 411 L178 475 L218 540 L245 462Z" fill="#FFFFFF" stroke="#26364A" stroke-width="7" stroke-linejoin="round"/>
+<path d="M307 411 L342 475 L302 540 L275 462Z" fill="#EAF1F6" stroke="#26364A" stroke-width="7" stroke-linejoin="round"/>
+<path d="M305 604 L357 604 L357 670 L305 670Z" fill="#D9E7EF" stroke="#26364A" stroke-width="6"/>
+<path d="M316 622 L346 622" stroke="#39D6D0" stroke-width="7" stroke-linecap="round"/>
+<text x="330" y="654" font-family="DejaVu Sans, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#1C5260">WISE</text>
+<!-- neck and head -->
+<path d="M226 366 L226 418 Q260 450 294 418 L294 366Z" fill="#D99E72" stroke="#26364A" stroke-width="7"/>
+<ellipse cx="260" cy="250" rx="111" ry="133" fill="#E8B98D" stroke="#26364A" stroke-width="9"/>
+<!-- hair -->
+<path d="M150 231 Q135 126 224 112 Q315 84 367 161 Q387 191 369 235 Q351 204 327 193 Q291 218 243 195 Q202 226 150 231Z" fill="#253348" stroke="#17263A" stroke-width="9" stroke-linejoin="round"/>
+<path d="M158 220 Q177 177 214 164" fill="none" stroke="#53657A" stroke-width="12" stroke-linecap="round"/>
+<!-- ears -->
+<ellipse cx="150" cy="263" rx="18" ry="29" fill="#E8B98D" stroke="#26364A" stroke-width="7"/>
+<ellipse cx="370" cy="263" rx="18" ry="29" fill="#E8B98D" stroke="#26364A" stroke-width="7"/>
+<!-- glasses -->
+<g fill="none" stroke="#23364D" stroke-width="8">
+ <rect x="177" y="238" width="72" height="54" rx="18"/>
+ <rect x="271" y="238" width="72" height="54" rx="18"/>
+ <path d="M249 258 Q260 249 271 258"/>
+</g>
+<!-- eyes and brows -->
+<path d="M193 225 Q211 214 231 224 M289 224 Q310 214 328 225" fill="none" stroke="#26364A" stroke-width="8" stroke-linecap="round"/>
+<ellipse cx="214" cy="263" rx="8" ry="11" fill="#17263A"/>
+<ellipse cx="306" cy="263" rx="8" ry="11" fill="#17263A"/>
+<path d="M260 268 L250 310 L267 313" fill="none" stroke="#B77958" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M235 340 Q260 358 285 340" fill="none" stroke="#8F4D47" stroke-width="7" stroke-linecap="round"/>
+<!-- subtle cheek accents -->
+<ellipse cx="190" cy="316" rx="17" ry="8" fill="#D98278" opacity=".22"/>
+<ellipse cx="330" cy="316" rx="17" ry="8" fill="#D98278" opacity=".22"/>
+</svg>"""
+        svg_path = target / f"{name}.svg"
+        png_path = target / f"{name}.png"
+        svg_path.write_text(svg, encoding="utf-8")
+        run([converter, "-w", "520", "-h", "900", "-o", str(png_path), str(svg_path)])
+        if not png_path.exists() or png_path.stat().st_size < 1000:
+            raise RuntimeError(f"Could not render WISE LAB character pose: {name}")
+    return {name: target / f"{name}.png" for name in poses}
+
+
+def overlay_wise_lab_character(video: Path, pose_png: Path, seconds: float,
+                               width: int, height: int, shot_number: int) -> None:
+    """Animate the guide entering, gently bobbing, and exiting over selected shots."""
+    vertical = height > width
+    character_height = int(height * (0.27 if vertical else 0.44))
+    margin = int(width * (0.035 if vertical else 0.025))
+    side = "right" if (shot_number // 3) % 2 else "left"
+    if side == "left":
+        x_expr = f"if(lt(t,0.32),-overlay_w+(overlay_w+{margin})*t/0.32,{margin})"
+    else:
+        x_expr = f"if(lt(t,0.32),main_w-(overlay_w+{margin})*t/0.32,main_w-overlay_w-{margin})"
+    temp = video.with_name(video.stem + "_character.mp4")
+    enable_end = max(0.08, seconds - 0.08)
+    filter_graph = (
+        f"[1:v]scale=-1:{character_height},format=rgba[guide];"
+        f"[0:v][guide]overlay=x='{x_expr}':"
+        f"y='H-h-{int(height * 0.035)}+5*sin(2*PI*t*0.8)':"
+        f"enable='between(t,0.02,{enable_end:.3f})':format=auto[v]"
+    )
+    run([
+        ffmpeg(), "-y", "-i", str(video), "-loop", "1", "-framerate", str(FPS),
+        "-i", str(pose_png), "-filter_complex", filter_graph,
+        "-map", "[v]", "-an", "-t", f"{seconds:.3f}",
+        "-c:v", "libx264", "-preset", "ultrafast" if vertical else "veryfast",
+        "-crf", "23", "-pix_fmt", "yuv420p", str(temp)
+    ])
+    temp.replace(video)
+
+
 def render_scene(media: Path, destination: Path, seconds: float,
                  width: int, height: int, is_image: bool) -> None:
     ff = ffmpeg()
@@ -1170,6 +1291,8 @@ def main() -> int:
         credit_text = "No background music was added: no suitable unused track was available.\n"
     (OUT / "background_music_credit.txt").write_text(credit_text, encoding="utf-8")
     rendered = []
+    character_poses = prepare_wise_lab_character(WORK)
+    print("Original WISE LAB 2D guide enabled: rotating poses, alternating sides, animated entrance and subtle movement.")
 
     shot_number = 0
     target_shot_seconds = 3.0
@@ -1300,6 +1423,14 @@ def main() -> int:
 
             shot_path = WORK / f"scene_{index:02}_shot_{shot_index:02}.mp4"
             render_scene(media_path, shot_path, shot_seconds, width, height, is_image)
+            # The guide appears on roughly one in three three-second cuts; it is not a permanent watermark.
+            if shot_number % 3 == 1:
+                pose_order = ("explaining", "pointing", "thinking", "surprised")
+                pose_name = pose_order[(shot_number // 3) % len(pose_order)]
+                overlay_wise_lab_character(
+                    shot_path, character_poses[pose_name], shot_seconds,
+                    width, height, shot_number
+                )
             shot_paths.append(shot_path)
             shot_durations.append(shot_seconds)
             shot_number += 1
