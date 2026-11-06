@@ -1,0 +1,40 @@
+{
+  "channel": "WISE-LAB",
+  "primary_market": "United States",
+  "language": "en-US",
+  "niche": "psychology and human behaviour",
+  "content_pillars": [
+    "brain and neuroscience",
+    "human behaviour",
+    "relationships and social psychology",
+    "mental strength and personal development grounded in psychology",
+    "psychological experiments and research",
+    "cognitive biases and decision making",
+    "sleep, dreams and the subconscious",
+    "psychology of modern life and digital behaviour"
+  ],
+  "visual_editorial_rules": {
+    "no_unnecessary_asset_reuse": true,
+    "track_provider_ids": true,
+    "track_sha256": true,
+    "track_perceptual_hashes": true,
+    "topic_specific_diagrams": true,
+    "custom_ai_visuals_when_useful": true,
+    "male_character_library": {
+      "planned_count": 6,
+      "gender_presentation": "male",
+      "roles": ["professor", "researcher", "thinker", "observer", "everyday man", "mentor"],
+      "reuse_character_identity_but_vary_pose_expression_and_composition": true
+    },
+    "stock_footage_is_not_filler": true,
+    "avoid_repeating_scene_sequences": true,
+    "consistent_branding_with_episode_specific_art_direction": true,
+    "visuals_must_support_or_explain_narration": true
+  },
+  "commercial_safety": {
+    "record_source_and_license": true,
+    "do_not_present_ai_images_as_real_evidence": true,
+    "verify_research_claims_against_primary_sources": true
+  },
+  "note": "Editorial targets guide creative production; they are not YouTube monetization guarantees or fixed visual quotas."
+}
