@@ -107,7 +107,10 @@ def main() -> int:
         try:
             assets = json.loads(manifest_file.read_text(encoding="utf-8"))
             hashes = [str(a.get("sha256")) for a in assets if a.get("sha256")]
+            perceptual = [h for a in assets for h in (a.get("visual_hashes") or [])]
             metrics["visual_cut_count"] = len(assets)
+            metrics["perceptual_fingerprint_count"] = len(perceptual)
+            metrics["original_diagram_count"] = sum(1 for a in assets if "wise-lab original diagram" in str(a.get("source", "")).lower())
             metrics["visual_source_counts"] = dict(Counter(str(a.get("source") or "Pixabay") for a in assets))
             metrics["ai_visual_count"] = sum(1 for a in assets if "openai" in str(a.get("source", "")).lower())
             if len(assets) < 5:
@@ -116,6 +119,8 @@ def main() -> int:
                 errors.append("At least one visual has no SHA-256 fingerprint.")
             if len(set(hashes)) != len(hashes):
                 errors.append("Duplicate visual fingerprints were found within this video.")
+            if len(perceptual) < len(assets):
+                errors.append("At least one visual is missing perceptual fingerprints; visual reuse checks are incomplete.")
             long_cuts = [a for a in assets if float(a.get("shot_duration_seconds") or 0) > 6.5]
             if long_cuts:
                 warnings.append(f"{len(long_cuts)} visual cut(s) exceed 6.5 seconds; check pacing and relevance.")
