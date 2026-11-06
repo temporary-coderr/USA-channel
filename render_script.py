@@ -205,7 +205,9 @@ def load_visual_history() -> tuple[dict, set[str]]:
     except (OSError, json.JSONDecodeError):
         raise RuntimeError("visual_history/used_assets.json is invalid JSON. Fix or reset this history file.")
     assets = history.get("assets", [])
-    return history, {str(item.get("id")) for item in assets if item.get("id") is not None}
+    used_ids = {str(item.get("id")) for item in assets if item.get("id") is not None}
+    used_ids.update(str(item) for item in history.get("rejected_ids", []))
+    return history, used_ids
 
 
 def pixabay_search(endpoint: str, params: dict) -> dict:
@@ -247,8 +249,7 @@ def find_video(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict
             "key": key, "q": query, "video_type": "film",
             "safesearch": "true", "per_page": 200, "page": page,
         })
-        asset = _pick_video_hit(data.get("hits", []), used_ids, vertical, query)
-        if asset:            return asset        if page * 200 >= data.get("totalHits", 0):
+        asset = _pick_video_hit(data.get("hits", []), used_ids, vertical, query)        if asset:            return asset        if page * 200 >= data.get("totalHits", 0):
             break
     return None
 
@@ -497,8 +498,7 @@ def probe_duration(path: Path) -> float:
 
 def split_tts_text(text: str, limit: int = 1800) -> list[str]:
     sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", text.strip())
-    chunks, current = [], ""    for sentence in sentences:
-        sentence = sentence.strip()        if not sentence:
+    chunks, current = [], ""    for sentence in sentences:        sentence = sentence.strip()        if not sentence:
             continue
         if len(sentence.encode("utf-16-le")) // 2 > limit:
             for word in sentence.split():
@@ -747,8 +747,7 @@ def ass_timestamp(seconds: float) -> str:
 
 
 def make_highlight_captions(scenes: list[dict], path: Path,                            durations: list[float], vertical: bool,                            offset: float = 0.0) -> None:
-    """Create readable ASS captions with a teal karaoke highlight on each estimated spoken word."""
-    font_size = 54 if vertical else 48
+    """Create readable ASS captions with a teal karaoke highlight on each estimated spoken word."""    font_size = 54 if vertical else 48
     margin_v = 170 if vertical else 88
     header = (
         "[Script Info]\n"
@@ -997,8 +996,7 @@ def make_brand_clip(destination: Path, duration: float, width: int, height: int,
     ff = ffmpeg()
     font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"    regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"    # The sound is synthesized from simple tones for this channel; no stock music is used.
     audio = (
-        "aevalsrc=0.075*sin(2*PI*220*t)+0.055*sin(2*PI*277.18*t)"
-        "+0.045*sin(2*PI*329.63*t)+0.025*sin(2*PI*440*t):s=48000:d="
+        "aevalsrc=0.075*sin(2*PI*220*t)+0.055*sin(2*PI*277.18*t)"        "+0.045*sin(2*PI*329.63*t)+0.025*sin(2*PI*440*t):s=48000:d="
         f"{duration:.3f},"
         f"afade=t=in:st=0:d=0.8,afade=t=out:st={max(0.1, duration - 1.0):.3f}:d=1"
     )
@@ -1247,8 +1245,7 @@ def main() -> int:
             "That is too long for a YouTube Short. Choose landscape for this script, "
             "or prepare a Shorts script of 400 words or fewer."        )
     OUT.mkdir(exist_ok=True)    WORK.mkdir(exist_ok=True)
-    vertical = FORMAT == "shorts"
-    width, height = (1080, 1920) if vertical else (1920, 1080)
+    vertical = FORMAT == "shorts"    width, height = (1080, 1920) if vertical else (1920, 1080)
     key = required_env("PIXABAY_API_KEY")
     pexels_key = os.getenv("PEXELS_API_KEY", "").strip()
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
@@ -1452,6 +1449,12 @@ def main() -> int:
             duplicate = find_visual_duplicate(asset_visual_hashes, historical_visual_hashes + current_visual_hashes, max_distance=5)
             if duplicate:
                 media_path.unlink(missing_ok=True)
+                # Persist the rejected provider ID so the next run can move on to a fresh result.
+                rejected_ids = history.setdefault("rejected_ids", [])
+                if str(asset.get("id")) not in rejected_ids:
+                    rejected_ids.append(str(asset.get("id")))
+                HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+                HISTORY_FILE.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
                 raise RuntimeError(
                     f"Near-duplicate visual detected for shot '{query}' (perceptual distance {duplicate['distance']}). "
                     "The renderer stopped rather than reuse a visually similar asset."
@@ -1497,8 +1500,7 @@ def main() -> int:
     caption_filter = f"subtitles='{caption_filter_path}'"
     content_final = WORK / ("content_shorts.mp4" if vertical else "content_landscape.mp4")
     # Shorts use a faster encoder preset to reduce GitHub runner time while
-    # retaining 1080x1920, 30 FPS, and high-quality H.264 output.
-    caption_preset = "ultrafast" if vertical else "medium"
+    # retaining 1080x1920, 30 FPS, and high-quality H.264 output.    caption_preset = "ultrafast" if vertical else "medium"
     caption_crf = "22" if vertical else "20"
     run([ffmpeg(), "-y", "-i", str(silent), "-vf", caption_filter,
          "-an", "-c:v", "libx264", "-preset", caption_preset, "-crf", caption_crf,
