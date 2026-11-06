@@ -1,0 +1,38 @@
+name: WISE LAB visual pipeline checks
+
+on:
+  push:
+    paths:
+      - "render_script.py"
+      - "visual_uniqueness.py"
+      - "custom_diagrams.py"
+      - "requirements.txt"
+      - "visual_policy.json"
+      - ".github/workflows/visual-integrity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-import-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Compile WISE LAB Python modules
+        run: python -m py_compile render_script.py visual_uniqueness.py custom_diagrams.py editorial_gate.py quality_check.py upload_youtube.py
+
+      - name: Validate visual policy JSON
+        run: python -m json.tool visual_policy.json > /dev/null
