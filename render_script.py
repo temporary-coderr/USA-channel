@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import requests
+from visual_uniqueness import visual_fingerprints, find_visual_duplicate
 
 ROOT = Path(__file__).resolve().parent
 SCRIPT = Path(os.getenv("SCRIPT_FILE", "scripts/script.txt"))
@@ -247,8 +248,7 @@ def find_video(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict
         })
         asset = _pick_video_hit(data.get("hits", []), used_ids, vertical, query)
         if asset:
-            return asset
-        if page * 200 >= data.get("totalHits", 0):
+            return asset        if page * 200 >= data.get("totalHits", 0):
             break
     return None
 
@@ -373,7 +373,9 @@ def build_ai_image_prompt(shot_text: str, query: str, vertical: bool, groq_key: 
         "communicates this idea: " + shot_text[:700] + ". "
         "Visual subject keywords: " + query + ". "
         "Use natural human expressions, realistic anatomy, subtle emotion, tasteful "
-        "cinematic lighting, authentic contemporary environments, clear composition, "
+        "cinematic lighting, authentic contemporary US environments when relevant, clear composition, "
+        "vary camera angle, subject placement, time of day, environment and visual metaphor from prior shots. "
+        "Never recreate a previously used composition or reuse a prior episode's visual. "
         "editorial photography, nuanced colors, and a visually interesting foreground. "
         "No text, no letters, no logos, no watermark, no infographic, no collage, "
         "no split screen, no exaggerated facial expressions, no surreal anatomy."
@@ -497,8 +499,7 @@ def split_tts_text(text: str, limit: int = 1800) -> list[str]:
     sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", text.strip())
     chunks, current = [], ""
     for sentence in sentences:
-        sentence = sentence.strip()
-        if not sentence:
+        sentence = sentence.strip()        if not sentence:
             continue
         if len(sentence.encode("utf-16-le")) // 2 > limit:
             for word in sentence.split():
@@ -747,8 +748,7 @@ def ass_timestamp(seconds: float) -> str:
 
 
 def make_highlight_captions(scenes: list[dict], path: Path,
-                            durations: list[float], vertical: bool,
-                            offset: float = 0.0) -> None:
+                            durations: list[float], vertical: bool,                            offset: float = 0.0) -> None:
     """Create readable ASS captions with a teal karaoke highlight on each estimated spoken word."""
     font_size = 54 if vertical else 48
     margin_v = 170 if vertical else 88
@@ -997,8 +997,7 @@ def make_brand_clip(destination: Path, duration: float, width: int, height: int,
                     headline: str, subtitle: str, footer: str) -> None:
     """Create an original WISE LAB ident with a custom synthesized ambient music bed."""
     ff = ffmpeg()
-    font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"    regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     # The sound is synthesized from simple tones for this channel; no stock music is used.
     audio = (
         "aevalsrc=0.075*sin(2*PI*220*t)+0.055*sin(2*PI*277.18*t)"
@@ -1247,8 +1246,7 @@ def main() -> int:
         raise RuntimeError(
             f"This script has {word_count} words (about {estimated_minutes:.1f} minutes at 140 WPM). "
             "That is too long for a YouTube Short. Choose landscape for this script, "
-            "or prepare a Shorts script of 400 words or fewer."
-        )
+            "or prepare a Shorts script of 400 words or fewer."        )
     OUT.mkdir(exist_ok=True)
     WORK.mkdir(exist_ok=True)
     vertical = FORMAT == "shorts"
@@ -1265,6 +1263,8 @@ def main() -> int:
     history, historical_ids = load_visual_history()
     used_ids = set(historical_ids)
     used_hashes = {str(item.get('sha256')) for item in history.get('assets', []) if item.get('sha256')}
+    historical_visual_hashes = [h for item in history.get('assets', []) for h in item.get('visual_hashes', [])]
+    current_visual_hashes = []
     selected_assets = []
 
     voice_segments = []
@@ -1427,6 +1427,16 @@ def main() -> int:
                     "The bot stopped rather than reuse a previously downloaded asset."
                 )
             asset["sha256"] = fingerprint
+            asset_visual_hashes = visual_fingerprints(media_path, is_video=not is_image)
+            duplicate = find_visual_duplicate(asset_visual_hashes, historical_visual_hashes + current_visual_hashes, max_distance=5)
+            if duplicate:
+                media_path.unlink(missing_ok=True)
+                raise RuntimeError(
+                    f"Near-duplicate visual detected for shot '{query}' (perceptual distance {duplicate['distance']}). "
+                    "The renderer stopped rather than reuse a visually similar asset."
+                )
+            asset["visual_hashes"] = asset_visual_hashes
+            current_visual_hashes.extend(asset_visual_hashes)
             if str(asset.get("source", "")).lower().startswith("openai"):
                 asset["id"] = "openai:" + fingerprint[:20]
             used_hashes.add(fingerprint)
@@ -1497,8 +1507,7 @@ def main() -> int:
                 **history_item,
                 "used_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
                 "format": FORMAT,
-                "script_file": str(SCRIPT),
-            })
+                "script_file": str(SCRIPT),            })
             existing_history_ids.add(str(asset["id"]))
     HISTORY_FILE.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     manifest_assets = [
