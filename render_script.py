@@ -833,8 +833,9 @@ def merge_scene_transitions(scene_paths: list[Path], durations: list[float],
 def prepare_wise_lab_character(work_dir: Path) -> dict[str, Path]:
     """Render four original transparent SVG poses for the recurring WISE LAB guide."""
     converter = shutil.which("rsvg-convert")
+    cairosvg = None
     if not converter:
-        raise RuntimeError("rsvg-convert is required for the WISE LAB 2D character. Install librsvg2-bin.")
+        import cairosvg
     target = work_dir / "wise_lab_character"
     target.mkdir(parents=True, exist_ok=True)
     poses = {
@@ -915,7 +916,10 @@ def prepare_wise_lab_character(work_dir: Path) -> dict[str, Path]:
         svg_path = target / f"{name}.svg"
         png_path = target / f"{name}.png"
         svg_path.write_text(svg, encoding="utf-8")
-        run([converter, "-w", "520", "-h", "900", "-o", str(png_path), str(svg_path)])
+        if converter:
+            run([converter, "-w", "520", "-h", "900", "-o", str(png_path), str(svg_path)])
+        else:
+            cairosvg.svg2png(url=str(svg_path), write_to=str(png_path), output_width=520, output_height=900)
         if not png_path.exists() or png_path.stat().st_size < 1000:
             raise RuntimeError(f"Could not render WISE LAB character pose: {name}")
     return {name: target / f"{name}.png" for name in poses}
