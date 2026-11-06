@@ -127,6 +127,8 @@ jobs:
             output/review_checklist.md
             scripts/research_notes.md
             output/wise_lab_logo.svg
+            output/work/wise_lab_character/*.svg
+            output/work/wise_lab_character/*.png
             output/wise_lab_thumbnail.jpg
             output/youtube_video_url.txt
           retention-days: 7
