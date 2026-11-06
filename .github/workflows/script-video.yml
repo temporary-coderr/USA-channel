@@ -84,7 +84,7 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Validate Python syntax before rendering
-        run: python -m py_compile editorial_gate.py render_script.py quality_check.py upload_youtube.py
+        run: python -m py_compile editorial_gate.py render_script.py visual_uniqueness.py quality_check.py upload_youtube.py
 
       - name: Check script and API secrets
         run: |
@@ -120,6 +120,8 @@ jobs:
             output/voiceover_script.txt
             output/scene_plan.json
             output/visual_manifest.json
+            visual_policy.json
+            visual_history/used_assets.json
             output/description.txt
             output/background_music_credit.txt
             output/editorial_review.txt
