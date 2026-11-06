@@ -12,6 +12,7 @@ from pathlib import Path
 
 import requests
 from visual_uniqueness import visual_fingerprints, find_visual_duplicate
+from custom_diagrams import build_topic_diagram
 
 ROOT = Path(__file__).resolve().parent
 SCRIPT = Path(os.getenv("SCRIPT_FILE", "scripts/script.txt"))
@@ -247,8 +248,7 @@ def find_video(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict
             "safesearch": "true", "per_page": 200, "page": page,
         })
         asset = _pick_video_hit(data.get("hits", []), used_ids, vertical, query)
-        if asset:
-            return asset        if page * 200 >= data.get("totalHits", 0):
+        if asset:            return asset        if page * 200 >= data.get("totalHits", 0):
             break
     return None
 
@@ -497,8 +497,7 @@ def probe_duration(path: Path) -> float:
 
 def split_tts_text(text: str, limit: int = 1800) -> list[str]:
     sentences = re.findall(r"[^.!?]+[.!?]+|[^.!?]+$", text.strip())
-    chunks, current = [], ""
-    for sentence in sentences:
+    chunks, current = [], ""    for sentence in sentences:
         sentence = sentence.strip()        if not sentence:
             continue
         if len(sentence.encode("utf-16-le")) // 2 > limit:
@@ -747,8 +746,7 @@ def ass_timestamp(seconds: float) -> str:
     return f"{hours}:{minutes:02}:{secs:02}.{centiseconds:02}"
 
 
-def make_highlight_captions(scenes: list[dict], path: Path,
-                            durations: list[float], vertical: bool,                            offset: float = 0.0) -> None:
+def make_highlight_captions(scenes: list[dict], path: Path,                            durations: list[float], vertical: bool,                            offset: float = 0.0) -> None:
     """Create readable ASS captions with a teal karaoke highlight on each estimated spoken word."""
     font_size = 54 if vertical else 48
     margin_v = 170 if vertical else 88
@@ -997,8 +995,7 @@ def make_brand_clip(destination: Path, duration: float, width: int, height: int,
                     headline: str, subtitle: str, footer: str) -> None:
     """Create an original WISE LAB ident with a custom synthesized ambient music bed."""
     ff = ffmpeg()
-    font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"    regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    # The sound is synthesized from simple tones for this channel; no stock music is used.
+    font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"    regular = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"    # The sound is synthesized from simple tones for this channel; no stock music is used.
     audio = (
         "aevalsrc=0.075*sin(2*PI*220*t)+0.055*sin(2*PI*277.18*t)"
         "+0.045*sin(2*PI*329.63*t)+0.025*sin(2*PI*440*t):s=48000:d="
@@ -1179,6 +1176,8 @@ def make_video_description(title: str, scenes: list[dict], durations: list[float
             )
         elif source.startswith("openai"):
             credits.append("AI-generated visual created with OpenAI GPT Image (not stock footage).")
+        elif source.startswith("wise-lab"):
+            credits.append("Original WISE-LAB explanatory diagram created for this episode.")
         else:
             credits.append(f"Pixabay media: {asset.get('page_url') or 'https://pixabay.com/'}")
     if credits:
@@ -1247,8 +1246,7 @@ def main() -> int:
             f"This script has {word_count} words (about {estimated_minutes:.1f} minutes at 140 WPM). "
             "That is too long for a YouTube Short. Choose landscape for this script, "
             "or prepare a Shorts script of 400 words or fewer."        )
-    OUT.mkdir(exist_ok=True)
-    WORK.mkdir(exist_ok=True)
+    OUT.mkdir(exist_ok=True)    WORK.mkdir(exist_ok=True)
     vertical = FORMAT == "shorts"
     width, height = (1080, 1920) if vertical else (1920, 1080)
     key = required_env("PIXABAY_API_KEY")
@@ -1315,7 +1313,15 @@ def main() -> int:
     ai_shot_indices = choose_ai_shot_indices(
         total_shots, int(os.getenv("AI_IMAGES_PER_VIDEO", "6"))
     ) if openai_key else set()
-    print(f"Planning {len(ai_shot_indices)} selective AI visuals across {total_shots} stock-style cuts.")
+    diagram_count = min(3, max(1, total_shots // 8))
+    diagram_shot_indices = {min(total_shots - 1, int((i + 0.5) * total_shots / diagram_count)) for i in range(diagram_count)} if total_shots else set()
+    diagram_shot_indices -= ai_shot_indices
+    for candidate in range(total_shots):
+        if len(diagram_shot_indices) >= diagram_count:
+            break
+        if candidate not in ai_shot_indices:
+            diagram_shot_indices.add(candidate)
+    print(f"Planning {len(diagram_shot_indices)} original topic diagrams and {len(ai_shot_indices)} selective AI visuals across {total_shots} cuts.")
     for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
         words = re.findall(r"\S+", scene["narration"])
         if not words:
@@ -1341,9 +1347,24 @@ def main() -> int:
             queries = list(dict.fromkeys([query, f"{query} documentary", scene["visual_query"]]))
             is_image = False
 
-            # Use a small number of bespoke AI stills for abstract psychology concepts
-            # while keeping the majority of the edit grounded in real stock footage.
-            if openai_key and shot_number in ai_shot_indices:
+            # Original diagrams are reserved for concepts that benefit from a clear explainer graphic.
+            if shot_number in diagram_shot_indices:
+                try:
+                    diagram_path = build_topic_diagram(shot_text, WORK / f"wise_lab_diagram_{shot_number:04}.png", vertical, shot_number + 1)
+                    asset = {
+                        "id": "diagram:" + hashlib.sha256(diagram_path.read_bytes()).hexdigest()[:20],
+                        "url": "", "type": "image", "source": "WISE-LAB Original Diagram",
+                        "query": query, "page_url": "", "local_path": str(diagram_path),
+                    }
+                    is_image = True
+                    print(f"Created original WISE-LAB topic diagram for shot {shot_number + 1}/{total_shots}.")
+                except Exception as exc:
+                    source_errors.append(f"Original diagram: {exc}")
+                    print(f"WARNING: Diagram generation failed; falling back to other visual sources: {exc}")
+
+            # Use bespoke AI stills for selected abstract psychology concepts while keeping
+            # most of the edit grounded in fresh stock footage and original diagrams.
+            if not asset and openai_key and shot_number in ai_shot_indices:
                 prompt = build_ai_image_prompt(shot_text, query, vertical, groq_key)
                 try:
                     generated = generate_openai_image(
@@ -1497,8 +1518,7 @@ def main() -> int:
         print("LONG VIDEO MODE: Edge-TTS narration and WISE LAB intro/outro included.")
 
     # Persist asset IDs only after the complete video has rendered successfully.
-    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
-    history_assets = history.setdefault("assets", [])
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)    history_assets = history.setdefault("assets", [])
     existing_history_ids = {str(item.get("id")) for item in history_assets if item.get("id") is not None}
     for asset in selected_assets:
         if str(asset["id"]) not in existing_history_ids:
