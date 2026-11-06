@@ -45,7 +45,7 @@ For a manual render without changing the script:
 - **Long-form:** 1920×1080, 30 fps, 5-second WISE LAB intro and 7-second branded outro.
 - **Shorts:** 1080×1920, 30 fps, no intro or outro; the renderer rejects scripts longer than 400 words.
 - **Audience direction:** English-language psychology and human-behaviour explainers for a primarily US audience. Use natural US English and US-relevant everyday settings/examples when the script calls for them; do not force US references into universal topics.
-- **Visuals:** Pixabay first, optional Pexels fallback, Openverse still-image fallback, and up to six selective OpenAI-generated stills when `OPENAI_API_KEY` is configured. Every episode should use topic-specific visual storytelling, original diagrams/graphics where they genuinely explain an idea, and varied male character poses. The approved male Edge-TTS voice remains unchanged.
+- **Visuals:** Pixabay first, optional Pexels fallback, Openverse still-image fallback, and up to six selective OpenAI-generated stills when `OPENAI_API_KEY` is configured. The renderer also creates up to three original topic diagrams per episode (loop, comparison, process or concept-map layouts) when the cut count supports them. These are explanatory concept illustrations, not scientific data charts. Every episode should use topic-specific visual storytelling and varied male character poses. The approved male Edge-TTS voice remains unchanged.
 - **Editing:** narration-specific visual cuts targeted around every three seconds, restrained motion, colour treatment and short cross-dissolves.
 - **Captions:** burned-in phrase captions plus SRT/ASS sidecars. Timing is estimated from narration segment duration; it is not word-level speech recognition.
 - **Music:** rotating Openverse tracks filtered for CC0/CC BY and commercial-use/modification permissions when a suitable unused track is available. If no suitable track is found, the video renders without BGM rather than using the old synthetic bed.
@@ -60,7 +60,7 @@ After rendering, `quality_check.py` verifies:
 - Presence of video and audio streams and plausible MP4 size/duration.
 - Caption sidecar structure.
 - That the scene plan preserves the original narration word sequence.
-- Visual manifest completeness, fingerprints and duplicate hashes.
+- Visual manifest completeness, SHA-256 and perceptual fingerprints, and duplicate checks.
 - Presence of the source ledger.
 
 It writes:
