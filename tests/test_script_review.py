@@ -1,5 +1,7 @@
+import os
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from script_review import review_script, write_review
@@ -7,7 +9,8 @@ from script_review import review_script, write_review
 
 class ScriptReviewTests(unittest.TestCase):
     def test_fallback_flags_research_claims_for_human_verification(self):
-        report = review_script("In 2015, researchers found a change in oxytocin. This may matter.")
+        with patch.dict(os.environ, {"GROQ_API_KEY": ""}):
+            report = review_script("In 2015, researchers found a change in oxytocin. This may matter.")
         self.assertTrue(report["claims_to_verify"])
         self.assertIn("check", report["claims_to_verify"][0])
         self.assertIn("does not guarantee rankings", report["seo_note"])
@@ -18,7 +21,8 @@ class ScriptReviewTests(unittest.TestCase):
             source = root / "script.txt"
             source.write_text("A short psychology story. Here is what it means.", encoding="utf-8")
             before = source.read_text(encoding="utf-8")
-            write_review(source, root / "review")
+            with patch.dict(os.environ, {"GROQ_API_KEY": ""}):
+                write_review(source, root / "review")
             self.assertEqual(source.read_text(encoding="utf-8"), before)
             self.assertTrue((root / "review" / "content_review.json").exists())
             self.assertTrue((root / "review" / "content_review.md").exists())
