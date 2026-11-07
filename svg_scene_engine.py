@@ -265,8 +265,9 @@ def _cat(x: float, y: float, scale: float, seed: int, phase: float) -> str:
 
 
 def render_scene_svg(narration: str, beat_index: int, width: int = 1920,
-                     height: int = 1080, phase: float = 0.0) -> str:
-    brief = plan_scene(narration, beat_index)
+                     height: int = 1080, phase: float = 0.0,
+                     visual_brief: dict | None = None) -> str:
+    brief = visual_brief or plan_scene(narration, beat_index)
     seed = brief["seed"]
     phase = max(0.0, min(1.0, phase))
     vertical = height > width
