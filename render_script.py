@@ -1518,7 +1518,8 @@ def main() -> int:
     caption_filter = f"subtitles='{caption_filter_path}'"
     content_final = WORK / ("content_shorts.mp4" if vertical else "content_landscape.mp4")
     # Shorts use a faster encoder preset to reduce GitHub runner time while
-    # retaining 1080x1920, 30 FPS, and high-quality H.264 output.    caption_preset = "ultrafast" if vertical else "medium"
+    # retaining 1080x1920, 30 FPS, and high-quality H.264 output.
+    caption_preset = "ultrafast" if vertical else "medium"
     caption_crf = "22" if vertical else "20"
     run([ffmpeg(), "-y", "-i", str(silent), "-vf", caption_filter,
          "-an", "-c:v", "libx264", "-preset", caption_preset, "-crf", caption_crf,
