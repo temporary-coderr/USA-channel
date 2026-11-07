@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/script.txt"
       - "render_script.py"
+      - ".github/workflows/script-video.yml"
   workflow_dispatch:
     inputs:
       format:
