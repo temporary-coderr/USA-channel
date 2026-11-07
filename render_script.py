@@ -217,11 +217,58 @@ def pixabay_search(endpoint: str, params: dict) -> dict:
     return response.json()
 
 
-def _pick_video_hit(hits: list[dict], used_ids: set[str], vertical: bool, query: str) -> dict | None:
+def infer_topic_lock(script: str) -> list[str]:
+    """Detect concrete recurring subjects that every stock result must preserve."""
+    text = script.lower()
+    locks = []
+    patterns = [
+        (r"\b(dogs?|pupp(?:y|ies)|canines?|dog owners?|pet dogs?)\b", "dog"),
+        (r"\b(cats?|kittens?|felines?)\b", "cat"),
+        (r"\b(horses?|ponies?|equines?)\b", "horse"),
+        (r"\b(elephants?)\b", "elephant"),
+        (r"\b(lions?)\b", "lion"),
+        (r"\b(tigers?)\b", "tiger"),
+        (r"\b(wolves?|wolf)\b", "wolf"),
+        (r"\b(birds?|parrots?|eagles?)\b", "bird"),
+    ]
+    for pattern, label in patterns:
+        if re.search(pattern, text):
+            locks.append(label)
+    # Avoid over-constraining scripts that merely mention several unrelated examples.
+    # The first recurring concrete subject is the editorial anchor for this video.
+    return locks[:1]
+
+
+def asset_matches_topic_lock(hit: dict, topic_lock: list[str]) -> bool:
+    if not topic_lock:
+        return True
+    raw_tags = hit.get("tags", "")
+    if isinstance(raw_tags, list):
+        raw_tags = " ".join(str(item) for item in raw_tags)
+    searchable = " ".join([
+        str(raw_tags), str(hit.get("title", "")),
+        str(hit.get("description", "")), str(hit.get("name", ""))
+    ]).lower()
+    aliases = {
+        "dog": ("dog", "puppy", "puppies", "canine"),
+        "cat": ("cat", "kitten", "feline"),
+        "horse": ("horse", "pony", "equine"),
+        "elephant": ("elephant",),
+        "lion": ("lion",),
+        "tiger": ("tiger",),
+        "wolf": ("wolf", "wolves"),
+        "bird": ("bird", "parrot", "eagle"),
+    }
+    terms = aliases.get(topic_lock[0], (topic_lock[0],))
+    return any(re.search(r"\b" + re.escape(term) + r"\b", searchable) for term in terms)
+
+
+def _pick_video_hit(hits: list[dict], used_ids: set[str], vertical: bool, query: str,
+                    topic_lock: list[str] | None = None) -> dict | None:
     candidates = []
     for hit in hits:
         asset_id = str(hit.get("id", ""))
-        if not asset_id or asset_id in used_ids:
+        if not asset_id or asset_id in used_ids or not asset_matches_topic_lock(hit, topic_lock or []):
             continue
         variants = []
         target_area = 1080 * (1920 if vertical else 1080)
@@ -243,14 +290,15 @@ def _pick_video_hit(hits: list[dict], used_ids: set[str], vertical: bool, query:
     return candidates[0][1] if candidates else None
 
 
-def find_video(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
+def find_video(query: str, key: str, vertical: bool, used_ids: set[str],
+               topic_lock: list[str] | None = None) -> dict | None:
     # Fetch multiple pages so a growing history does not force old footage to be reused.
     for page in range(1, 4):
         data = pixabay_search(PIXABAY_VIDEO, {
             "key": key, "q": query, "video_type": "film",
             "safesearch": "true", "per_page": 200, "page": page,
         })
-        asset = _pick_video_hit(data.get("hits", []), used_ids, vertical, query)
+        asset = _pick_video_hit(data.get("hits", []), used_ids, vertical, query, topic_lock)
         if asset:
             return asset
         if page * 200 >= data.get("totalHits", 0):
@@ -258,7 +306,8 @@ def find_video(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict
     return None
 
 
-def find_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict | None:
+def find_image(query: str, key: str, vertical: bool, used_ids: set[str],
+               topic_lock: list[str] | None = None) -> dict | None:
     for page in range(1, 4):
         data = pixabay_search(PIXABAY_IMAGE, {
             "key": key, "q": query, "image_type": "photo",
@@ -266,6 +315,8 @@ def find_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict
             "orientation": "vertical" if vertical else "horizontal",
         })
         for hit in data.get("hits", []):
+            if not asset_matches_topic_lock(hit, topic_lock or []):
+                continue
             asset_id = str(hit.get("id", ""))
             url = hit.get("largeImageURL")
             if asset_id and asset_id not in used_ids and url:
@@ -278,7 +329,8 @@ def find_image(query: str, key: str, vertical: bool, used_ids: set[str]) -> dict
     return None
 
 
-def find_openverse_image(query: str, vertical: bool, used_ids: set[str]) -> dict | None:
+def find_openverse_image(query: str, vertical: bool, used_ids: set[str],
+                         topic_lock: list[str] | None = None) -> dict | None:
     """Find openly licensed commercial-use still images as a no-key fallback."""
     response = SESSION.get(
         "https://api.openverse.org/v1/images/",
@@ -296,6 +348,8 @@ def find_openverse_image(query: str, vertical: bool, used_ids: set[str]) -> dict
     )
     response.raise_for_status()
     for hit in response.json().get("results", []):
+        if not asset_matches_topic_lock(hit, topic_lock or []):
+            continue
         asset_id = "openverse:" + str(hit.get("id") or "")
         url = hit.get("url")
         if not url or asset_id == "openverse:" or asset_id in used_ids:
@@ -334,12 +388,16 @@ def visual_query_from_text(text: str, fallback: str) -> str:
     return " ".join(terms) or "human psychology everyday life"
 
 
-def build_ai_image_prompt(shot_text: str, query: str, vertical: bool, groq_key: str = "") -> str:
+def build_ai_image_prompt(shot_text: str, query: str, vertical: bool, groq_key: str = "",
+                          topic_lock: list[str] | None = None) -> str:
     """Create a concise, editorially useful visual prompt; Groq refines it when configured."""
     base = (
         "Create a photorealistic cinematic documentary still for a premium US psychology "
         "YouTube explainer. Show a believable everyday human situation that visually "
         "communicates this idea: " + shot_text[:700] + ". "
+        "Video-wide subject lock: " + (", ".join(topic_lock or []) or "none") + ". "
+        "When a subject lock is present, the locked subject must be visibly present in every image; "
+        "do not substitute another animal, object, or unrelated metaphor. "
         "Visual subject keywords: " + query + ". "
         "Use natural human expressions, realistic anatomy, subtle emotion, tasteful "
         "cinematic lighting, authentic contemporary US environments when relevant, clear composition, "
@@ -1295,6 +1353,8 @@ def main() -> int:
     print("Groq art-direction prompt refinement enabled." if groq_key else "Groq prompt refinement disabled; local prompts will be used.")
     # Scene planning stays local; OpenAI/Groq are used only for selected custom stills.
     plan = plan_scenes(script)
+    topic_lock = infer_topic_lock(script)
+    print("Strict video-wide visual topic lock: " + (", ".join(topic_lock) if topic_lock else "not triggered"))
     history, historical_ids = load_visual_history()
     used_ids = set(historical_ids)
     used_hashes = {str(item.get('sha256')) for item in history.get('assets', []) if item.get('sha256')}
@@ -1454,6 +1514,8 @@ def main() -> int:
             shot_text = planned_shot["text"]
             shot_seconds = planned_shot["seconds"]
             query = visual_query_from_text(shot_text, scene["visual_query"])
+            if topic_lock:
+                query = " ".join(topic_lock + [query])
             image_query = query + " photography"
             print(f"Scene {index}/{len(plan['scenes'])}, shot {shot_index + 1}/{len(scene_shots[index - 1])}: {query}")
             # Use only no-cost sources already integrated in WISE-LAB:
@@ -1463,8 +1525,8 @@ def main() -> int:
             media_path = None
             is_image = False
             source_errors = []
-            queries = list(dict.fromkeys([query, f"{query} documentary", scene["visual_query"]]))
-            image_queries = list(dict.fromkeys([image_query, query, scene.get("image_query", query)]))
+            queries = list(dict.fromkeys([query, f"{query} documentary"]))
+            image_queries = list(dict.fromkeys([image_query, query]))
             max_visual_attempts = 12
 
             for asset_attempt in range(1, max_visual_attempts + 1):
@@ -1491,7 +1553,7 @@ def main() -> int:
                         print(f"WARNING: Diagram generation failed; trying other visual sources: {exc}")
 
                 if asset_attempt == 1 and not asset and shot_number in ai_shot_indices:
-                    prompt = build_ai_image_prompt(shot_text, query, vertical, groq_key)
+                    prompt = build_ai_image_prompt(shot_text, query, vertical, groq_key, topic_lock)
                     preferred = ai_provider_by_shot.get(shot_number, "openai")
                     providers = [preferred, "gemini" if preferred == "openai" else "openai"]
                     for provider in providers:
@@ -1530,7 +1592,7 @@ def main() -> int:
                 if not asset:
                     for candidate_query in queries:
                         try:
-                            asset = find_video(candidate_query, key, vertical, used_ids)
+                            asset = find_video(candidate_query, key, vertical, used_ids, topic_lock)
                         except Exception as exc:
                             source_errors.append(f"Pixabay video: {exc}")
                             print(f"Pixabay video search failed: {exc}")
@@ -1545,9 +1607,9 @@ def main() -> int:
                         for candidate_query in image_queries:
                             try:
                                 if provider == "pixabay":
-                                    asset = find_image(candidate_query, key, vertical, used_ids)
+                                    asset = find_image(candidate_query, key, vertical, used_ids, topic_lock)
                                 else:
-                                    asset = find_openverse_image(candidate_query, vertical, used_ids)
+                                    asset = find_openverse_image(candidate_query, vertical, used_ids, topic_lock)
                             except Exception as exc:
                                 source_errors.append(f"{provider} image: {exc}")
                                 print(f"{provider} image search failed: {exc}")
