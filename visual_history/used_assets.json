@@ -395,6 +395,1768 @@
       "used_at": "2026-11-05T17:58:01.898062+00:00",
       "format": "landscape",
       "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "243931",
+      "type": "video",
+      "query": "something honest ever stayed",
+      "page_url": "https://pixabay.com/videos/id-243931/",
+      "shot_duration_seconds": 2.544,
+      "scene_number": 1,
+      "shot_number": 1,
+      "sha256": "281bc5e3c5b0903463ed8c5f92c65ce72421e3399e988a45ae7f015e09df1598",
+      "visual_hashes": [
+        "9a0a1f96066ecedf",
+        "9a0a1f960e5ecedf",
+        "9a0a1f96064ed6df"
+      ],
+      "used_at": "2026-11-07T02:36:05.220941+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "272152",
+      "type": "video",
+      "query": "someone even knew hurting",
+      "page_url": "https://pixabay.com/videos/id-272152/",
+      "shot_duration_seconds": 2.544,
+      "scene_number": 1,
+      "shot_number": 2,
+      "sha256": "de64dfefb6df568eb186681d9ad2730c3c815e76c5beb318715c1c72a60efe29",
+      "visual_hashes": [
+        "070f0f0f0f370b1f",
+        "0717270f0f374b1f",
+        "0717250f0f3d4b1f"
+      ],
+      "used_at": "2026-11-07T02:36:05.220963+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "35620",
+      "type": "video",
+      "query": "friend only calls need something",
+      "page_url": "https://pixabay.com/videos/id-35620/",
+      "shot_duration_seconds": 2.544,
+      "scene_number": 1,
+      "shot_number": 3,
+      "sha256": "9f1142f80141a6657400a659f745f2fc593dce99affac663acce2b72af17baba",
+      "visual_hashes": [
+        "caab693233535502",
+        "c4cba86ab0724574",
+        "c4abeb6b33534560"
+      ],
+      "used_at": "2026-11-07T02:36:05.220969+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "42408",
+      "type": "video",
+      "query": "partner disrespects says sorry",
+      "page_url": "https://pixabay.com/videos/id-42408/",
+      "shot_duration_seconds": 2.452,
+      "scene_number": 2,
+      "shot_number": 4,
+      "sha256": "7a51ca446382640f3247451f9f53b7eb1c06c48fa151ae60ee93c15c19016a91",
+      "visual_hashes": [
+        "d1b1b09a92929282",
+        "d1f1c0dadada9a1a",
+        "c3e37465cdc9999d"
+      ],
+      "used_at": "2026-11-07T02:36:05.220974+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "171044",
+      "type": "video",
+      "query": "again person keep checking",
+      "page_url": "https://pixabay.com/videos/id-171044/",
+      "shot_duration_seconds": 2.758,
+      "scene_number": 2,
+      "shot_number": 5,
+      "sha256": "f2d081a0a834cec9e6e501cfa8225e043cb85a6f170a281af6be4c84e815a460",
+      "visual_hashes": [
+        "31888a44021a131b",
+        "298c8a44061a131b",
+        "31888a44061a131b"
+      ],
+      "used_at": "2026-11-07T02:36:05.220979+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "169446",
+      "type": "video",
+      "query": "online even though know hurt",
+      "page_url": "https://pixabay.com/videos/id-169446/",
+      "shot_duration_seconds": 2.758,
+      "scene_number": 2,
+      "shot_number": 6,
+      "sha256": "90a337d5270fafac9944a34103d428a16f29fc63d6244067b5fa6800b62f2054",
+      "visual_hashes": [
+        "0f67673c3c2e2f1b",
+        "0f0f1f1f1f3f3d3c",
+        "1f3f1e1e1e1f3f3b"
+      ],
+      "used_at": "2026-11-07T02:36:05.220984+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "208947",
+      "type": "video",
+      "query": "worst part people tell",
+      "page_url": "https://pixabay.com/videos/id-208947/",
+      "shot_duration_seconds": 2.337,
+      "scene_number": 3,
+      "shot_number": 7,
+      "sha256": "a86bd340b6c1d14d4dd22625a1666606c35c476d5a17c34b034ab5835a182f09",
+      "visual_hashes": [
+        "c26353036c0c9c41",
+        "b393611ab44c0c01",
+        "6321a5810a9c98a8"
+      ],
+      "used_at": "2026-11-07T02:36:05.220988+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "37056",
+      "type": "video",
+      "query": "leave move",
+      "page_url": "https://pixabay.com/videos/id-37056/",
+      "shot_duration_seconds": 2.629,
+      "scene_number": 3,
+      "shot_number": 8,
+      "sha256": "01735e0fd10237d526f31ab4f74c19a78dda46ab21285066ed48702d897f1dc4",
+      "visual_hashes": [
+        "19090b030b032333",
+        "0d0d170b0b070737",
+        "0c0f070707051113"
+      ],
+      "used_at": "2026-11-07T02:36:05.220993+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "79390",
+      "type": "video",
+      "query": "can't start thinking what's wrong",
+      "page_url": "https://pixabay.com/videos/id-79390/",
+      "shot_duration_seconds": 2.629,
+      "scene_number": 3,
+      "shot_number": 9,
+      "sha256": "2086920074ce0a222b52df047676f437c425f0c0525dad9dff430af221dc5e28",
+      "visual_hashes": [
+        "ccc68686c6cccecc",
+        "ccc68686c6cececc",
+        "ccc68686c6cececc"
+      ],
+      "used_at": "2026-11-07T02:36:05.220998+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "78639",
+      "type": "video",
+      "query": "weak listen",
+      "page_url": "https://pixabay.com/videos/id-78639/",
+      "shot_duration_seconds": 2.629,
+      "scene_number": 3,
+      "shot_number": 10,
+      "sha256": "6c4a2055b074ca48ac214db62e2673a75bdb07054cf8c3eb2036a89cb975287c",
+      "visual_hashes": [
+        "90589ca6968688c0",
+        "90589ca6968688c0",
+        "90989ca6968688c0"
+      ],
+      "used_at": "2026-11-07T02:36:05.221002+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "57916",
+      "type": "video",
+      "query": "nothing wrong brain",
+      "page_url": "https://pixabay.com/videos/id-57916/",
+      "shot_duration_seconds": 2.728,
+      "scene_number": 4,
+      "shot_number": 11,
+      "sha256": "b13b3dc7d3d7149ac150d777d6dac2126585bc4c852a2ffd7298301b18b52a4e",
+      "visual_hashes": [
+        "380c074323331b13",
+        "5a183a184b278b5e",
+        "3e4a0e4a7a6e2609"
+      ],
+      "used_at": "2026-11-07T02:36:05.221007+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "131731",
+      "type": "video",
+      "query": "trapped loop psychology explained years",
+      "page_url": "https://pixabay.com/videos/id-131731/",
+      "shot_duration_seconds": 3.032,
+      "scene_number": 4,
+      "shot_number": 12,
+      "sha256": "3e64568c742fba0206610f76e649469936874db7ab664ce10f0991be8c229253",
+      "visual_hashes": [
+        "0707030b0bd34b49",
+        "0707032b0bdb4b49",
+        "070703230b534b49"
+      ],
+      "used_at": "2026-11-07T02:36:05.221012+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "2302",
+      "type": "video",
+      "query": "today going show",
+      "page_url": "https://pixabay.com/videos/id-2302/",
+      "shot_duration_seconds": 2.627,
+      "scene_number": 5,
+      "shot_number": 13,
+      "sha256": "4437d608e1e39edc0afeb31b6323b6cc394eff42ebb9cdbb1573edb6cd3a2401",
+      "visual_hashes": [
+        "9c1d0d36afbe7efc",
+        "b2363532f1b272f3",
+        "9e1e053687ae3617"
+      ],
+      "used_at": "2026-11-07T02:36:05.221016+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "223839",
+      "type": "video",
+      "query": "can't real science",
+      "page_url": "https://pixabay.com/videos/id-223839/",
+      "shot_duration_seconds": 2.627,
+      "scene_number": 5,
+      "shot_number": 14,
+      "sha256": "3e7d776ddf725086de6f3626c07826f0c8c8070c693c0951f481790cd119458b",
+      "visual_hashes": [
+        "7262c2c1a3950559",
+        "7e7666424203154d",
+        "ee3efe7e66665262"
+      ],
+      "used_at": "2026-11-07T02:36:05.221020+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "105559",
+      "type": "video",
+      "query": "motivation quotes first reason brutal true",
+      "page_url": "https://pixabay.com/videos/id-105559/",
+      "shot_duration_seconds": 2.955,
+      "scene_number": 5,
+      "shot_number": 15,
+      "sha256": "6a1d4fb8678f50a9a52eca8395dc85b088db7961f5a0afcb7723a07b9741bdff",
+      "visual_hashes": [
+        "cd1e3a3353c36337",
+        "73b1717173213cb5",
+        "51517131903d9196"
+      ],
+      "used_at": "2026-11-07T02:36:05.221024+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "71124",
+      "type": "video",
+      "query": "someone hurts suddenly becomes",
+      "page_url": "https://pixabay.com/videos/id-71124/",
+      "shot_duration_seconds": 2.592,
+      "scene_number": 6,
+      "shot_number": 16,
+      "sha256": "b39d914d154e62d40f39ae4e51b7298f16c3486e274418a1106ce7ba9129660f",
+      "visual_hashes": [
+        "07033377511938f8",
+        "0f033377511938f8",
+        "0f033377511938b8"
+      ],
+      "used_at": "2026-11-07T02:36:05.221028+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "diagram:950638c3ff6cec7c05a7",
+      "type": "image",
+      "source": "WISE-LAB Original Diagram",
+      "query": "nice brain gets confused confusion creates",
+      "page_url": "",
+      "shot_duration_seconds": 2.916,
+      "scene_number": 6,
+      "shot_number": 17,
+      "sha256": "950638c3ff6cec7c05a76e4fa4e7795d88c5efa855beb87227f0f99d93595ffd",
+      "visual_hashes": [
+        "1851292bcc2b3354"
+      ],
+      "used_at": "2026-11-07T02:36:05.221033+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "141673",
+      "type": "video",
+      "query": "think like someone",
+      "page_url": "https://pixabay.com/videos/id-141673/",
+      "shot_duration_seconds": 2.592,
+      "scene_number": 6,
+      "shot_number": 18,
+      "sha256": "9dd1a3a80d778c85163b6efc42de0fac7617d187f887eec15a05acb0bd4138df",
+      "visual_hashes": [
+        "180a86d0587c2636",
+        "0d4c499444676571",
+        "1c1d29c6d8587725"
+      ],
+      "used_at": "2026-11-07T02:36:05.221038+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "39591",
+      "type": "video",
+      "query": "nice every brain gets bored",
+      "page_url": "https://pixabay.com/videos/id-39591/",
+      "shot_duration_seconds": 2.916,
+      "scene_number": 6,
+      "shot_number": 19,
+      "sha256": "d37c5c22389ae4bb35b2f7153b4e42017c3449412b916488212fe8fe157ef469",
+      "visual_hashes": [
+        "1f1b0b0f0f0f1717",
+        "0f0f0f0f0f0f1b1b",
+        "0f0f0707070f0d0d"
+      ],
+      "used_at": "2026-11-07T02:36:05.221042+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "99543",
+      "type": "video",
+      "query": "it's predictable dopamine someone",
+      "page_url": "https://pixabay.com/videos/id-99543/",
+      "shot_duration_seconds": 2.358,
+      "scene_number": 7,
+      "shot_number": 20,
+      "sha256": "7310087f320493d71f878f8b36889b585ed518f9229d0ab5d1f4d06d3af1c5a3",
+      "visual_hashes": [
+        "0400000060601844",
+        "0400000060201e41",
+        "0000006040308801"
+      ],
+      "used_at": "2026-11-07T02:36:05.221046+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "329724",
+      "type": "video",
+      "query": "cold next",
+      "page_url": "https://pixabay.com/videos/id-329724/",
+      "shot_duration_seconds": 2.694,
+      "scene_number": 7,
+      "shot_number": 21,
+      "sha256": "c9200e44b4796ec0a5cdd5d7f6dfd56b49cec81026ab2d29b34a62e6e6903f8a",
+      "visual_hashes": [
+        "38061a242c467607",
+        "38163a4c5dcd6e1f",
+        "3c163f499a9bfd1e"
+      ],
+      "used_at": "2026-11-07T02:36:05.221051+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "79155",
+      "type": "video",
+      "query": "ignores days suddenly",
+      "page_url": "https://pixabay.com/videos/id-79155/",
+      "shot_duration_seconds": 2.358,
+      "scene_number": 7,
+      "shot_number": 22,
+      "sha256": "3173a3d45b3adb7e87de74e09246fdf57ebf335f0ed492c8b388eb43986f2627",
+      "visual_hashes": [
+        "e2e7ebefe7ebd5a9",
+        "e6e3e7ebe3e1ebfb",
+        "e3e3e7e3e5ebeaec"
+      ],
+      "used_at": "2026-11-07T02:36:05.221055+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "1295",
+      "type": "video",
+      "query": "says miss brain goes crazy",
+      "page_url": "https://pixabay.com/videos/id-1295/",
+      "shot_duration_seconds": 2.694,
+      "scene_number": 7,
+      "shot_number": 23,
+      "sha256": "e67f3b21e26110562879966dca6408528aba7a66d75551add38df5e477f2b049",
+      "visual_hashes": [
+        "8101013d3d818ab6",
+        "111919393d018ab6",
+        "1c1d1d1d3f018ab6"
+      ],
+      "used_at": "2026-11-07T02:36:05.221059+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "88218",
+      "type": "video",
+      "query": "starts waiting next good",
+      "page_url": "https://pixabay.com/videos/id-88218/",
+      "shot_duration_seconds": 2.422,
+      "scene_number": 8,
+      "shot_number": 24,
+      "sha256": "2d5e6f5f1fbbe9ca626bbf4bb04cc96a46c79e628e165bf583ffdd6b449df81a",
+      "visual_hashes": [
+        "0899094963c1ec41",
+        "ca08212363726123",
+        "1a92011147c3c181"
+      ],
+      "used_at": "2026-11-07T02:36:05.221063+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "103987",
+      "type": "video",
+      "query": "moment like gambler waits",
+      "page_url": "https://pixabay.com/videos/id-103987/",
+      "shot_duration_seconds": 2.422,
+      "scene_number": 8,
+      "shot_number": 25,
+      "sha256": "378f69d8752bb666569399e48e1002e92caabaacf445773276246b5bd5a5b057",
+      "visual_hashes": [
+        "0000080c08000000",
+        "00001c1e1e0c0000",
+        "0000161616060000"
+      ],
+      "used_at": "2026-11-07T02:36:05.221067+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "141672",
+      "type": "video",
+      "query": "psychologists call intermittent reinforcement it's",
+      "page_url": "https://pixabay.com/videos/id-141672/",
+      "shot_duration_seconds": 2.422,
+      "scene_number": 8,
+      "shot_number": 26,
+      "sha256": "4c789023e5883ed9f66ef219123f6608ddd5ed9991bd606edff2bcca101added",
+      "visual_hashes": [
+        "fdfb3a78f8f8f8fd",
+        "3b7bbb3af8f9f9bd",
+        "3dfb7d7d7dfc3cf6"
+      ],
+      "used_at": "2026-11-07T02:36:05.221071+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "212001",
+      "type": "video",
+      "query": "same trick makes slot machines addictive",
+      "page_url": "https://pixabay.com/videos/id-212001/",
+      "shot_duration_seconds": 2.767,
+      "scene_number": 8,
+      "shot_number": 27,
+      "sha256": "ef055b2fc91501529f5609c613f3795207a505254fb1f00f3c81ce420956ddc7",
+      "visual_hashes": [
+        "23232121212b2333",
+        "6170406444a48583",
+        "0c03414343210313"
+      ],
+      "used_at": "2026-11-07T02:36:05.221076+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "223078",
+      "type": "video",
+      "query": "don't know",
+      "page_url": "https://pixabay.com/videos/id-223078/",
+      "shot_duration_seconds": 2.88,
+      "scene_number": 9,
+      "shot_number": 28,
+      "sha256": "11f65f5a36f6f292564e85f5c2198ff52c70df82429f0deba7d809f123601825",
+      "visual_hashes": [
+        "fcfc786e2c0e2f07",
+        "ed7e7e6e2e1e2f07",
+        "793e3e3e0e0e1e03"
+      ],
+      "used_at": "2026-11-07T02:36:05.221080+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "238854",
+      "type": "video",
+      "query": "keep playing famous psychologist",
+      "page_url": "https://pixabay.com/videos/id-238854/",
+      "shot_duration_seconds": 2.88,
+      "scene_number": 9,
+      "shot_number": 29,
+      "sha256": "63cbff7ae5f8d222d4553c6133977fcb17716ffabd663afa70d15e07038af6e4",
+      "visual_hashes": [
+        "b4342b1e4e0f0706",
+        "36342256662c054c",
+        "3435292b0b0a0918"
+      ],
+      "used_at": "2026-11-07T02:36:05.221084+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "120095",
+      "type": "video",
+      "query": "named skinner proved pigeons",
+      "page_url": "https://pixabay.com/videos/id-120095/",
+      "shot_duration_seconds": 2.88,
+      "scene_number": 9,
+      "shot_number": 30,
+      "sha256": "446f33d182dda6d299d43658216115c51dbf3151281df8f922baf1e6853f3fac",
+      "visual_hashes": [
+        "010153716472d0b0",
+        "187a5bd87870f59c",
+        "404227a2bae8f2f2"
+      ],
+      "used_at": "2026-11-07T02:36:05.221089+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "336755",
+      "type": "video",
+      "query": "pigeons food every time calm",
+      "page_url": "https://pixabay.com/videos/id-336755/",
+      "shot_duration_seconds": 3.24,
+      "scene_number": 9,
+      "shot_number": 31,
+      "sha256": "0c428a86347602dfbcd160ceb8dccc83e548c742300c7edd1b349484d5959e73",
+      "visual_hashes": [
+        "0f0e3adb67cc9eb6",
+        "0f8f3b5b67993c6c",
+        "974f3b5b4fa168d8"
+      ],
+      "used_at": "2026-11-07T02:36:05.221093+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "210706",
+      "type": "video",
+      "query": "food randomly sometimes",
+      "page_url": "https://pixabay.com/videos/id-210706/",
+      "shot_duration_seconds": 2.412,
+      "scene_number": 10,
+      "shot_number": 32,
+      "sha256": "3e315e708310a3640dff8b873ddabda58f5bc512e25001715a8c7ed6464f30c8",
+      "visual_hashes": [
+        "4f565575b1732b6d",
+        "4e571d699973332d",
+        "4e5751699169214d"
+      ],
+      "used_at": "2026-11-07T02:36:05.221097+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "32065",
+      "type": "video",
+      "query": "sometimes became obsessed",
+      "page_url": "https://pixabay.com/videos/id-32065/",
+      "shot_duration_seconds": 2.412,
+      "scene_number": 10,
+      "shot_number": 33,
+      "sha256": "50aa3389c92b12de6891c4368cf027c9ae9f77a8ce191ea48ee483fbde8dae36",
+      "visual_hashes": [
+        "d15c8e8f2f2d6b87",
+        "270c0418581d8967",
+        "b953ef8fefcf9fcb"
+      ],
+      "used_at": "2026-11-07T02:36:05.221101+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "1048",
+      "type": "video",
+      "query": "kept pressing button non-stop",
+      "page_url": "https://pixabay.com/videos/id-1048/",
+      "shot_duration_seconds": 2.412,
+      "scene_number": 10,
+      "shot_number": 34,
+      "sha256": "e13fa04c626912c48fb37a32b986bd4c74eb08f98a1d3c1744137a49f23adaf1",
+      "visual_hashes": [
+        "c143430112144c61",
+        "c143430112144c61",
+        "c143430102144c61"
+      ],
+      "used_at": "2026-11-07T02:36:05.221105+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "120097",
+      "type": "video",
+      "query": "stupid pigeon",
+      "page_url": "https://pixabay.com/videos/id-120097/",
+      "shot_duration_seconds": 2.412,
+      "scene_number": 10,
+      "shot_number": 35,
+      "sha256": "778ac8737f61b9c71c513206ea7504f17a51ee0e54371dc5f67a59b3fcd9eb8d",
+      "visual_hashes": [
+        "0063633978f8ec98",
+        "01272068fcdace4c",
+        "000732bcbecdcb45"
+      ],
+      "used_at": "2026-11-07T02:36:05.221109+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "1383",
+      "type": "video",
+      "query": "pressing button waiting",
+      "page_url": "https://pixabay.com/videos/id-1383/",
+      "shot_duration_seconds": 2.57,
+      "scene_number": 11,
+      "shot_number": 36,
+      "sha256": "e631ca2d55a7d9e30de979864305af82e3a0cd97b31bef19e8207e96c78d5562",
+      "visual_hashes": [
+        "161e1e9e9e9e0d0c",
+        "476d4557d5959109",
+        "1717171a1a1a1c54"
+      ],
+      "used_at": "2026-11-07T02:36:05.221113+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "73712",
+      "type": "video",
+      "query": "good message person",
+      "page_url": "https://pixabay.com/videos/id-73712/",
+      "shot_duration_seconds": 2.891,
+      "scene_number": 11,
+      "shot_number": 37,
+      "sha256": "6bcb2abcf130cc2dce66705e83964a1b46deedfbd6a8c1d5d24ac910ce2e6272",
+      "visual_hashes": [
+        "06060e0e06060c0e",
+        "0e0e0707060e040e",
+        "0e0e0f0e0e0c0c0e"
+      ],
+      "used_at": "2026-11-07T02:36:05.221117+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "106382",
+      "type": "video",
+      "query": "love addiction second reason even deeper",
+      "page_url": "https://pixabay.com/videos/id-106382/",
+      "shot_duration_seconds": 2.891,
+      "scene_number": 11,
+      "shot_number": 38,
+      "sha256": "15477772c8a44416f0f62433a8b0446f6cf4d1eae9857f82c59efea7d385f482",
+      "visual_hashes": [
+        "0e0f0f0d0f1f19d0",
+        "1e0d2d0e0e1e18d0",
+        "0109090d0f171c10"
+      ],
+      "used_at": "2026-11-07T02:36:05.221121+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "119238",
+      "type": "video",
+      "query": "psychologists baumeister leary published",
+      "page_url": "https://pixabay.com/videos/id-119238/",
+      "shot_duration_seconds": 2.79,
+      "scene_number": 12,
+      "shot_number": 39,
+      "sha256": "7cd3adf041134b500864050319728370c6a73f3fcfcde716825e66f4762a6da2",
+      "visual_hashes": [
+        "233c9e9613060623",
+        "08e4f2f95f571a18",
+        "a8213189ebac3818"
+      ],
+      "used_at": "2026-11-07T02:36:05.221125+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "153455",
+      "type": "video",
+      "query": "paper called need belong",
+      "page_url": "https://pixabay.com/videos/id-153455/",
+      "shot_duration_seconds": 3.138,
+      "scene_number": 12,
+      "shot_number": 40,
+      "sha256": "053ab1459bd61c8c9125c43ee3859c3020742513f3911db26e3b89ffd7930523",
+      "visual_hashes": [
+        "ee4dc968747d1a77",
+        "53b0b9d5d4d4c4a6",
+        "6c6cb575129b2931"
+      ],
+      "used_at": "2026-11-07T02:36:05.221129+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "63533",
+      "type": "video",
+      "query": "proved humans basic need",
+      "page_url": "https://pixabay.com/videos/id-63533/",
+      "shot_duration_seconds": 2.79,
+      "scene_number": 12,
+      "shot_number": 41,
+      "sha256": "9c41c10612ad04405c12d107eb04d8e60e27faf97b5e05acf1f8d39c4f8a9901",
+      "visual_hashes": [
+        "0c0c1c1c1e041606",
+        "08081c081c0e1416",
+        "000808081c0e1c1e"
+      ],
+      "used_at": "2026-11-07T02:36:05.221133+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "65562",
+      "type": "video",
+      "query": "feel connected it's strong hunger thirst",
+      "page_url": "https://pixabay.com/videos/id-65562/",
+      "shot_duration_seconds": 3.138,
+      "scene_number": 12,
+      "shot_number": 42,
+      "sha256": "11a5cc2906105e9ff8c218d42545de5ef797820ede1f2bf1cfc156e9abc57b6c",
+      "visual_hashes": [
+        "0e3587a3a3c37018",
+        "033b232634b4621c",
+        "061b270523f3728c"
+      ],
+      "used_at": "2026-11-07T02:36:05.221139+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "26731",
+      "type": "video",
+      "query": "lose someone brain doesn't",
+      "page_url": "https://pixabay.com/videos/id-26731/",
+      "shot_duration_seconds": 2.611,
+      "scene_number": 13,
+      "shot_number": 43,
+      "sha256": "6d1515ceab26ffbe4dea1a173be144664190b552bb0cd8e474c4abc564b0ef61",
+      "visual_hashes": [
+        "27097d1db73d370f",
+        "23a78f3a0fa73fb7",
+        "b387363e574f1fb7"
+      ],
+      "used_at": "2026-11-07T02:36:05.221143+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "73710",
+      "type": "video",
+      "query": "miss person panics",
+      "page_url": "https://pixabay.com/videos/id-73710/",
+      "shot_duration_seconds": 2.611,
+      "scene_number": 13,
+      "shot_number": 44,
+      "sha256": "eee55f4b38877ad993cb0d7685f9732f50f89268c4f122598c6fe60a977b7745",
+      "visual_hashes": [
+        "0e0e16060c0c0c16",
+        "0e0e1616140c0c0f",
+        "0e0e16160c0c0c16"
+      ],
+      "used_at": "2026-11-07T02:36:05.221147+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "35590",
+      "type": "video",
+      "query": "thinks alone survive",
+      "page_url": "https://pixabay.com/videos/id-35590/",
+      "shot_duration_seconds": 2.938,
+      "scene_number": 13,
+      "shot_number": 45,
+      "sha256": "f764410ed25d9ce29ce685c8a594cca9add53361a5fc68e869851e83528abdc1",
+      "visual_hashes": [
+        "a011081686c1e5f1",
+        "40090096d3c7f575",
+        "1029009693a7e171"
+      ],
+      "used_at": "2026-11-07T02:36:05.221151+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "138216",
+      "type": "video",
+      "query": "that's even toxic breakup",
+      "page_url": "https://pixabay.com/videos/id-138216/",
+      "shot_duration_seconds": 2.161,
+      "scene_number": 14,
+      "shot_number": 46,
+      "sha256": "76b1ea620bbcff1420c7ccdc1c7e78bc3f4a6a061931647cb38bac4c60ad5fb6",
+      "visual_hashes": [
+        "2e1995d9763fe6aa",
+        "c52ae94426233969",
+        "870b89c4cb223b2e"
+      ],
+      "used_at": "2026-11-07T02:36:05.221154+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "61499",
+      "type": "video",
+      "query": "feel empty missing insults",
+      "page_url": "https://pixabay.com/videos/id-61499/",
+      "shot_duration_seconds": 2.432,
+      "scene_number": 14,
+      "shot_number": 47,
+      "sha256": "f17634aba035b3049318233a034ae2576f4a3056baf4b48594fbdf0c3b287e22",
+      "visual_hashes": [
+        "f87dfcf878393931",
+        "da5edad87c393811",
+        "383031b1b8b0fb31"
+      ],
+      "used_at": "2026-11-07T02:36:05.221159+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "32021",
+      "type": "video",
+      "query": "missing feeling someone there",
+      "page_url": "https://pixabay.com/videos/id-32021/",
+      "shot_duration_seconds": 2.432,
+      "scene_number": 14,
+      "shot_number": 48,
+      "sha256": "a603a1a170c38fffc52ede806f0a8108618fe0e366334ac77be6835a430af40a",
+      "visual_hashes": [
+        "070f0e0c0c0c0e04",
+        "070f0e0c0c0c0e04",
+        "03070b0b071b2301"
+      ],
+      "used_at": "2026-11-07T02:36:05.221162+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "45721",
+      "type": "video",
+      "query": "tell story",
+      "page_url": "https://pixabay.com/videos/id-45721/",
+      "shot_duration_seconds": 2.432,
+      "scene_number": 14,
+      "shot_number": 49,
+      "sha256": "707a47b8d80f360fc4fe52824c755339ba61ae0e29045098d99a133a842549d8",
+      "visual_hashes": [
+        "fc5a97edb9f96975",
+        "f85e3c57cdf8e9e9",
+        "f85a0874ccc7d5d1"
+      ],
+      "used_at": "2026-11-07T02:36:05.221167+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "377601",
+      "type": "video",
+      "query": "friend like only",
+      "page_url": "https://pixabay.com/videos/id-377601/",
+      "shot_duration_seconds": 2.28,
+      "scene_number": 15,
+      "shot_number": 50,
+      "sha256": "77eacae078fdb03dc10746f80b6586def9120d7204a2ceb7b2874dfef9bbc6ee",
+      "visual_hashes": [
+        "393d1c1c1c1c1e5e",
+        "99183c5c2c3c3c38",
+        "e4ac5e1e96960e0f"
+      ],
+      "used_at": "2026-11-07T02:36:05.221170+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "144453",
+      "type": "video",
+      "query": "call needed money help",
+      "page_url": "https://pixabay.com/videos/id-144453/",
+      "shot_duration_seconds": 2.28,
+      "scene_number": 15,
+      "shot_number": 51,
+      "sha256": "7e40b69106e508fb71875f765defe920e68fec18468d9746a378ab2ce9478ca0",
+      "visual_hashes": [
+        "e9edede9e9ec99d7",
+        "e9c8ccececfc9da7",
+        "e9c9c9d9d486e4e4"
+      ],
+      "used_at": "2026-11-07T02:36:05.221174+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "337459",
+      "type": "video",
+      "query": "rest time ignore messages",
+      "page_url": "https://pixabay.com/videos/id-337459/",
+      "shot_duration_seconds": 2.28,
+      "scene_number": 15,
+      "shot_number": 52,
+      "sha256": "635f5a9b230665b38a1d7d0fa9b3677bb55e7532dc99c5c46c814300a5dcfe8e",
+      "visual_hashes": [
+        "0f3f395e0e713b46",
+        "0f6e771546523b2e",
+        "0f9be73395123e35"
+      ],
+      "used_at": "2026-11-07T02:36:05.221178+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "65268",
+      "type": "video",
+      "query": "decided block felt",
+      "page_url": "https://pixabay.com/videos/id-65268/",
+      "shot_duration_seconds": 2.413,
+      "scene_number": 16,
+      "shot_number": 53,
+      "sha256": "a97d4d53a61cf627e1104ca22d383383de53db185db5dc07c44d272a7d0e950a",
+      "visual_hashes": [
+        "060f072727272626",
+        "0c0e0d133327262e",
+        "080c0c0c0c2c2c2e"
+      ],
+      "used_at": "2026-11-07T02:36:05.221182+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "23879",
+      "type": "video",
+      "query": "guilty weeks felt like",
+      "page_url": "https://pixabay.com/videos/id-23879/",
+      "shot_duration_seconds": 2.681,
+      "scene_number": 16,
+      "shot_number": 54,
+      "sha256": "331f9392b40aba34d65fae305bc346f91d21f2fdd2a6869c776f94f24ca17db8",
+      "visual_hashes": [
+        "6039191917030396",
+        "603999d917034396",
+        "60391909070383a6"
+      ],
+      "used_at": "2026-11-07T02:36:05.221186+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "135139",
+      "type": "video",
+      "query": "person later understood missing",
+      "page_url": "https://pixabay.com/videos/id-135139/",
+      "shot_duration_seconds": 2.681,
+      "scene_number": 16,
+      "shot_number": 55,
+      "sha256": "ea34832a9d4e00898975f2768e5748a1c3182c00ecf19639db13735f897532ca",
+      "visual_hashes": [
+        "000808080808080c",
+        "000c0c04040e0606",
+        "02020606040e0e27"
+      ],
+      "used_at": "2026-11-07T02:36:05.221190+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "133603",
+      "type": "video",
+      "query": "missing idea having",
+      "page_url": "https://pixabay.com/videos/id-133603/",
+      "shot_duration_seconds": 2.236,
+      "scene_number": 17,
+      "shot_number": 56,
+      "sha256": "b16e91287a14a381f75de768757ba1d1f64a417ec21ba2d87e35c41118757f47",
+      "visual_hashes": [
+        "048042cecc11867a",
+        "2b360fc189118672",
+        "080bc9cccd118672"
+      ],
+      "used_at": "2026-11-07T02:36:05.221194+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "43633",
+      "type": "video",
+      "query": "friend scared alone",
+      "page_url": "https://pixabay.com/videos/id-43633/",
+      "shot_duration_seconds": 2.516,
+      "scene_number": 17,
+      "shot_number": 57,
+      "sha256": "742eeaca08f7ace2da99e2b580229a729279297dab348313833b8c9c08f8a0cd",
+      "visual_hashes": [
+        "b5fdb99183030307",
+        "8387070507070f1f",
+        "27b9fabaa2820707"
+      ],
+      "used_at": "2026-11-07T02:36:05.221198+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "131989",
+      "type": "video",
+      "query": "feel weak",
+      "page_url": "https://pixabay.com/videos/id-131989/",
+      "shot_duration_seconds": 2.236,
+      "scene_number": 17,
+      "shot_number": 58,
+      "sha256": "9b24be60acb7be2f39980f85e67785d325c07c287b518cea2a22c96a95e4ff43",
+      "visual_hashes": [
+        "191d1d1d21691503",
+        "a4a484c2e0180c0d",
+        "e4848484c6619203"
+      ],
+      "used_at": "2026-11-07T02:36:05.221202+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "62556",
+      "type": "video",
+      "query": "human brain scared loneliness",
+      "page_url": "https://pixabay.com/videos/id-62556/",
+      "shot_duration_seconds": 2.516,
+      "scene_number": 17,
+      "shot_number": 59,
+      "sha256": "2c1936c7698cf7b7d45bcc80b4912708a1756c778222cacfe816da66826d2aaf",
+      "visual_hashes": [
+        "303c3c2c2c3e1662",
+        "60707075666666e6",
+        "3530303434766666"
+      ],
+      "used_at": "2026-11-07T02:36:05.221206+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "1687",
+      "type": "video",
+      "query": "last reason nobody",
+      "page_url": "https://pixabay.com/videos/id-1687/",
+      "shot_duration_seconds": 2.482,
+      "scene_number": 18,
+      "shot_number": 60,
+      "sha256": "84ea1bc7e8f688ffa008ef88cc3058b534417d6a4e2f4ca5118adc10f1daaae6",
+      "visual_hashes": [
+        "3131050d1c483a78",
+        "39531d0d3c503a70",
+        "38331d0d1c583a78"
+      ],
+      "used_at": "2026-11-07T02:36:05.221210+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "79336",
+      "type": "video",
+      "query": "talks psychologist",
+      "page_url": "https://pixabay.com/videos/id-79336/",
+      "shot_duration_seconds": 2.482,
+      "scene_number": 18,
+      "shot_number": 61,
+      "sha256": "e342dd6aea09f0374fc6edd680f127246c4981737ad30af8a8823d3fdaeeb8e7",
+      "visual_hashes": [
+        "747b791131315545",
+        "7415352535313345",
+        "76193c3535333b63"
+      ],
+      "used_at": "2026-11-07T02:36:05.221213+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "125324",
+      "type": "video",
+      "query": "named john bowlby created attachment theory",
+      "page_url": "https://pixabay.com/videos/id-125324/",
+      "shot_duration_seconds": 2.482,
+      "scene_number": 18,
+      "shot_number": 62,
+      "sha256": "959c0082eb987ffaadcf94d67b3db39cd52712c723ffd10fa2cd9dfc71dd87a8",
+      "visual_hashes": [
+        "80830301008810f0",
+        "f8f8ffc4e498f0f0",
+        "fffffffff9d4f8fc"
+      ],
+      "used_at": "2026-11-07T02:36:05.221217+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "42814",
+      "type": "video",
+      "query": "said loved",
+      "page_url": "https://pixabay.com/videos/id-42814/",
+      "shot_duration_seconds": 2.482,
+      "scene_number": 18,
+      "shot_number": 63,
+      "sha256": "7e6f89b4bcd9ca38c8bffa873a78c934a4b48a1400e6a48e943cb9139884ce4d",
+      "visual_hashes": [
+        "0c0c8d8f07610707",
+        "04040d0706210707",
+        "0e0e8c8f06220707"
+      ],
+      "used_at": "2026-11-07T02:36:05.221221+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "77929",
+      "type": "video",
+      "query": "kids decides love adults",
+      "page_url": "https://pixabay.com/videos/id-77929/",
+      "shot_duration_seconds": 2.482,
+      "scene_number": 18,
+      "shot_number": 64,
+      "sha256": "9b5e1184514aca4953159e81317e01c740de629d1f85eaf2cc1d5d94ec0be077",
+      "visual_hashes": [
+        "3024040909091111",
+        "6d62b232322c2101",
+        "3636120808c1c98d"
+      ],
+      "used_at": "2026-11-07T02:36:05.221225+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "85008",
+      "type": "video",
+      "query": "earn love good quiet marks",
+      "page_url": "https://pixabay.com/videos/id-85008/",
+      "shot_duration_seconds": 2.167,
+      "scene_number": 19,
+      "shot_number": 65,
+      "sha256": "947da59dee5bfa5a3727a212ba4c3bde5af70d810477abe0914be5fee73656c4",
+      "visual_hashes": [
+        "666dee060f8bab3b",
+        "666dee06078bab3b",
+        "6669ee06078bab3b"
+      ],
+      "used_at": "2026-11-07T02:36:05.221229+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "117019",
+      "type": "video",
+      "query": "love good quiet",
+      "page_url": "https://pixabay.com/videos/id-117019/",
+      "shot_duration_seconds": 2.438,
+      "scene_number": 19,
+      "shot_number": 66,
+      "sha256": "ab970d5ae308d842a3cf8f11b78cab6952300dd6a1cc16cc946387fac9e18183",
+      "visual_hashes": [
+        "68321430c0d08000",
+        "68321430c0d08000",
+        "68321430c0d08000"
+      ],
+      "used_at": "2026-11-07T02:36:05.221232+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "345089",
+      "type": "video",
+      "query": "good marks attention",
+      "page_url": "https://pixabay.com/videos/id-345089/",
+      "shot_duration_seconds": 2.438,
+      "scene_number": 19,
+      "shot_number": 67,
+      "sha256": "cfe60d13a51fb197751dfcdd41ab175e0dbff709728a709cb2c70086f3e5f0b1",
+      "visual_hashes": [
+        "cbde5e18526e6844",
+        "c75a9d9a7a6c4915",
+        "c32e8958686d4911"
+      ],
+      "used_at": "2026-11-07T02:36:05.221236+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "79386",
+      "type": "video",
+      "query": "adult think love earned",
+      "page_url": "https://pixabay.com/videos/id-79386/",
+      "shot_duration_seconds": 2.438,
+      "scene_number": 19,
+      "shot_number": 68,
+      "sha256": "49d674fe2a148ad41b1b0f7da60329eb0584be616fcc74b2f9997052bb6ccf14",
+      "visual_hashes": [
+        "d6e6e6c6c4c49ace",
+        "d6e6e6c6c5cc98c2",
+        "d6e6e6c7c4c498c2"
+      ],
+      "used_at": "2026-11-07T02:36:05.221240+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "46637",
+      "type": "video",
+      "query": "someone hurts child brain says",
+      "page_url": "https://pixabay.com/videos/id-46637/",
+      "shot_duration_seconds": 2.71,
+      "scene_number": 20,
+      "shot_number": 69,
+      "sha256": "66451d917275b97e4117efc65d1560d4e215f0dd9619ac20b48008bdb054ce58",
+      "visual_hashes": [
+        "15151d1d093c5c1c",
+        "15151d1d093c4c0c",
+        "15151d1d083c4c1c"
+      ],
+      "used_at": "2026-11-07T02:36:05.221243+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "305863",
+      "type": "video",
+      "query": "harder better documentary",
+      "page_url": "https://pixabay.com/videos/id-305863/",
+      "shot_duration_seconds": 2.71,
+      "scene_number": 20,
+      "shot_number": 70,
+      "sha256": "db311780fbda02a846199313e8d53e86627cc97c0b14bb740567db9b094fcc1a",
+      "visual_hashes": [
+        "9f17535b035963e7",
+        "9f1f37231f3367cf",
+        "9b27272f37774f9f"
+      ],
+      "used_at": "2026-11-07T02:36:05.221248+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "152798",
+      "type": "video",
+      "query": "love that's keep trying",
+      "page_url": "https://pixabay.com/videos/id-152798/",
+      "shot_duration_seconds": 2.981,
+      "scene_number": 20,
+      "shot_number": 71,
+      "sha256": "60ab884eaa616a4b02082a5765bf874828089141afe7c993e33987619e5f6d1b",
+      "visual_hashes": [
+        "4b2b233515151f1f",
+        "2d29b313131a8783",
+        "2d0b1311111b1303"
+      ],
+      "used_at": "2026-11-07T02:36:05.221251+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "44088",
+      "type": "video",
+      "query": "trying childhood hardest truth cannot",
+      "page_url": "https://pixabay.com/videos/id-44088/",
+      "shot_duration_seconds": 2.145,
+      "scene_number": 21,
+      "shot_number": 72,
+      "sha256": "aba4f79b776ba3a6fdf895153dbadd09315be92b44595447302ca25532d01aed",
+      "visual_hashes": [
+        "fcf8dccccccc4cc4",
+        "e6e6f6e1e5e370f1",
+        "fefffffee6c000c0"
+      ],
+      "used_at": "2026-11-07T02:36:05.221255+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "179764",
+      "type": "video",
+      "query": "trying childhood",
+      "page_url": "https://pixabay.com/videos/id-179764/",
+      "shot_duration_seconds": 2.413,
+      "scene_number": 21,
+      "shot_number": 73,
+      "sha256": "8d3c2fce7aa2ed83008e617bf99a1bf407909d8308c378105182e25cf3311750",
+      "visual_hashes": [
+        "d09673d9cdadacec",
+        "9a931bba9f9ebcec",
+        "d29641d9cceeecac"
+      ],
+      "used_at": "2026-11-07T02:36:05.221259+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "85338",
+      "type": "video",
+      "query": "hardest truth cannot childhood",
+      "page_url": "https://pixabay.com/videos/id-85338/",
+      "shot_duration_seconds": 2.413,
+      "scene_number": 21,
+      "shot_number": 74,
+      "sha256": "386e6fc5fe5ba98ba3d510bf050f0185be72c3ced900b2fdd439e6aec4a006c8",
+      "visual_hashes": [
+        "e3c3e3e3c3e7e3e7",
+        "e3e3e3e3e3c3d2f2",
+        "e3e3e2c3e7e3c3c3"
+      ],
+      "used_at": "2026-11-07T02:36:05.221263+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "56242",
+      "type": "video",
+      "query": "fixing toxic person",
+      "page_url": "https://pixabay.com/videos/id-56242/",
+      "shot_duration_seconds": 2.413,
+      "scene_number": 21,
+      "shot_number": 75,
+      "sha256": "b5d97860ba37fe7e141d20d15c8d0ad616926eda6ceb36502547bf5788baa101",
+      "visual_hashes": [
+        "0f0f070f272e6b6f",
+        "0f0f0f9f575d57ce",
+        "1e1f0f1f8fcddfde"
+      ],
+      "used_at": "2026-11-07T02:36:05.221267+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "14627",
+      "type": "video",
+      "query": "going give",
+      "page_url": "https://pixabay.com/videos/id-14627/",
+      "shot_duration_seconds": 2.456,
+      "scene_number": 22,
+      "shot_number": 76,
+      "sha256": "3af511623a518abcef210239ff48e40197615595678cfafd46555b714dc7f3af",
+      "visual_hashes": [
+        "608080a080a0a089",
+        "40c0808080c080c9",
+        "40c080808080c0c9"
+      ],
+      "used_at": "2026-11-07T02:36:05.221271+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "212000",
+      "type": "video",
+      "query": "motivation give actually worked",
+      "page_url": "https://pixabay.com/videos/id-212000/",
+      "shot_duration_seconds": 2.456,
+      "scene_number": 22,
+      "shot_number": 77,
+      "sha256": "6ac7cff662a6ea8479aebcc09cf8f0fe752f284580465e391d98bb90567e4932",
+      "visual_hashes": [
+        "12323635191193d3",
+        "1337023131131313",
+        "1333133131331393"
+      ],
+      "used_at": "2026-11-07T02:36:05.221274+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "114860",
+      "type": "video",
+      "query": "first stop asking can't",
+      "page_url": "https://pixabay.com/videos/id-114860/",
+      "shot_duration_seconds": 2.456,
+      "scene_number": 22,
+      "shot_number": 78,
+      "sha256": "c6c4751eae9cd7192e09449650d031af17b9821f76cdc68784e1f775b32ca873",
+      "visual_hashes": [
+        "660546068c1a1584",
+        "125656c2048a9935",
+        "614003c2048a1035"
+      ],
+      "used_at": "2026-11-07T02:36:05.221279+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "4723",
+      "type": "video",
+      "query": "start asking actually addicted",
+      "page_url": "https://pixabay.com/videos/id-4723/",
+      "shot_duration_seconds": 2.276,
+      "scene_number": 23,
+      "shot_number": 79,
+      "sha256": "b791cfb4c222f9a9c9d15d9bf73128276294e8c3effcc74dc2daea19c31a1b0b",
+      "visual_hashes": [
+        "f9b99d918d1d9b19",
+        "e99989958d0f8b19",
+        "f99d8d95850f9b19"
+      ],
+      "used_at": "2026-11-07T02:36:05.221282+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "311970",
+      "type": "video",
+      "query": "person hope",
+      "page_url": "https://pixabay.com/videos/id-311970/",
+      "shot_duration_seconds": 2.56,
+      "scene_number": 23,
+      "shot_number": 80,
+      "sha256": "3867dd98465be292e4183eeda4889ddbfd96fc1ee76c64bf17840400bf901f9f",
+      "visual_hashes": [
+        "0f4b4f6767676366",
+        "0f0b0f6747c7e366",
+        "0f4b0f6f45c7c366"
+      ],
+      "used_at": "2026-11-07T02:36:05.221286+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "277042",
+      "type": "video",
+      "query": "change write paper",
+      "page_url": "https://pixabay.com/videos/id-277042/",
+      "shot_duration_seconds": 2.276,
+      "scene_number": 23,
+      "shot_number": 81,
+      "sha256": "12fb65fb0d674e918bed147623a282eb3d411dde7b16e8a23a53c0c9f438e2cc",
+      "visual_hashes": [
+        "4622131b1f0c66f5",
+        "4622030b1f0c66f5",
+        "4622030b171c66f5"
+      ],
+      "used_at": "2026-11-07T02:36:05.221290+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "diagram:329ae932669ff36284d8",
+      "type": "image",
+      "source": "WISE-LAB Original Diagram",
+      "query": "written brain stops lying",
+      "page_url": "",
+      "shot_duration_seconds": 2.56,
+      "scene_number": 23,
+      "shot_number": 82,
+      "sha256": "329ae932669ff36284d8464aae3c7e45195812bcb987b04eae441f25ebe31ff1",
+      "visual_hashes": [
+        "19232b2bcc2b3354"
+      ],
+      "used_at": "2026-11-07T02:36:05.221294+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "65267",
+      "type": "video",
+      "query": "second don't block",
+      "page_url": "https://pixabay.com/videos/id-65267/",
+      "shot_duration_seconds": 2.659,
+      "scene_number": 24,
+      "shot_number": 83,
+      "sha256": "0b5f08bb2dd031e4039a962318fb4d8a65a55f6c8e6259eb11c1bd4bcf9e64df",
+      "visual_hashes": [
+        "8f8f8f0f0f0e0e0f",
+        "0e0d0d0d0d0e1e0e",
+        "0c0c0c0c0c0c0c4c"
+      ],
+      "used_at": "2026-11-07T02:36:05.221298+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "118631",
+      "type": "video",
+      "query": "hero replace find",
+      "page_url": "https://pixabay.com/videos/id-118631/",
+      "shot_duration_seconds": 2.659,
+      "scene_number": 24,
+      "shot_number": 84,
+      "sha256": "f6a9157c5ab4bdf3a82932eebce05ed0a5314905be7b5a39d591f1600dcd5755",
+      "visual_hashes": [
+        "5e3f3f3f1f1f8f85",
+        "5e3f3f1f1f1f8f85",
+        "5f3f3f3f1f1f8f85"
+      ],
+      "used_at": "2026-11-07T02:36:05.221302+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "43459",
+      "type": "video",
+      "query": "person hobby thing gives",
+      "page_url": "https://pixabay.com/videos/id-43459/",
+      "shot_duration_seconds": 2.659,
+      "scene_number": 24,
+      "shot_number": 85,
+      "sha256": "f53ea2eeb9d9506631d2106f6992ede05b651d99520f13146743dfe7973a2280",
+      "visual_hashes": [
+        "66664642c2c25232",
+        "66664642c2c25232",
+        "66666642c2c25232"
+      ],
+      "used_at": "2026-11-07T02:36:05.221305+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "37748",
+      "type": "video",
+      "query": "same feeling belonging without pain",
+      "page_url": "https://pixabay.com/videos/id-37748/",
+      "shot_duration_seconds": 2.991,
+      "scene_number": 24,
+      "shot_number": 86,
+      "sha256": "59da8645d6e274816f9df7ceb993ae5053db0cf80196af40086158b9c443ac05",
+      "visual_hashes": [
+        "edf8335e0e1e644c",
+        "e5f8997a0e1e67cc",
+        "edf8983ace1f1345"
+      ],
+      "used_at": "2026-11-07T02:36:05.221309+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "17870",
+      "type": "video",
+      "query": "brain doesn't need person needs",
+      "page_url": "https://pixabay.com/videos/id-17870/",
+      "shot_duration_seconds": 2.462,
+      "scene_number": 25,
+      "shot_number": 87,
+      "sha256": "e8a5de12ee693929cacf80e1db5ad71edbb8fa0fc07d5217c0e4e28e51ba6944",
+      "visual_hashes": [
+        "4f03b76d6be77773",
+        "0f2f336b6df77730",
+        "67263767e9667638"
+      ],
+      "used_at": "2026-11-07T02:36:05.221313+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "10749",
+      "type": "video",
+      "query": "connection third remember line",
+      "page_url": "https://pixabay.com/videos/id-10749/",
+      "shot_duration_seconds": 2.77,
+      "scene_number": 25,
+      "shot_number": 88,
+      "sha256": "e84f60df45fa4b94c4f6eadd23cb0b9b29c798331e26aebafce127c11a53a16e",
+      "visual_hashes": [
+        "c141040606c1ccdb",
+        "4143c3c78701674b",
+        "056143c071414759"
+      ],
+      "used_at": "2026-11-07T02:36:05.221317+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "106378",
+      "type": "video",
+      "query": "love it's",
+      "page_url": "https://pixabay.com/videos/id-106378/",
+      "shot_duration_seconds": 2.462,
+      "scene_number": 25,
+      "shot_number": 89,
+      "sha256": "a1985a9a8ed4903f001eb37adce07f8601e32180b345781a71e6c26e70d02384",
+      "visual_hashes": [
+        "040c0c08080c080b",
+        "040c0c08080c080b",
+        "0c0c0c08080c080f"
+      ],
+      "used_at": "2026-11-07T02:36:05.221321+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "60721",
+      "type": "video",
+      "query": "didn't apply",
+      "page_url": "https://pixabay.com/videos/id-60721/",
+      "shot_duration_seconds": 2.77,
+      "scene_number": 25,
+      "shot_number": 90,
+      "sha256": "fbc195eb42f7628f621ef54c9f56cac9b007ea4390ded068bd47c81702dddfe0",
+      "visual_hashes": [
+        "4f3f1f3f23271d2d",
+        "0b73c1c2c5b3470f",
+        "0f0707072307070f"
+      ],
+      "used_at": "2026-11-07T02:36:05.221325+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "106376",
+      "type": "video",
+      "query": "deserve love doesn't make anxious",
+      "page_url": "https://pixabay.com/videos/id-106376/",
+      "shot_duration_seconds": 2.92,
+      "scene_number": 26,
+      "shot_number": 91,
+      "sha256": "e6cc78b58abd1c1ed3263d338e6b96779ff34d20b00604c415c8121fe5532da4",
+      "visual_hashes": [
+        "0008080c040c140f",
+        "080c0c0c040c410f",
+        "080c0c0c040c110f"
+      ],
+      "used_at": "2026-11-07T02:36:05.221330+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "35266",
+      "type": "video",
+      "query": "video felt like",
+      "page_url": "https://pixabay.com/videos/id-35266/",
+      "shot_duration_seconds": 2.92,
+      "scene_number": 26,
+      "shot_number": 92,
+      "sha256": "0e1b6d633da8e31935211640c31894a2a238c8e17ee225d0f993a9c9ef42d588",
+      "visual_hashes": [
+        "e3d8f890cfd8f8f8",
+        "c3e1f0a0d880e0f0",
+        "9b8b438092f0fcf8"
+      ],
+      "used_at": "2026-11-07T02:36:05.221333+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "273919",
+      "type": "video",
+      "query": "comment felt read every",
+      "page_url": "https://pixabay.com/videos/id-273919/",
+      "shot_duration_seconds": 2.92,
+      "scene_number": 26,
+      "shot_number": 93,
+      "sha256": "4c3050038295c97a6aa65fea0eba40087fe532dbb931f25beb35f6d826b87ecd",
+      "visual_hashes": [
+        "22323606861f1717",
+        "32323606861f1717",
+        "32323606861f1717"
+      ],
+      "used_at": "2026-11-07T02:36:05.221337+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "262191",
+      "type": "video",
+      "query": "want part",
+      "page_url": "https://pixabay.com/videos/id-262191/",
+      "shot_duration_seconds": 2.344,
+      "scene_number": 27,
+      "shot_number": 94,
+      "sha256": "79fd1e8d1e29add92885c32967916140f04d06b7be328a2eb08e63ca0ccedd53",
+      "visual_hashes": [
+        "0d59c9a8513565a5",
+        "6ac4843835a695ed",
+        "d18d2931356d19a9"
+      ],
+      "used_at": "2026-11-07T02:36:05.221341+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "63039",
+      "type": "video",
+      "query": "actually move days using psychology",
+      "page_url": "https://pixabay.com/videos/id-63039/",
+      "shot_duration_seconds": 2.636,
+      "scene_number": 27,
+      "shot_number": 95,
+      "sha256": "b9c2bc52579830974d6b5bab9e2c06b880292cdf65315f423411adb76365dc77",
+      "visual_hashes": [
+        "06161e1616067060",
+        "1414141416067060",
+        "1414141414047060"
+      ],
+      "used_at": "2026-11-07T02:36:05.221345+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "35259",
+      "type": "video",
+      "query": "subscribe video even",
+      "page_url": "https://pixabay.com/videos/id-35259/",
+      "shot_duration_seconds": 2.344,
+      "scene_number": 27,
+      "shot_number": 96,
+      "sha256": "e622c439aa47f162377fe1957d79124e2369124e4aa8d331cf869ec08707e729",
+      "visual_hashes": [
+        "8000c09088cac849",
+        "8000c0d008cac9ca",
+        "8000d0d0a8c8d9d8"
+      ],
+      "used_at": "2026-11-07T02:36:05.221349+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "35619",
+      "type": "video",
+      "query": "real take care yourself",
+      "page_url": "https://pixabay.com/videos/id-35619/",
+      "shot_duration_seconds": 2.636,
+      "scene_number": 27,
+      "shot_number": 97,
+      "sha256": "c4c305c2c52eb8d235a40f4eee9c6b77037a3ef45898277712f71b7de4e168bc",
+      "visual_hashes": [
+        "db313832f9955b77",
+        "93353a33f9d57b57",
+        "495a343bb8c83dfd"
+      ],
+      "used_at": "2026-11-07T02:36:05.221353+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "380282",
+      "type": "video",
+      "query": "weak healing",
+      "page_url": "https://pixabay.com/videos/id-380282/",
+      "shot_duration_seconds": 2.28,
+      "scene_number": 28,
+      "shot_number": 98,
+      "sha256": "3561995ad8696b0b29a09104b43037b9827dd7ad6375878f44c3401f10fe968a",
+      "visual_hashes": [
+        "b0ae948c99c14000",
+        "b052cc84940000a0",
+        "a012cccc944000a0"
+      ],
+      "used_at": "2026-11-07T02:36:05.221357+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
     }
   ],
   "rejected_ids": [
