@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import requests
@@ -1287,6 +1288,7 @@ def main() -> int:
     pexels_key = os.getenv("PEXELS_API_KEY", "").strip()
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
     groq_key = os.getenv("GROQ_API_KEY", "").strip()
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     print("Optional Pexels fallback enabled." if pexels_key else "Pexels fallback not configured; using Pixabay only.")
     print("OpenAI image generation: enabled." if openai_key else "OpenAI image generation: unavailable; optional.")
     print("Gemini image generation: enabled." if gemini_key else "Gemini image generation: unavailable; optional.")
@@ -1429,8 +1431,17 @@ def main() -> int:
     total_shots = final_cursor
     ai_shot_indices = choose_ai_shot_indices(
         total_shots, int(os.getenv("AI_IMAGES_PER_VIDEO", "6"))
-    ) if openai_key else set()
+    ) if (openai_key or gemini_key) else set()
     ai_shot_indices -= diagram_shot_indices
+    ordered_ai_shots = sorted(ai_shot_indices)
+    ai_provider_by_shot = {}
+    for position, shot_index in enumerate(ordered_ai_shots):
+        if openai_key and gemini_key:
+            ai_provider_by_shot[shot_index] = "openai" if position < 4 else "gemini"
+        elif openai_key:
+            ai_provider_by_shot[shot_index] = "openai"
+        else:
+            ai_provider_by_shot[shot_index] = "gemini"
     print(
         f"Planning {len(diagram_shot_indices)} original topic diagrams "
         f"(minimum {diagram_min_seconds:.0f}s, target about {diagram_target_seconds:.0f}s) "
