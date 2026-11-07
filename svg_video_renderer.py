@@ -8,7 +8,6 @@ import hashlib
 import json
 import math
 import shutil
-import struct
 import subprocess
 import tempfile
 import wave
@@ -127,7 +126,6 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
     cursor = 0.0
     total_duration = (sum(float(b["duration_seconds"]) for b in beats)
                       + max(0, len(beats)-1) * transition_seconds)
-    frame_count = max(1, round(total_duration * fps))
     previous_frame = None
 
     with tempfile.TemporaryDirectory(prefix="wise_lab_frames_") as temp_name:
@@ -169,6 +167,7 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
             "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(silent_video)
         ], check=True)
 
+    total_duration = global_frame / fps
     sfx_path = output_dir / "sound_effects.wav"
     write_sfx_track(total_duration, events, sfx_path)
     final_video = output_dir / "wise_lab_animated_preview.mp4"
