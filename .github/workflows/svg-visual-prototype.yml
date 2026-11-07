@@ -48,7 +48,7 @@ jobs:
           python -m pip install CairoSVG Pillow requests edge-tts
 
       - name: Validate engine
-        run: python -m py_compile svg_animation_engine.py svg_scene_engine.py svg_story_planner.py
+        run: python -m py_compile svg_animation_engine.py svg_scene_engine.py svg_story_planner.py svg_narration.py
 
       - name: Run SVG engine tests
         run: python -m unittest discover -s tests -p 'test_svg_animation_engine.py' -v
@@ -61,6 +61,9 @@ jobs:
 
       - name: Validate audio and animated renderer
         run: python -m py_compile svg_audio_engine.py svg_narration.py svg_video_renderer.py
+
+      - name: Run narration and caption tests
+        run: python -m unittest discover -s tests -p 'test_svg_narration.py' -v
 
       - name: Run animation and sound tests
         run: python -m unittest discover -s tests -p 'test_svg_video_renderer.py' -v
