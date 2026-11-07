@@ -104,6 +104,7 @@ jobs:
         run: python render_script.py
 
       - name: Record script only after a video has rendered
+        continue-on-error: true
         run: |
           python editorial_gate.py --record-rendered
           git config user.name "github-actions[bot]"
@@ -113,10 +114,10 @@ jobs:
             git commit -m "Record successfully rendered WISE LAB script"
             for attempt in 1 2 3; do
               git fetch origin main
-              if ! git rebase origin/main; then
+              if ! git -c rebase.autoStash=true rebase origin/main; then
                 git rebase --abort || true
-                echo "Could not safely rebase rendered-script history."
-                exit 1
+                echo "WARNING: Could not safely rebase rendered-script history; continuing with video delivery."
+                exit 0
               fi
               if git push origin HEAD:main; then
                 echo "Successfully recorded rendered script."
@@ -124,8 +125,8 @@ jobs:
               fi
               echo "Push attempt $attempt failed; retrying."
             done
-            echo "Could not push rendered-script history after 3 attempts."
-            exit 1
+            echo "WARNING: Could not push rendered-script history after 3 attempts; continuing with video delivery."
+            exit 0
           else
             echo "Rendered script was already recorded."
           fi
@@ -133,16 +134,26 @@ jobs:
       - name: Run technical quality checks and prepare human review pack
         run: python quality_check.py
 
-      # Save the finished render and review reports before attempting YouTube upload.
-      # This preserves a downloadable MP4 even if OAuth or YouTube is temporarily unavailable.
-      - name: Upload WISE LAB video, logo and captions
+      - name: Upload video to YouTube (private)
+        run: python upload_youtube.py
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_PRIVACY_STATUS: private
+          VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
+
+      # One artifact per run: one rendered MP4 plus its review materials and private YouTube link.
+      # This runs even if YouTube upload fails, so the rendered video is still downloadable.
+      - name: Save one WISE LAB video artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wise-lab-video-${{ github.run_number }}
           if-no-files-found: warn
           path: |
-            output/wise_lab_*.mp4
+            output/wise_lab_shorts.mp4
+            output/wise_lab_video.mp4
             output/captions.srt
             output/captions.ass
             output/wise_lab_voiceover.mp3
@@ -169,26 +180,6 @@ jobs:
             output/work/wise_lab_diagram_*.svg
             output/wise_lab_thumbnail.jpg
             output/youtube_video_url.txt
-          retention-days: 7
-
-      - name: Upload video to YouTube (private)
-        run: python upload_youtube.py
-        env:
-          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
-          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          YOUTUBE_PRIVACY_STATUS: private
-          VIDEO_FORMAT: ${{ inputs.format || 'landscape' }}
-
-      - name: Save private YouTube review link
-        if: always() && hashFiles('output/youtube_video_url.txt') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: wise-lab-private-review-link-${{ github.run_number }}
-          path: |
-            output/youtube_video_url.txt
-            output/review_checklist.md
-          if-no-files-found: warn
           retention-days: 7
 
       - name: Save visual usage history
