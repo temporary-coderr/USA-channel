@@ -59,6 +59,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Validate uploader Python syntax
+        run: python -m py_compile upload_youtube.py
+
       - name: Run technical quality checks on the existing render
         run: python quality_check.py
 
