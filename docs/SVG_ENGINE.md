@@ -4,9 +4,15 @@
 
 The engine turns narration into ordered visual beats, creates original SVG compositions, animates them frame-by-frame, and encodes a review MP4. It uses Python, CairoSVG, Pillow, FFmpeg, and standard-library audio synthesis. It does not call Pixabay, Openverse, OpenAI Images, Gemini Images, or another external image service.
 
+### Script-adaptive scene engine
+
+The video renderer now uses `svg_scene_engine.py` as its visual composition layer. For every narration beat it derives a scene brief containing subject, action, emotion, environment, props, character variant, and composition. The flat-vector renderer draws the character and scene directly with SVG geometry. It includes expression-specific eyes, brows and mouths; walking/sitting/pointing/hiding/waving/thinking poses; blink and bob motion; multiple environments (rainy street, bedroom, park, workplace, interior and dark room); and script-selected props. Dog-focused beats place a dog alongside the character rather than showing an unrelated generic person. Layouts vary between beats.
+
+The scene planner is deterministic for a given beat but uses the beat index and narration to vary scene composition. It does not use stock images, raster assets, or external image-generation APIs. The renderer is still a first-stage procedural system: visual interpretation is keyword/rule-based, not a full semantic AI storyboard, and uncommon concepts need additional hand-authored SVG vocabulary.
+
 ### Animation features
 
-- Character breathing/bobbing and gesture movement.
+- Character breathing/bobbing, blinking, expression changes and action-specific pose movement.
 - Per-scene camera push-in and alternating pan.
 - Subtle background parallax.
 - Short crossfade transitions between beats.
