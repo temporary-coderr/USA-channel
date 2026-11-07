@@ -110,6 +110,8 @@ def plan_scene(narration: str, beat_index: int) -> dict:
         props.append("cat")
 
     seed = _seed(f"{beat_index}|{narration}")
+    layouts = ("left_focus", "right_focus", "wide_interaction", "close_up")
+    layout = layouts[(beat_index - 1) % len(layouts)]
     return {
         "subject": subject, "action": action, "emotion": emotion,
         "environment": environment, "props": props,
