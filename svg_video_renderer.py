@@ -87,7 +87,8 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
     total_duration = global_frame / fps
     sfx_path = output_dir / "sound_effects.wav"
     mix_path = output_dir / "audio_mix.wav"
-    audio_report = write_audio_tracks(total_duration, events, sfx_path, mix_path)
+    music_seed = int(hashlib.sha256(script.encode('utf-8')).hexdigest()[:8], 16)
+    audio_report = write_audio_tracks(total_duration, events, sfx_path, mix_path, music_seed)
     final_video = output_dir / "wise_lab_animated_preview.mp4"
     subprocess.run([
         _ffmpeg(), "-y", "-hide_banner", "-loglevel", "error",
