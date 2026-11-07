@@ -1332,38 +1332,102 @@ def main() -> int:
 
     shot_number = 0
     target_shot_seconds = 3.0
-    estimated_shot_counts = [
-        min(max(1, int((seconds + target_shot_seconds - 0.001) // target_shot_seconds)),
-            max(1, len(re.findall(r"\S+", scene["narration"]))))
-        for scene, seconds in zip(plan["scenes"], durations)
-    ]
-    total_shots = sum(estimated_shot_counts)
-    ai_shot_indices = choose_ai_shot_indices(
-        total_shots, int(os.getenv("AI_IMAGES_PER_VIDEO", "6"))
-    ) if openai_key else set()
-    diagram_count = min(3, max(1, total_shots // 8))
-    diagram_shot_indices = {min(total_shots - 1, int((i + 0.5) * total_shots / diagram_count)) for i in range(diagram_count)} if total_shots else set()
-    diagram_shot_indices -= ai_shot_indices
-    for candidate in range(total_shots):
-        if len(diagram_shot_indices) >= diagram_count:
-            break
-        if candidate not in ai_shot_indices:
-            diagram_shot_indices.add(candidate)
-    print(f"Planning {len(diagram_shot_indices)} original topic diagrams and {len(ai_shot_indices)} selective AI visuals across {total_shots} cuts.")
-    for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
-        words = re.findall(r"\S+", scene["narration"])
+    diagram_min_seconds = 5.0
+    diagram_target_seconds = 6.0
+
+    # Build the ordinary ~3-second shot plan first. Original diagrams are then
+    # given a dedicated 5–7+ second window by combining adjacent narration shots.
+    base_scene_shots = []
+    for scene, seconds in zip(plan["scenes"], durations):
+        words = re.findall(r"\\S+", scene["narration"])
         if not words:
-            words = re.findall(r"\S+", scene.get("heading", "psychology"))
+            words = re.findall(r"\\S+", scene.get("heading", "psychology"))
         shot_count = max(1, int((seconds + target_shot_seconds - 0.001) // target_shot_seconds))
         shot_count = min(shot_count, max(1, len(words)))
-        shot_paths = []
-        shot_durations = []
+        scene_shots = []
         for shot_index in range(shot_count):
             left = (shot_index * len(words)) // shot_count
             right = ((shot_index + 1) * len(words)) // shot_count
             shot_words = words[left:right] or words
-            shot_text = " ".join(shot_words)
-            shot_seconds = seconds * len(shot_words) / max(1, len(words))
+            scene_shots.append({
+                "text": " ".join(shot_words),
+                "seconds": seconds * len(shot_words) / max(1, len(words)),
+            })
+        base_scene_shots.append(scene_shots)
+
+    total_base_shots = sum(len(items) for items in base_scene_shots)
+    diagram_count = min(3, max(1, total_base_shots // 8)) if total_base_shots >= 2 else 0
+    selected_base_diagrams = set()
+    # Choose separated positions with a following shot available to merge.
+    for slot in range(diagram_count):
+        if total_base_shots < 2:
+            break
+        ideal = min(total_base_shots - 2, int((slot + 0.5) * (total_base_shots - 1) / max(1, diagram_count)))
+        candidates = sorted(
+            range(total_base_shots - 1),
+            key=lambda value: (abs(value - ideal), value)
+        )
+        chosen = next(
+            (value for value in candidates
+             if all(abs(value - existing) > 1 for existing in selected_base_diagrams)),
+            None
+        )
+        if chosen is not None:
+            selected_base_diagrams.add(chosen)
+
+    # Merge the diagram's shot with following narration shots until it has at
+    # least five seconds on screen. No narration is removed and scene runtime
+    # remains unchanged; only the visual cut boundaries move.
+    scene_shots = []
+    diagram_shot_indices = set()
+    base_cursor = 0
+    final_cursor = 0
+    for base_items in base_scene_shots:
+        final_items = []
+        local_cursor = 0
+        while local_cursor < len(base_items):
+            item = dict(base_items[local_cursor])
+            is_diagram = base_cursor in selected_base_diagrams
+            local_cursor += 1
+            base_cursor += 1
+            if is_diagram:
+                while (
+                    item["seconds"] < diagram_min_seconds
+                    and local_cursor < len(base_items)
+                    and base_cursor not in selected_base_diagrams
+                ):
+                    following = base_items[local_cursor]
+                    item["text"] += " " + following["text"]
+                    item["seconds"] += following["seconds"]
+                    local_cursor += 1
+                    base_cursor += 1
+                if item["seconds"] >= diagram_min_seconds:
+                    item["is_diagram"] = True
+                    diagram_shot_indices.add(final_cursor)
+                else:
+                    item["is_diagram"] = False
+            else:
+                item["is_diagram"] = False
+            final_items.append(item)
+            final_cursor += 1
+        scene_shots.append(final_items)
+
+    total_shots = final_cursor
+    ai_shot_indices = choose_ai_shot_indices(
+        total_shots, int(os.getenv("AI_IMAGES_PER_VIDEO", "6"))
+    ) if openai_key else set()
+    ai_shot_indices -= diagram_shot_indices
+    print(
+        f"Planning {len(diagram_shot_indices)} original topic diagrams "
+        f"(minimum {diagram_min_seconds:.0f}s, target about {diagram_target_seconds:.0f}s) "
+        f"and {len(ai_shot_indices)} selective AI visuals across {total_shots} cuts."
+    )
+    for index, (scene, seconds) in enumerate(zip(plan["scenes"], durations), 1):
+        shot_paths = []
+        shot_durations = []
+        for shot_index, planned_shot in enumerate(scene_shots[index - 1]):
+            shot_text = planned_shot["text"]
+            shot_seconds = planned_shot["seconds"]
             query = visual_query_from_text(shot_text, scene["visual_query"])
             image_query = query + " photography"
             print(f"Scene {index}/{len(plan['scenes'])}, shot {shot_index + 1}/{shot_count}: {query}")
