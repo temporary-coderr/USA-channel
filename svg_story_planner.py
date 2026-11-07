@@ -21,7 +21,7 @@ ALLOWED = {
     "environment": {"rainy_street", "bedroom", "park", "workplace", "interior", "dark_room", "studio", "cafe", "classroom", "city", "home"},
     "character": {"boy", "girl"},
     "layout": {"left_focus", "right_focus", "wide_interaction", "close_up"},
-    "props": {"phone", "broken_phone", "door", "brain", "heart", "clock", "book", "coffee", "dog", "cat"},
+    "props": {"phone", "broken_phone", "door", "brain", "heart", "clock", "book", "coffee", "dog", "cat", "mirror", "eye", "keys"},
 }
 
 
@@ -53,7 +53,7 @@ def _validate_scene(raw: Any, beat: dict, index: int) -> dict:
             p for p in props if isinstance(p, str) and p in ALLOWED["props"]
         ))[:4]
     # Ensure a selected object subject is actually present in the SVG scene.
-    if result["subject"] in {"phone", "door", "brain", "heart", "clock", "book"} and result["subject"] not in result["props"]:
+    if result["subject"] in {"phone", "door", "brain", "heart", "clock", "book", "mirror", "eye"} and result["subject"] not in result["props"]:
         result["props"].insert(0, result["subject"])
     if result["subject"] == "dog" and "dog" not in result["props"]:
         result["props"].append("dog")
@@ -86,7 +86,7 @@ def _prompt(beats: list[dict]) -> str:
         "Allowed action: explaining,walking,sitting,pointing,hiding,waving,talking,thinking,shocked,scared,angry,sad,happy. "
         "Allowed emotion: neutral,sad,happy,shocked,thinking,angry,scared. "
         "Allowed environment: rainy_street,bedroom,park,workplace,interior,dark_room,studio,cafe,classroom,city,home. "
-        "Allowed props: phone,broken_phone,door,brain,heart,clock,book,coffee,dog,cat. "
+        "Allowed props: phone,broken_phone,door,brain,heart,clock,book,coffee,dog,cat,mirror,eye,keys. "
         "Allowed character: boy,girl. Allowed layout: left_focus,right_focus,wide_interaction,close_up. "
         "For each beat return exactly one scene, preserving beat_index. "
         "Narration beats:\n" + json.dumps(compact, ensure_ascii=False)
