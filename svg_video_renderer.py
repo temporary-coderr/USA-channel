@@ -11,7 +11,8 @@ import tempfile
 from pathlib import Path
 
 from svg_animation_engine import plan_visual_beats
-from svg_scene_engine import plan_scene, render_scene_svg
+from svg_scene_engine import render_scene_svg
+from svg_story_planner import plan_story
 from svg_audio_engine import build_sound_events, write_audio_tracks
 
 def _ffmpeg() -> str:
@@ -35,6 +36,8 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
         width = 720
     height = round(width * (16/9 if vertical else 9/16))
     beats = plan_visual_beats(script, target_wpm, target_seconds)
+    visual_briefs, story_plan_report = plan_story(beats)
+    print("Story planner selected: " + story_plan_report.get("provider", "unknown"))
     output_dir.mkdir(parents=True, exist_ok=True)
     scene_dir = output_dir / "scene_svgs"
     scene_dir.mkdir(exist_ok=True)
@@ -52,7 +55,8 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
         for beat_index, beat in enumerate(beats, 1):
             beat_svg_path = scene_dir / f"{beat['id']}.svg"
             beat_svg_path.write_text(
-                render_scene_svg(beat["narration"], beat_index, width, height, phase=0.0),
+                render_scene_svg(beat["narration"], beat_index, width, height, phase=0.0,
+                                visual_brief=visual_briefs[beat_index - 1]),
                 encoding="utf-8"
             )
             frame_total = max(4, round(float(beat["duration_seconds"]) * fps))
@@ -60,7 +64,8 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
             last_frame = None
             for local_index in range(frame_total):
                 phase = local_index / max(1, frame_total - 1)
-                svg = render_scene_svg(beat["narration"], beat_index, width, height, phase=phase)
+                svg = render_scene_svg(beat["narration"], beat_index, width, height, phase=phase,
+                                        visual_brief=visual_briefs[beat_index - 1])
                 png_bytes = cairosvg.svg2png(bytestring=svg.encode("utf-8"),
                                              output_width=width, output_height=height)
                 image = Image.open(__import__("io").BytesIO(png_bytes)).convert("RGB")
@@ -110,7 +115,8 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
         "beat_count": len(beats),
         "rendered_frame_count": global_frame,
         "character_animation": ["expression_shapes", "blink", "breathing_bob", "walking_cycle", "pose_variants"],
-        "scene_engine": "script_adaptive_svg_scene_composer",
+        "scene_engine": "groq_planned_script_adaptive_svg_scene_composer",
+        "story_planner": story_plan_report,
         "scene_variation": ["emotion", "pose", "environment", "props", "composition"],
         "camera_animation": ["slow_push_in", "alternating_pan", "background_parallax"],
         "transitions": {"type": "crossfade", "duration_seconds": round(transition_frames/fps, 3)},
@@ -118,7 +124,7 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
                   "narration_included": False},
         "stock_media_used": False,
         "external_image_apis_used": False,
-        "beats": [{**beat, "visual_brief": plan_scene(beat["narration"], i)} for i, beat in enumerate(beats, 1)],
+        "beats": [{**beat, "visual_brief": visual_briefs[i - 1]} for i, beat in enumerate(beats, 1)],
         "files": {
             "video": final_video.name,
             "sound_effects": sfx_path.name,
