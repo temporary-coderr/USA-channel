@@ -346,10 +346,18 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920,
     prop = "".join(_prop(p, prop_x + (i*scale*28), prop_y, scale*.85)
                    for i, p in enumerate(brief["props"]) if p != "dog")
     if brief["subject"] == "dog":
-        dog_x = width*(.69 if person_x < width/2 else .28)
-        dog = _dog(dog_x, height*.78, scale*.72, seed, phase)
-        # Interaction is explicit: the dog is placed close and oriented toward the person.
+        dog_x = person_x + (width*.22 if person_x < width/2 else -width*.22)
+        dog_y = height*.72
+        dog = _dog(dog_x, dog_y, scale*.78, seed, phase)
+        # Flip the dog when it is on the right so its muzzle faces the person.
+        if person_x < width/2:
+            dog = f'<g transform="translate({2*dog_x:.1f} 0) scale(-1 1)">{dog}</g>'
         prop += dog
+        words = _tokens(narration)
+        if words & {"love", "bond", "oxytocin", "gaze", "eyes", "eye", "look", "looking"}:
+            heart_x = (person_x + dog_x) / 2
+            heart_y = height*.48
+            prop += _prop("heart", heart_x, heart_y, scale*.30)
     if brief["subject"] == "cat":
         prop += _cat(prop_x, height*.76, scale*.62, seed, phase)
     camera_zoom = 1 + .025 * math.sin(math.pi * phase)
