@@ -60,7 +60,7 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_svg_story_planner.py' -v
 
       - name: Validate audio and animated renderer
-        run: python -m py_compile svg_audio_engine.py svg_narration.py svg_video_renderer.py
+        run: python -m py_compile svg_audio_engine.py svg_narration.py svg_video_renderer.py svg_quality_gate.py
 
       - name: Run narration and caption tests
         run: python -m unittest discover -s tests -p 'test_svg_narration.py' -v
