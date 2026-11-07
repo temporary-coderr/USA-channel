@@ -35,8 +35,10 @@ TOPIC_RULES = [
     (("dog", "dogs", "puppy", "puppies", "canine", "pet dog"), "dog"),
     (("cat", "cats", "kitten", "kittens"), "cat"),
     (("bird", "birds", "parrot", "parrots"), "bird"),
+    # Concrete objects take priority over broad cognitive terms. For example,
+    # "phone notifications interrupt attention" must render a phone, not a brain.
+    (("phone", "text", "message", "notification", "notifications", "social media", "screen"), "phone"),
     (("brain", "memory", "remember", "forget", "attention", "thought", "mind"), "brain"),
-    (("phone", "text", "message", "notification", "social media", "screen"), "phone"),
     (("door", "doorway", "room", "enter", "exit"), "door"),
     (("clock", "time", "deadline", "late", "waiting"), "clock"),
     (("mirror", "self-image", "identity", "reflection"), "mirror"),
