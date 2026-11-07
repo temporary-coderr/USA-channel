@@ -39,9 +39,9 @@ def cap_hashtags(text: str, remaining: int, seen: set[str]) -> tuple[str, int]:
         return tag
 
     cleaned = HASHTAG_RE.sub(replace, text)
-    cleaned = re.sub(r"[ \\t]{2,}", " ", cleaned)
-    cleaned = re.sub(r" *\\n *", "\\n", cleaned)
-    cleaned = re.sub(r"\\n{3,}", "\\n\\n", cleaned)
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    cleaned = re.sub(r" *\n *", "\\n", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip(), kept
 
 
