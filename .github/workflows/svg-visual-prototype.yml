@@ -56,6 +56,9 @@ jobs:
       - name: Run script-adaptive scene engine tests
         run: python -m unittest discover -s tests -p 'test_svg_scene_engine.py' -v
 
+      - name: Run Groq story planner tests
+        run: python -m unittest discover -s tests -p 'test_svg_story_planner.py' -v
+
       - name: Validate audio and animated renderer
         run: python -m py_compile svg_audio_engine.py svg_video_renderer.py
 
