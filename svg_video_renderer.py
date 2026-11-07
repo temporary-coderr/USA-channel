@@ -3,6 +3,7 @@ from __future__ import annotations
 """Render the procedural WISE-LAB SVG scenes as an animated MP4 with original SFX."""
 
 import argparse
+from array import array
 import hashlib
 import json
 import math
@@ -27,11 +28,12 @@ SFX_FOR_ACTION = {
     "explaining": "soft_tick",
 }
 
-def build_sound_events(beats: list[dict]) -> list[dict]:
+def build_sound_events(beats: list[dict], transition_seconds: float = 0.22) -> list[dict]:
     events = [{"time": 0.08, "kind": "logo", "gain": 0.42}]
     cursor = 0.0
     for index, beat in enumerate(beats):
         if index:
+            cursor += transition_seconds
             events.append({"time": cursor, "kind": "soft_whoosh", "gain": 0.19})
         kind = SFX_FOR_ACTION.get(beat.get("action"), "soft_tick")
         # Leave breathing room: effects punctuate meaningful beats, not every word.
@@ -67,7 +69,7 @@ def _sound_sample(kind: str, t: float, duration: float, seed: int) -> float:
 def write_sfx_track(duration: float, events: list[dict], output_path: Path) -> None:
     """Synthesize a low-volume mono SFX bed using only Python's standard library."""
     total_frames = max(1, int(math.ceil(duration * SAMPLE_RATE)))
-    mixed = [0] * total_frames
+    mixed = array('h', [0]) * total_frames
     durations = {
         "ui_click": 0.075, "soft_tick": 0.105, "soft_step": 0.15,
         "soft_impact": 0.24, "soft_whoosh": 0.34, "logo": 0.72,
@@ -92,7 +94,7 @@ def write_sfx_track(duration: float, events: list[dict], output_path: Path) -> N
         block = 48000
         for start in range(0, total_frames, block):
             chunk = mixed[start:start+block]
-            wav.writeframesraw(struct.pack("<" + "h"*len(chunk), *chunk))
+            wav.writeframesraw(chunk.tobytes())
         wav.writeframes(b"")
 
 def _ffmpeg() -> str:
@@ -119,11 +121,13 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
     output_dir.mkdir(parents=True, exist_ok=True)
     scene_dir = output_dir / "scene_svgs"
     scene_dir.mkdir(exist_ok=True)
-    events = build_sound_events(beats)
-    cursor = 0.0
-    total_duration = sum(float(b["duration_seconds"]) for b in beats)
-    frame_count = max(1, round(total_duration * fps))
     transition_frames = max(2, round(fps * 0.22))
+    transition_seconds = transition_frames / fps
+    events = build_sound_events(beats, transition_seconds)
+    cursor = 0.0
+    total_duration = (sum(float(b["duration_seconds"]) for b in beats)
+                      + max(0, len(beats)-1) * transition_seconds)
+    frame_count = max(1, round(total_duration * fps))
     previous_frame = None
 
     with tempfile.TemporaryDirectory(prefix="wise_lab_frames_") as temp_name:
