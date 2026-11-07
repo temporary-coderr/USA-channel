@@ -68,7 +68,7 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
     scene_dir.mkdir(exist_ok=True)
     transition_frames = max(2, round(fps * 0.22))
     transition_seconds = transition_frames / fps
-    events = build_sound_events(beats, transition_seconds)
+    events = build_sound_events(beats, 0.0)
     previous_frame = None
 
     with tempfile.TemporaryDirectory(prefix="wise_lab_frames_") as temp_name:
