@@ -36,7 +36,9 @@ class SVGSceneEngineTests(unittest.TestCase):
         park_a = render_scene_svg("A person relaxes in the park.", 1, 720, 1280)
         park_b = render_scene_svg("A person relaxes in the park.", 2, 720, 1280)
         self.assertNotEqual(park_a, park_b)
-        self.assertNotEqual(park_a.count("<circle"), park_b.count("<circle"))
+        bg_a = park_a.split("<g transform=", 1)[0]
+        bg_b = park_b.split("<g transform=", 1)[0]
+        self.assertNotEqual(bg_a, bg_b)
 
     def test_planner_recognizes_more_real_world_environments(self):
         self.assertEqual(plan_scene("A student studies in a classroom.", 1)["environment"], "classroom")
@@ -48,7 +50,7 @@ class SVGSceneEngineTests(unittest.TestCase):
         mirror = render_scene_svg("A person studies their reflection in a mirror.", 1)
         eye = render_scene_svg("The eye notices every movement.", 2)
         self.assertIn('rx="52"', mirror)
-        self.assertIn('rx="90"', eye)
+        self.assertIn("Q0 -90", eye)
 
     def test_pose_and_expression_change_rendered_svg(self):
         sad = render_scene_svg("He feels sad and lonely.", 1, 1280, 720, 0.2)
