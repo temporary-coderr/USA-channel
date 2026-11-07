@@ -32,6 +32,24 @@ class SVGSceneEngineTests(unittest.TestCase):
         self.assertIn("#EF8175", svg)
         self.assertIn("scale(-1 1)", svg)
 
+    def test_seeded_backgrounds_have_multiple_distinct_compositions(self):
+        park_a = render_scene_svg("A person relaxes in the park.", 1, 720, 1280)
+        park_b = render_scene_svg("A person relaxes in the park.", 2, 720, 1280)
+        self.assertNotEqual(park_a, park_b)
+        self.assertNotEqual(park_a.count("<circle"), park_b.count("<circle"))
+
+    def test_planner_recognizes_more_real_world_environments(self):
+        self.assertEqual(plan_scene("A student studies in a classroom.", 1)["environment"], "classroom")
+        self.assertEqual(plan_scene("They meet at a cafe for coffee.", 1)["environment"], "cafe")
+        self.assertEqual(plan_scene("The commute through the city feels stressful.", 1)["environment"], "city")
+        self.assertEqual(plan_scene("A family talks together at home.", 1)["environment"], "home")
+
+    def test_mirror_and_eye_subjects_have_drawable_props(self):
+        mirror = render_scene_svg("A person studies their reflection in a mirror.", 1)
+        eye = render_scene_svg("The eye notices every movement.", 2)
+        self.assertIn('rx="52"', mirror)
+        self.assertIn('rx="90"', eye)
+
     def test_pose_and_expression_change_rendered_svg(self):
         sad = render_scene_svg("He feels sad and lonely.", 1, 1280, 720, 0.2)
         shocked = render_scene_svg("He is shocked by the unexpected sound.", 2, 1280, 720, 0.2)
