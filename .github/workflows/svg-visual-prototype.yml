@@ -51,8 +51,8 @@ jobs:
       - name: Run SVG engine tests
         run: python -m unittest discover -s tests -p 'test_svg_animation_engine.py' -v
 
-      - name: Validate animated renderer
-        run: python -m py_compile svg_video_renderer.py
+      - name: Validate audio and animated renderer
+        run: python -m py_compile svg_audio_engine.py svg_video_renderer.py
 
       - name: Run animation and sound tests
         run: python -m unittest discover -s tests -p 'test_svg_video_renderer.py' -v
@@ -76,6 +76,7 @@ jobs:
           path: |
             output/svg_animation_preview/wise_lab_animated_preview.mp4
             output/svg_animation_preview/sound_effects.wav
+            output/svg_animation_preview/audio_mix.wav
             output/svg_animation_preview/animation_manifest.json
             output/svg_animation_preview/scene_svgs/
           retention-days: 7
