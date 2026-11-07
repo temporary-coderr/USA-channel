@@ -1339,9 +1339,9 @@ def main() -> int:
     # given a dedicated 5–7+ second window by combining adjacent narration shots.
     base_scene_shots = []
     for scene, seconds in zip(plan["scenes"], durations):
-        words = re.findall(r"\\S+", scene["narration"])
+        words = re.findall(r"\S+", scene["narration"])
         if not words:
-            words = re.findall(r"\\S+", scene.get("heading", "psychology"))
+            words = re.findall(r"\S+", scene.get("heading", "psychology"))
         shot_count = max(1, int((seconds + target_shot_seconds - 0.001) // target_shot_seconds))
         shot_count = min(shot_count, max(1, len(words)))
         scene_shots = []
@@ -1430,7 +1430,7 @@ def main() -> int:
             shot_seconds = planned_shot["seconds"]
             query = visual_query_from_text(shot_text, scene["visual_query"])
             image_query = query + " photography"
-            print(f"Scene {index}/{len(plan['scenes'])}, shot {shot_index + 1}/{shot_count}: {query}")
+            print(f"Scene {index}/{len(plan['scenes'])}, shot {shot_index + 1}/{len(scene_shots[index - 1])}: {query}")
             # Use only no-cost sources already integrated in WISE-LAB:
             # Pixabay stock video/photos, Openverse CC0/CC-BY images, OpenAI stills,
             # and original WISE-LAB diagrams. Pexels is intentionally not used.
