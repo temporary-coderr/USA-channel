@@ -19,6 +19,18 @@ class SVGSceneEngineTests(unittest.TestCase):
         self.assertEqual(brief["subject"], "dog")
         self.assertIn("<circle cx=\"78\"", svg)
         self.assertIn("park", brief["environment"])
+        self.assertIn("scale(-1 1)", svg)
+
+    def test_environment_background_contains_real_scene_layers(self):
+        svg = render_scene_svg("A person relaxes in the park.", 8, 720, 1280)
+        self.assertIn("linearGradient id=\"sceneSky\"", svg)
+        self.assertIn("#70533E", svg)
+        self.assertIn("#6F9479", svg)
+
+    def test_dog_bond_scene_adds_a_visual_connection_cue(self):
+        svg = render_scene_svg("The dog shares a loving gaze with its owner.", 9, 720, 1280)
+        self.assertIn("#EF8175", svg)
+        self.assertIn("scale(-1 1)", svg)
 
     def test_pose_and_expression_change_rendered_svg(self):
         sad = render_scene_svg("He feels sad and lonely.", 1, 1280, 720, 0.2)
