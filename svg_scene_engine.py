@@ -171,6 +171,8 @@ def _character(x: float, y: float, scale: float, brief: dict, phase: float) -> s
         mouth = '<path d="M-13 -100 H13" stroke="#743F3A" stroke-width="6"/>'
     elif emotion == "scared":
         mouth = '<ellipse cx="0" cy="-101" rx="7" ry="11" fill="#743F3A"/>'
+    elif action == "talking":
+        mouth = ('<ellipse cx="0" cy="-101" rx="9" ry="12" fill="#743F3A"/>' if phase % 0.24 < 0.12 else '<path d="M-10 -104 Q0 -96 10 -104" stroke="#743F3A" stroke-width="5" fill="none"/>')
     else:
         mouth = '<path d="M-10 -104 Q0 -96 10 -104" stroke="#743F3A" stroke-width="5" fill="none"/>'
     if action == "sitting":
@@ -254,7 +256,7 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920,
         person_x = width*(.36 if brief["layout"] != "right_focus" else .64)
         person_y = height*.70
         prop_x = width*(.75 if person_x < width/2 else .22)
-    move = (phase - .5) * width * .035 if brief["action"] == "walking" else 0
+    move = (phase - .5) * width * .12 if brief["action"] == "walking" else 0
     character = _character(person_x + move, person_y, scale*.83, brief, phase)
     prop_y = height*(.48 if not vertical else .43)
     prop = "".join(_prop(p, prop_x + (i*scale*28), prop_y, scale*.85)
