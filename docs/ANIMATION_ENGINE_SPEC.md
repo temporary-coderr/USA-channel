@@ -6,7 +6,7 @@ Approved production direction. This document records the requirements for the ne
 
 ## Product goal
 
-Replace stock-footage-led editing with original, script-specific 2D animated psychology explainers. The system must be able to produce both Shorts and 6–8 minute landscape videos using locally generated SVG artwork, procedural animation, narration, captions, music, and FFmpeg.
+Replace stock-footage-led editing with original, script-specific 2D animated psychology explainers. The system must be able to produce Shorts and long-form landscape videos of at least 15 minutes, with no arbitrary 8- or 10-minute ceiling using locally generated SVG artwork, procedural animation, narration, captions, music, and FFmpeg.
 
 The intended production path should remain compatible with the existing GitHub Actions workflow and its manual-only trigger. Do not reintroduce automatic rendering on push.
 
@@ -25,7 +25,9 @@ The intended production path should remain compatible with the existing GitHub A
 
 - Target an average visual change about every 3 seconds, adjusted to narration and story beats rather than enforced mechanically.
 - Hold information-dense diagrams for approximately 5–7 seconds when needed for readability.
-- Support complete 6–8 minute videos (approximately 120–160 visual beats at a 3-second average), as well as Shorts.
+- Support videos of 6–8 minutes, 10 minutes, 15 minutes, and longer, as well as Shorts. There must be no hard-coded maximum duration of 8 or 10 minutes; practical limits should come from available runner time, memory, storage, and rendering resources.
+- At a 3-second average visual rhythm, a 15-minute video may contain roughly 300 visual beats. The planner, manifest, uniqueness checks, and renderer must handle long scene lists without truncating the script or silently reducing visual quality.
+- Design rendering to process scenes in manageable chunks where useful, while preserving continuous narration timing, audio/video synchronization, transitions, and a single final output. Clean up temporary frame files safely to control disk usage.
 - Preserve 1080p output and the existing format selection (landscape or Shorts).
 - Keep narration synchronized with animation, captions, transitions, and music.
 - Do not change the user's selected format automatically.
@@ -113,8 +115,8 @@ Automated checks support editorial review; they do not replace human review or f
 3. Implement a scene planner that converts a script into timed, script-specific visual beats.
 4. Implement SVG scene composition and animation rendering.
 5. Produce a 60-second prototype Short and review relevance, movement, readability, and visual quality.
-6. Expand to a 3-minute test, then a complete 6–8 minute video.
-7. Only after the long-form prototype passes review, integrate the new renderer into the production workflow and retire stock-footage selection.
+6. Expand to a 3-minute test, then 6–8 minutes, 10 minutes, and a complete 15-minute test; test longer scripts after that. Do not treat 15 minutes as a maximum.
+7. Only after the 15-minute long-form prototype passes review, integrate the new renderer into the production workflow and retire stock-footage selection.
 8. Preserve manual-only workflow dispatch, private YouTube upload, and one review artifact per render unless the user approves a change.
 
 ## Monetization and originality
