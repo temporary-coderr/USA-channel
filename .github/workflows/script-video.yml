@@ -1,11 +1,6 @@
 name: Build WISE LAB video from script
 
 on:
-  push:
-    paths:
-      - "scripts/script.txt"
-      - "render_script.py"
-      - ".github/workflows/script-video.yml"
   workflow_dispatch:
     inputs:
       format:
