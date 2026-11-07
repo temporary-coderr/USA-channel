@@ -1537,8 +1537,12 @@ def main() -> int:
                 # a duplicate, the next attempt moves on to stock sources.
                 if asset_attempt == 1 and shot_number in diagram_shot_indices:
                     try:
+                        diagram_text = (
+                            "Keep this diagram about " + ", ".join(topic_lock) + ". " + shot_text
+                            if topic_lock else shot_text
+                        )
                         diagram_path = build_topic_diagram(
-                            shot_text, WORK / f"wise_lab_diagram_{shot_number:04}.png",
+                            diagram_text, WORK / f"wise_lab_diagram_{shot_number:04}.png",
                             vertical, shot_number + 1
                         )
                         asset = {
