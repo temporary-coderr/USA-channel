@@ -67,29 +67,35 @@ def synthesize_beats(beats: list[dict], output_dir: Path, width: int, height: in
     output_dir.mkdir(parents=True, exist_ok=True)
     audio_dir = output_dir / "narration_segments"
     audio_dir.mkdir(exist_ok=True)
-    segment_paths, durations = [], []
+    segment_paths, durations, wav_paths = [], [], []
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        raise RuntimeError("FFmpeg is required to prepare narration audio.")
     for index, beat in enumerate(beats, 1):
         path = audio_dir / f"narration_{index:04d}.mp3"
-        asyncio.run(_synthesize(str(beat["narration"]), path, voice, rate))
+        awaitable = _synthesize(str(beat["narration"]), path, voice, rate)
+        asyncio.run(awaitable)
         if not path.exists() or path.stat().st_size < 256:
             raise RuntimeError(f"Edge-TTS returned an empty narration segment: {index}")
-        duration = probe_duration(path)
+        wav_path = audio_dir / f"narration_{index:04d}.wav"
+        _run([ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
+              "-i", str(path), "-ac", "1", "-ar", "24000", "-c:a", "pcm_s16le", str(wav_path)])
+        duration = probe_duration(wav_path)
         if duration <= 0:
             raise RuntimeError(f"Invalid narration duration for segment {index}")
         segment_paths.append(path)
+        wav_paths.append(wav_path)
         durations.append(duration)
         print(f"Generated narration {index}/{len(beats)} ({duration:.2f}s)")
     concat_file = output_dir / "narration_concat.txt"
     concat_file.write_text(
         "".join("file '" + p.resolve().as_posix().replace("'", "'\\''") + "'\n"
-                for p in segment_paths), encoding="utf-8"
+                for p in wav_paths), encoding="utf-8"
     )
-    narration_path = output_dir / "narration.mp3"
-    ffmpeg = shutil.which("ffmpeg")
-    if not ffmpeg:
-        raise RuntimeError("FFmpeg is required to concatenate narration.")
+    narration_path = output_dir / "narration.wav"
     _run([ffmpeg, "-y", "-hide_banner", "-loglevel", "error", "-f", "concat",
-          "-safe", "0", "-i", str(concat_file), "-c", "copy", str(narration_path)])
+          "-safe", "0", "-i", str(concat_file), "-c:a", "pcm_s16le", str(narration_path)])
+
 
     ass_path = output_dir / "captions.ass"
     play_res_y = height
