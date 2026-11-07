@@ -983,7 +983,8 @@ def overlay_wise_lab_character(video: Path, pose_png: Path, seconds: float,
 
 
 def render_scene(media: Path, destination: Path, seconds: float,
-                 width: int, height: int, is_image: bool) -> None:
+                 width: int, height: int, is_image: bool,
+                 is_diagram: bool = False) -> None:
     ff = ffmpeg()
     vf_base = (
         f"scale={int(width * 1.08)}:{int(height * 1.08)}:force_original_aspect_ratio=increase,"
@@ -993,7 +994,13 @@ def render_scene(media: Path, destination: Path, seconds: float,
     )
     preset = "ultrafast" if FORMAT == "shorts" else "veryfast"
     crf = "22" if FORMAT == "shorts" else "21"
-    if is_image:
+    if is_image and is_diagram:
+        # Keep explanatory diagrams completely still so labels remain easy to read.
+        run([ff, "-y", "-loop", "1", "-i", str(media), "-t", f"{seconds:.3f}",
+             "-vf", f"scale={width}:{height},fps={FPS},format=yuv420p",
+             "-an", "-c:v", "libx264", "-preset", preset,
+             "-crf", crf, "-pix_fmt", "yuv420p", str(destination)])
+    elif is_image:
         # Slow Ken Burns zoom. One output frame is generated for each frame of the scene.
         frames = max(1, round(seconds * FPS))
         zoom = (
@@ -1358,13 +1365,20 @@ def main() -> int:
     total_base_shots = sum(len(items) for items in base_scene_shots)
     diagram_count = min(3, max(1, total_base_shots // 8)) if total_base_shots >= 2 else 0
     selected_base_diagrams = set()
-    # Choose separated positions with a following shot available to merge.
+    eligible_base_indices = []
+    base_offset = 0
+    for scene_items in base_scene_shots:
+        eligible_base_indices.extend(
+            base_offset + local_index for local_index in range(max(0, len(scene_items) - 1))
+        )
+        base_offset += len(scene_items)
+    # Choose separated positions that have following narration shots in the same scene.
     for slot in range(diagram_count):
-        if total_base_shots < 2:
+        if not eligible_base_indices:
             break
-        ideal = min(total_base_shots - 2, int((slot + 0.5) * (total_base_shots - 1) / max(1, diagram_count)))
+        ideal = int((slot + 0.5) * total_base_shots / max(1, diagram_count))
         candidates = sorted(
-            range(total_base_shots - 1),
+            eligible_base_indices,
             key=lambda value: (abs(value - ideal), value)
         )
         chosen = next(
@@ -1616,9 +1630,13 @@ def main() -> int:
             current_visual_hashes.extend(asset_visual_hashes)
 
             shot_path = WORK / f"scene_{index:02}_shot_{shot_index:02}.mp4"
-            render_scene(media_path, shot_path, shot_seconds, width, height, is_image)
-            # The guide appears on roughly one in three three-second cuts; it is not a permanent watermark.
-            if shot_number % 3 == 1:
+            is_diagram_shot = shot_number in diagram_shot_indices
+            render_scene(
+                media_path, shot_path, shot_seconds, width, height, is_image,
+                is_diagram=is_diagram_shot
+            )
+            # Keep the character off explanatory diagrams so it cannot cover labels.
+            if shot_number % 3 == 1 and not is_diagram_shot:
                 pose_order = ("explaining", "pointing", "thinking", "surprised")
                 pose_name = pose_order[(shot_number // 3) % len(pose_order)]
                 overlay_wise_lab_character(
