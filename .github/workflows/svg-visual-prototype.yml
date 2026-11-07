@@ -47,8 +47,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install CairoSVG Pillow requests edge-tts
 
-      - name: Validate engine
-        run: python -m py_compile svg_animation_engine.py svg_scene_engine.py svg_story_planner.py svg_narration.py
+      - name: Validate engine and content review
+        run: python -m py_compile svg_animation_engine.py svg_scene_engine.py svg_story_planner.py svg_narration.py script_review.py
+
+      - name: Run script editorial review tests
+        run: python -m unittest discover -s tests -p 'test_script_review.py' -v
+
+      - name: Generate script review and YouTube metadata suggestions
+        run: python script_review.py --script scripts/script.txt --output output/content_review
 
       - name: Run SVG engine tests
         run: python -m unittest discover -s tests -p 'test_svg_animation_engine.py' -v
@@ -96,4 +102,5 @@ jobs:
             output/svg_animation_preview/narration_segments/
             output/svg_animation_preview/animation_manifest.json
             output/svg_animation_preview/scene_svgs/
+            output/content_review/
           retention-days: 7
