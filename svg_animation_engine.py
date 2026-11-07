@@ -159,7 +159,7 @@ def _human(x: int, y: int, scale: float, action: str, seed: int, phase: float = 
         "looking": f'<path d="M30 -25 Q75 -70 85 -65" fill="none" stroke="{skin}" stroke-width="18" stroke-linecap="round"/>',
         "talking": f'<path d="M30 -20 Q75 -5 90 -35" fill="none" stroke="{skin}" stroke-width="18" stroke-linecap="round"/>',
         "choosing": f'<path d="M30 -20 Q78 -45 95 -10" fill="none" stroke="{skin}" stroke-width="18" stroke-linecap="round"/>',
-        "walking": f'<path d="M-20 58 L-55 112 M20 58 L60 105" stroke="{PALETTE["hair"]}" stroke-width="22" stroke-linecap="round"/>',
+        "walking": f'<path d="M-30 -20 Q-70 5 -82 48 M30 -20 Q70 5 82 48" fill="none" stroke="{skin}" stroke-width="18" stroke-linecap="round"/>',
         "turn_away": f'<path d="M30 -25 Q65 -15 85 20" fill="none" stroke="{skin}" stroke-width="18" stroke-linecap="round"/>',
         "surprised": f'<path d="M-30 -25 Q-78 -85 -88 -55 M30 -25 Q78 -85 88 -55" fill="none" stroke="{skin}" stroke-width="18" stroke-linecap="round"/>',
         "explaining": f'<path d="M30 -20 Q75 -55 92 -90" fill="none" stroke="{skin}" stroke-width="18" stroke-linecap="round"/>',
@@ -170,7 +170,9 @@ def _human(x: int, y: int, scale: float, action: str, seed: int, phase: float = 
     mouth = '<path d="M-10 -105 Q0 -98 10 -105" fill="none" stroke="#8F4D47" stroke-width="4" stroke-linecap="round"/>'
     bob = math.sin(phase * math.tau) * 5.0
     arm_swing = math.sin(phase * math.tau) * 8.0
-    return f'<g transform="translate({x} {y + bob:.2f}) scale({scale})"><ellipse cx="0" cy="126" rx="66" ry="13" fill="#000" opacity=".24"/><path d="M-38 -75 Q0 -95 38 -75 L52 55 Q0 80 -52 55Z" fill="{shirt}" stroke="#17263A" stroke-width="7"/><path d="M-22 55 L-30 120 M22 55 L30 120" stroke="#25364B" stroke-width="22" stroke-linecap="round"/><g transform="rotate({arm_swing:.2f} 0 -35)">{arm}</g>{face}{hair}{eyes}{mouth}</g>'
+    leg_swing = math.sin(phase * math.tau) * 12.0 if action == "walking" else 0.0
+    legs = (f'<g><path d="M-22 55 L-30 120" stroke="#25364B" stroke-width="22" stroke-linecap="round" transform="rotate({leg_swing:.2f} -22 55)"/><path d="M22 55 L30 120" stroke="#25364B" stroke-width="22" stroke-linecap="round" transform="rotate({-leg_swing:.2f} 22 55)"/></g>')
+    return f'<g transform="translate({x} {y + bob:.2f}) scale({scale})"><ellipse cx="0" cy="126" rx="66" ry="13" fill="#000" opacity=".24"/><path d="M-38 -75 Q0 -95 38 -75 L52 55 Q0 80 -52 55Z" fill="{shirt}" stroke="#17263A" stroke-width="7"/>{legs}<g transform="rotate({arm_swing:.2f} 0 -35)">{arm}</g>{face}{hair}{eyes}{mouth}</g>'
 
 def _dog(x: int, y: int, scale: float, seed: int) -> str:
     coat = "#D8A66F" if seed % 2 else "#E7D7BE"
