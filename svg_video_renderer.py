@@ -3,98 +3,15 @@ from __future__ import annotations
 """Render the procedural WISE-LAB SVG scenes as an animated MP4 with original SFX."""
 
 import argparse
-from array import array
 import hashlib
 import json
-import math
 import shutil
 import subprocess
 import tempfile
-import wave
 from pathlib import Path
 
 from svg_animation_engine import plan_visual_beats, render_scene_svg
-
-SAMPLE_RATE = 24000
-SFX_FOR_ACTION = {
-    "thinking": "soft_tick",
-    "looking": "ui_click",
-    "talking": "ui_click",
-    "choosing": "ui_click",
-    "walking": "soft_step",
-    "turn_away": "soft_whoosh",
-    "surprised": "soft_impact",
-    "explaining": "soft_tick",
-}
-
-def build_sound_events(beats: list[dict], transition_seconds: float = 0.22) -> list[dict]:
-    events = [{"time": 0.08, "kind": "logo", "gain": 0.42}]
-    cursor = 0.0
-    for index, beat in enumerate(beats):
-        if index:
-            cursor += transition_seconds
-            events.append({"time": cursor, "kind": "soft_whoosh", "gain": 0.19})
-        kind = SFX_FOR_ACTION.get(beat.get("action"), "soft_tick")
-        # Leave breathing room: effects punctuate meaningful beats, not every word.
-        if index % 2 == 0 or beat.get("action") in {"surprised", "choosing", "walking"}:
-            events.append({"time": cursor + min(0.16, beat["duration_seconds"] * 0.18),
-                           "kind": kind, "gain": 0.24 if kind != "soft_impact" else 0.30})
-        cursor += float(beat["duration_seconds"])
-    return events
-
-def _sound_sample(kind: str, t: float, duration: float, seed: int) -> float:
-    p = max(0.0, min(1.0, t / max(duration, 1e-6)))
-    if kind == "ui_click":
-        return math.sin(2 * math.pi * (1250 - 420*p) * t) * math.exp(-24*p)
-    if kind == "soft_tick":
-        return (math.sin(2 * math.pi * 740 * t) + 0.35 * math.sin(2 * math.pi * 1480 * t)) * math.exp(-18*p)
-    if kind == "soft_step":
-        return (math.sin(2 * math.pi * (105 - 38*p) * t) * math.exp(-11*p)
-                + 0.12 * math.sin(2 * math.pi * 680 * t) * math.exp(-32*p))
-    if kind == "soft_impact":
-        return (math.sin(2 * math.pi * (95 - 55*p) * t) * math.exp(-7*p)
-                + 0.18 * math.sin(2 * math.pi * 210 * t) * math.exp(-13*p))
-    if kind == "soft_whoosh":
-        carrier = math.sin(2 * math.pi * (180 + 620*p) * t)
-        envelope = math.sin(math.pi * p) ** 1.4
-        shimmer = math.sin(2 * math.pi * (310 + seed % 190) * t) * 0.12
-        return (carrier + shimmer) * envelope
-    if kind == "logo":
-        envelope = max(0.0, 1.0-p) ** 1.5
-        return (math.sin(2*math.pi*392*t) + 0.45*math.sin(2*math.pi*587.33*t)
-                + 0.2*math.sin(2*math.pi*784*t)) * envelope
-    return 0.0
-
-def write_sfx_track(duration: float, events: list[dict], output_path: Path) -> None:
-    """Synthesize a low-volume mono SFX bed using only Python's standard library."""
-    total_frames = max(1, int(math.ceil(duration * SAMPLE_RATE)))
-    mixed = array('h', [0]) * total_frames
-    durations = {
-        "ui_click": 0.075, "soft_tick": 0.105, "soft_step": 0.15,
-        "soft_impact": 0.24, "soft_whoosh": 0.34, "logo": 0.72,
-    }
-    for event_index, event in enumerate(events):
-        kind = event["kind"]
-        start = max(0, int(float(event["time"]) * SAMPLE_RATE))
-        length = int(durations.get(kind, 0.12) * SAMPLE_RATE)
-        gain = float(event.get("gain", 0.2))
-        for offset in range(min(length, total_frames-start)):
-            t = offset / SAMPLE_RATE
-            value = _sound_sample(kind, t, length / SAMPLE_RATE, event_index * 97)
-            sample = int(max(-1.0, min(1.0, value * gain)) * 32767)
-            pos = start + offset
-            mixed[pos] = max(-32768, min(32767, mixed[pos] + sample))
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with wave.open(str(output_path), "wb") as wav:
-        wav.setnchannels(1)
-        wav.setsampwidth(2)
-        wav.setframerate(SAMPLE_RATE)
-        # Stream in blocks to avoid a second full-size PCM copy.
-        block = 48000
-        for start in range(0, total_frames, block):
-            chunk = mixed[start:start+block]
-            wav.writeframesraw(chunk.tobytes())
-        wav.writeframes(b"")
+from svg_audio_engine import build_sound_events, write_audio_tracks
 
 def _ffmpeg() -> str:
     path = shutil.which("ffmpeg")
@@ -169,11 +86,12 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
 
     total_duration = global_frame / fps
     sfx_path = output_dir / "sound_effects.wav"
-    write_sfx_track(total_duration, events, sfx_path)
+    mix_path = output_dir / "audio_mix.wav"
+    audio_report = write_audio_tracks(total_duration, events, sfx_path, mix_path)
     final_video = output_dir / "wise_lab_animated_preview.mp4"
     subprocess.run([
         _ffmpeg(), "-y", "-hide_banner", "-loglevel", "error",
-        "-i", str(silent_video), "-i", str(sfx_path),
+        "-i", str(silent_video), "-i", str(mix_path),
         "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
         "-c:a", "aac", "-b:a", "128k", "-shortest",
         "-movflags", "+faststart", str(final_video)
@@ -192,14 +110,15 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
         "character_animation": ["breathing_bob", "gesture_swing"],
         "camera_animation": ["slow_push_in", "alternating_pan", "background_parallax"],
         "transitions": {"type": "crossfade", "duration_seconds": round(transition_frames/fps, 3)},
-        "sound_effects": {"track": sfx_path.name, "event_count": len(events),
-                          "types": sorted({event["kind"] for event in events})},
+        "audio": {**audio_report, "effects_track": sfx_path.name, "mixed_track": mix_path.name,
+                  "narration_included": False},
         "stock_media_used": False,
         "external_image_apis_used": False,
         "beats": beats,
         "files": {
             "video": final_video.name,
             "sound_effects": sfx_path.name,
+            "audio_mix": mix_path.name,
             "scene_svgs": str(scene_dir.name),
         },
         "sha256": hashlib.sha256(final_video.read_bytes()).hexdigest(),
@@ -209,6 +128,7 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
     silent_video.unlink(missing_ok=True)
     print(f"ANIMATED VIDEO READY: {final_video}")
     print(f"SOUND EFFECTS READY: {sfx_path}")
+    print(f"MASTERED AUDIO MIX READY: {mix_path}")
     return manifest
 
 def main() -> int:
