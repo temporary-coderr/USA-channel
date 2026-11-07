@@ -35,7 +35,7 @@ Use GitHub Actions → **WISE LAB SVG visual prototype** → Run workflow. Choos
 Or run locally:
 
 ```bash
-python -m pip install CairoSVG Pillow
+python -m pip install CairoSVG Pillow requests
 python -m unittest discover -s tests -v
 python svg_video_renderer.py --script scripts/script.txt --output output/svg_animation_preview --format landscape --wpm 140 --seconds 3 --fps 12 --width 720
 ```
