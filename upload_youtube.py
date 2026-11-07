@@ -40,16 +40,16 @@ def main() -> int:
     description = (
         description_file.read_text(encoding="utf-8").strip()
         if description_file.exists()
-        else "Welcome to WISE LAB — thoughtful explainers about psychology and human behaviour.\\n\\n"
-             "Educational content only; not medical advice.\\n\\n#WiseLab #Psychology #HumanBehaviour"
+        else "Welcome to WISE LAB — thoughtful explainers about psychology and human behaviour.\n\n"
+             "Educational content only; not medical advice.\n\n#WiseLab #Psychology #HumanBehaviour"
     )
     # YouTube rejects descriptions longer than 5,000 characters. Keep the
     # viewer-facing description concise while retaining per-asset references
     # in output/visual_manifest.json inside the review artifact.
-    description = description.replace("\\r\\n", "\\n").replace("\\r", "\\n")
+    description = description.replace("\r\n", "\n").replace("\r", "\n")
     description = "".join(
         char for char in description
-        if char in "\\n\\t" or ord(char) >= 32
+        if char in "\n\t" or ord(char) >= 32
     )
     description_lines = description.splitlines()
     pixabay_lines = [
@@ -66,9 +66,9 @@ def main() -> int:
             f"Visual media: Pixabay ({len(pixabay_lines)} assets).",
             "Individual asset references are retained in the production visual manifest.",
         ])
-    description = "\\n".join(description_lines).strip()
+    description = "\n".join(description_lines).strip()
     if len(description) > 5000:
-        description = description[:4990].rsplit(" ", 1)[0].rstrip() + "\\n[Description shortened to meet YouTube's 5,000-character limit.]"
+        description = description[:4990].rsplit(" ", 1)[0].rstrip() + "\n[Description shortened to meet YouTube's 5,000-character limit.]"
     if len(description) > 5000:
         raise RuntimeError("YouTube description could not be reduced below 5,000 characters.")
     print(f"YouTube description validated: {len(description)}/5000 characters.")
