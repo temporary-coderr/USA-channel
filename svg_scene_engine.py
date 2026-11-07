@@ -357,7 +357,7 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920,
         if words & {"love", "bond", "oxytocin", "gaze", "eyes", "eye", "look", "looking"}:
             heart_x = (person_x + dog_x) / 2
             heart_y = height*.48
-            prop += _prop("heart", heart_x, heart_y, scale*.30)
+            prop += (f'<g transform="translate({heart_x:.1f} {heart_y:.1f}) scale({scale*.30:.3f})"><path d="M0 55 C-115 -15 -80 -100 0 -35 C80 -100 115 -15 0 55Z" fill="#EF8175" stroke="#FFD1C9" stroke-width="7"/></g>')
     if brief["subject"] == "cat":
         prop += _cat(prop_x, height*.76, scale*.62, seed, phase)
     camera_zoom = 1 + .025 * math.sin(math.pi * phase)
