@@ -243,7 +243,7 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920, height:
         elements.append(_object(subject, int(width*.69), int(height*.48), scale*.82, seed))
         elements.append(f'<path d="M{width*.42:.0f} {height*.48:.0f} Q{width*.53:.0f} {height*.28:.0f} {width*.57:.0f} {height*.43:.0f}" fill="none" stroke="{PALETTE["teal"]}" stroke-width="7" stroke-dasharray="12 14"/>')
     elif subject in {"phone", "door", "clock", "mirror", "book"}:
-        elements.append(_human(int(width*.30), int(height*.72), scale*.72, action, seed))
+        elements.append(_human(int(width*.30), int(height*.72), scale*.72, action, seed, phase))
         elements.append(_object(subject, int(width*.70), int(height*.48), scale*.82, seed))
         elements.append(f'<path d="M{width*.42:.0f} {height*.55:.0f} Q{width*.53:.0f} {height*.34:.0f} {width*.58:.0f} {height*.48:.0f}" fill="none" stroke="{PALETTE["gold"]}" stroke-width="6" stroke-dasharray="9 12"/>')
     else:
