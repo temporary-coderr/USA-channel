@@ -79,6 +79,9 @@ jobs:
             --fps 12 \
             --width 720
 
+      - name: Validate final MP4 audio, captions and dimensions
+        run: python svg_quality_gate.py output/svg_animation_preview
+
       - name: Upload animated video review pack
         uses: actions/upload-artifact@v4
         with:
@@ -86,7 +89,7 @@ jobs:
           if-no-files-found: error
           path: |
             output/svg_animation_preview/wise_lab_animated_preview.mp4
-            output/svg_animation_preview/narration.mp3
+            output/svg_animation_preview/narration.wav
             output/svg_animation_preview/captions.ass
             output/svg_animation_preview/sound_effects.wav
             output/svg_animation_preview/audio_mix.wav
