@@ -116,11 +116,7 @@ def plan_scene(narration: str, beat_index: int) -> dict:
         "subject": subject, "action": action, "emotion": emotion,
         "environment": environment, "props": props,
         "character": "boy" if seed % 5 else "girl",
-        # Include the beat index so adjacent beats cannot accidentally reuse
-        # the same composition when their hash happens to share the same bucket.
-        "layout": ("left_focus", "right_focus", "wide_interaction", "close_up")[
-            (beat_index + seed % 4) % 4
-        ],
+        "layout": layout,
         "seed": seed,
     }
 
