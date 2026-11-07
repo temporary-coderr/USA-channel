@@ -251,7 +251,7 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920, height:
     # Short, editorially useful title; narration itself remains in the voice track.
     keywords = [w for w in _tokens(narration) if w not in STOP]
     title = " ".join(keywords[:5]).upper() or "THE HUMAN MIND"
-    title = title[:42]
+    title = title[:22] if vertical else title[:42]
     title_y = int(height * (.12 if vertical else .16))
     title_size = int(min(width, height) * (.046 if vertical else .052))
     title_size = max(26, min(title_size, 64))
