@@ -52,7 +52,7 @@ class SVGVideoRendererTests(unittest.TestCase):
                 samples = wav.readframes(wav.getnframes())
             values = [int.from_bytes(samples[i:i+2], "little", signed=True) for i in range(0, len(samples), 2)]
             # The ambient layer must remain audible between isolated effects.
-            middle = values[24000:28800]
+            middle = values[52800:57600]
             rms = math.sqrt(sum(v*v for v in middle) / len(middle))
             self.assertGreater(rms, 100)
 
