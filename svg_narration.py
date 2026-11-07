@@ -6,7 +6,6 @@ import asyncio
 import re
 import shutil
 import subprocess
-import textwrap
 from pathlib import Path
 
 
@@ -61,7 +60,7 @@ def _caption_text(phrase: str, max_chars: int) -> str:
     return r"\N".join(lines)
 
 
-def synthesize_beats(beats: list[dict], output_dir: Path, width: int,
+def synthesize_beats(beats: list[dict], output_dir: Path, width: int, height: int,
                      voice: str = "en-US-AndrewNeural", rate: str = "+5%") -> tuple[list[Path], list[float], Path]:
     """Synthesize each spoken beat separately so caption times use measured audio."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -92,10 +91,10 @@ def synthesize_beats(beats: list[dict], output_dir: Path, width: int,
           "-safe", "0", "-i", str(concat_file), "-c", "copy", str(narration_path)])
 
     ass_path = output_dir / "captions.ass"
-    play_res_y = round(width * 16 / 9) if width < 1000 else 1080
-    font_size = max(30, round(width * 0.068))
+    play_res_y = height
+    font_size = max(26, round(width * (0.068 if height > width else 0.052)))
     margin_v = max(90, round(play_res_y * 0.12))
-    max_chars = 25 if play_res_y > width else 42
+    max_chars = 27 if play_res_y > width else 46
     rows = [
         "[Script Info]", "ScriptType: v4.00+", f"PlayResX: {width}",
         f"PlayResY: {play_res_y}", "ScaledBorderAndShadow: yes", "",
