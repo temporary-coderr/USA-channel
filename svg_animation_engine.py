@@ -97,13 +97,14 @@ def plan_visual_beats(script: str, target_wpm: int = 140, target_seconds: float 
         words = sentence.split()
         if not words:
             continue
-        # Prefer clause boundaries, then fill to the target visual rhythm.
+        # Keep spoken/caption beats short enough to read comfortably on mobile.
+        # Prefer punctuation when it lands near the target, but never let a beat
+        # grow beyond two extra words just to wait for a comma.
         chunks, current = [], []
         for word in words:
             current.append(word)
-            if len(current) >= words_per_beat and re.search(r"[,;:]$", word):
-                chunks.append(" ".join(current)); current = []
-            elif len(current) >= words_per_beat + 3:
+            at_clause_end = re.search(r"[,;:]$", word) is not None
+            if len(current) >= words_per_beat and (at_clause_end or len(current) >= words_per_beat + 1):
                 chunks.append(" ".join(current)); current = []
         if current:
             chunks.append(" ".join(current))
