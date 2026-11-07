@@ -68,18 +68,27 @@ def plan_scene(narration: str, beat_index: int) -> dict:
 
     if words & {"rain", "rainy", "storm", "wet"}:
         environment = "rainy_street"
+    elif words & {"cafe", "coffee", "restaurant", "barista", "cappuccino"}:
+        environment = "cafe"
+    elif words & {"school", "student", "teacher", "classroom", "lecture"}:
+        environment = "classroom"
+    elif words & {"city", "street", "traffic", "commute", "subway", "train"}:
+        environment = "city"
     elif words & {"bedroom", "sleep", "nightmare", "bed"}:
         environment = "bedroom"
-    elif words & {"park", "outside", "walk", "walking", "dog", "dogs"}:
+    elif words & {"home", "family", "parent", "kitchen", "living"}:
+        environment = "home"
+    elif words & {"park", "outside", "walk", "walking", "dog", "dogs", "garden", "tree"}:
         environment = "park"
-    elif words & {"office", "work", "coworker", "meeting"}:
+    elif words & {"office", "work", "coworker", "meeting", "computer"}:
         environment = "workplace"
     elif words & {"door", "doorway", "room", "enter", "exit"}:
         environment = "interior"
     elif words & {"dark", "lonely", "alone", "fear", "scared", "anxiety"}:
         environment = "dark_room"
     else:
-        environment = ("studio", "interior", "park", "bedroom")[_seed(narration + str(beat_index)) % 4]
+        environments = ("studio", "interior", "park", "bedroom", "cafe", "classroom", "city", "home")
+        environment = environments[_seed(narration + str(beat_index)) % len(environments)]
 
     emotion = "neutral"
     for terms, value in [
@@ -121,98 +130,120 @@ def plan_scene(narration: str, beat_index: int) -> dict:
     }
 
 def _background(env: str, w: int, h: int, seed: int) -> str:
-    """Draw a layered, location-specific environment instead of a flat colour card."""
-    night = env in {"rainy_street", "dark_room"}
-    horizon = int(h * (0.70 if env in {"park", "rainy_street"} else 0.76))
-    parts = [
-        f'<defs><linearGradient id="sceneSky" x1="0" y1="0" x2="0" y2="1">'
-        f'<stop offset="0" stop-color="{ "#101A2D" if night else "#6F9FB5" }"/>'
-        f'<stop offset="1" stop-color="{ "#293B55" if night else "#D5C8AE" }"/></linearGradient>'
-        f'<linearGradient id="sceneFloor" x1="0" y1="0" x2="0" y2="1">'
-        f'<stop offset="0" stop-color="{ "#29384B" if night else "#8D9B83" }"/>'
-        f'<stop offset="1" stop-color="{ "#101C2C" if night else "#4B6258" }"/></linearGradient></defs>',
-        f'<rect width="{w}" height="{h}" fill="url(#sceneSky)"/>',
+    """Build a scene-specific, seeded environment with real layout variation."""
+    variant = seed % 5
+    palettes = [
+        ("#15243A", "#314D65", "#D5C6AE", "#344A42", "#EFCB86"),
+        ("#20243B", "#514568", "#E4CBB8", "#53606D", "#F0B58D"),
+        ("#18313A", "#3D6670", "#D9D0B8", "#4B665A", "#E6D28D"),
+        ("#302B2B", "#725B52", "#E6D8C4", "#6D6252", "#E7B66F"),
+        ("#172B45", "#49647A", "#D6DCE0", "#566B75", "#B9D8E7"),
     ]
+    sky_top, sky_bottom, wall, floor, accent = palettes[variant]
+    parts = [
+        '<defs>'
+        f'<linearGradient id="sky{seed:x}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{sky_top}"/><stop offset="1" stop-color="{sky_bottom}"/></linearGradient>'
+        f'<linearGradient id="floor{seed:x}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{floor}"/><stop offset="1" stop-color="#101B2A"/></linearGradient>'
+        '</defs>',
+        f'<rect width="{w}" height="{h}" fill="url(#sky{seed:x})"/>',
+    ]
+    # Every environment gets a different composition seed, not just a colour swap.
     if env == "park":
-        sun_x = int(w * (.78 if seed % 2 else .20))
+        horizon = h * (0.48 + (variant % 3) * 0.045)
         parts += [
-            f'<circle cx="{sun_x}" cy="{h*.17:.0f}" r="{min(w,h)*.075:.0f}" fill="#F6D99A" opacity=".82"/>',
-            f'<path d="M0 {h*.60:.0f} Q{w*.25:.0f} {h*.48:.0f} {w*.52:.0f} {h*.59:.0f} T{w} {h*.54:.0f} V{h} H0Z" fill="#6F9479"/>',
-            f'<path d="M0 {h*.76:.0f} Q{w*.48:.0f} {h*.64:.0f} {w} {h*.76:.0f} V{h} H0Z" fill="url(#sceneFloor)"/>',
+            f'<circle cx="{w*(.18 + .16*variant):.0f}" cy="{h*(.14 + .025*(variant%2)):.0f}" r="{min(w,h)*.065:.0f}" fill="{accent}" opacity=".9"/>',
+            f'<path d="M0 {horizon:.0f} Q{w*.24:.0f} {h*(.38+variant*.012):.0f} {w*.52:.0f} {horizon+18:.0f} T{w} {horizon-12:.0f} V{h} H0Z" fill="#6F9479"/>',
         ]
-        for i, x in enumerate((.10, .27, .78, .93)):
-            xx = int(w*x); yy = int(h*(.43 + (i%2)*.06)); radius = int(min(w,h)*(.12 + (i%3)*.025))
+        tree_xs = [(.08,.30,.73,.93),(.16,.43,.66,.88),(.04,.24,.61,.82),(.12,.37,.79,.98),(.20,.48,.70,.91)][variant]
+        for i, xf in enumerate(tree_xs):
+            x = int(w*xf); y = int(h*(.39 + ((i+variant)%3)*.035))
+            r = int(min(w,h)*(.075 + ((i+variant)%3)*.018))
             parts += [
-                f'<path d="M{xx} {yy} v{h*.34:.0f}" stroke="#70533E" stroke-width="{max(12,int(w*.018))}"/>',
-                f'<circle cx="{xx}" cy="{yy}" r="{radius}" fill="{("#376B55","#477B60","#568766")[i%3]}"/>',
-                f'<circle cx="{xx-radius*.35:.0f}" cy="{yy-radius*.25:.0f}" r="{radius*.48:.0f}" fill="#78A477" opacity=".52"/>',
+                f'<path d="M{x} {y} v{h*.37:.0f}" stroke="#70533E" stroke-width="{max(12,int(w*.018))}"/>',
+                f'<circle cx="{x}" cy="{y}" r="{r}" fill="{("#376B55","#477B60","#568766")[(i+variant)%3]}"/>',
+                f'<circle cx="{x-r*.3:.0f}" cy="{y-r*.3:.0f}" r="{r*.42:.0f}" fill="#9AB889" opacity=".45"/>',
             ]
+        parts += [f'<path d="M{w*(.22+.04*variant):.0f} {h} Q{w*.45:.0f} {h*.82:.0f} {w*(.56+.025*variant):.0f} {h*.72:.0f} T{w} {h*.74:.0f}" stroke="#D9C7A5" stroke-width="{max(22,int(w*.06))}" fill="none"/>']
+    elif env in {"bedroom", "home"}:
         parts += [
-            f'<path d="M{w*.40:.0f} {h} Q{w*.48:.0f} {h*.82:.0f} {w*.62:.0f} {h*.72:.0f} Q{w*.72:.0f} {h*.67:.0f} {w*.82:.0f} {h*.70:.0f}" fill="none" stroke="#C9B995" stroke-width="{max(22,int(w*.055))}" opacity=".85"/>',
-            f'<path d="M{w*.40:.0f} {h} Q{w*.48:.0f} {h*.82:.0f} {w*.62:.0f} {h*.72:.0f}" fill="none" stroke="#E4D4B6" stroke-width="5" opacity=".55"/>',
+            f'<rect x="0" y="0" width="{w}" height="{h*.78:.0f}" fill="{wall}"/>',
+            f'<rect x="{w*(.07+.055*variant):.0f}" y="{h*.10:.0f}" width="{w*(.25+.02*(variant%2)):.0f}" height="{h*.27:.0f}" rx="8" fill="#20364D" stroke="#D0D6D2" stroke-width="7"/>',
+            f'<path d="M{w*(.195+.055*variant):.0f} {h*.10:.0f} V{h*.37:.0f} M{w*(.07+.055*variant):.0f} {h*.235:.0f} H{w*(.32+.075*variant):.0f}" stroke="#91A9B8" stroke-width="5"/>',
+            f'<rect x="{w*(.10+.035*variant):.0f}" y="{h*(.55-.025*(variant%2)):.0f}" width="{w*(.55+.035*(variant%3)):.0f}" height="{h*.24:.0f}" rx="24" fill="#64758A"/>',
+            f'<rect x="{w*(.14+.035*variant):.0f}" y="{h*.51:.0f}" width="{w*.20:.0f}" height="{h*.10:.0f}" rx="16" fill="#D5C6B4"/>',
+            f'<rect x="{w*(.73-.04*variant):.0f}" y="{h*.38:.0f}" width="{w*.10:.0f}" height="{h*.39:.0f}" fill="#805D43"/>',
+            f'<path d="M{w*(.78-.04*variant):.0f} {h*.38:.0f} v{h*.39:.0f}" stroke="#D6B38C" stroke-width="6"/>',
+            f'<circle cx="{w*(.84-.035*variant):.0f}" cy="{h*.33:.0f}" r="{min(w,h)*.035:.0f}" fill="{accent}"/>',
         ]
-    elif env == "bedroom":
-        parts += [
-            f'<rect x="{w*.06:.0f}" y="{h*.08:.0f}" width="{w*.88:.0f}" height="{h*.70:.0f}" rx="{w*.025:.0f}" fill="#34445D" stroke="#71839A" stroke-width="5"/>',
-            f'<rect x="{w*.12:.0f}" y="{h*.14:.0f}" width="{w*.30:.0f}" height="{h*.28:.0f}" fill="#172A43" stroke="#B6C6D0" stroke-width="8"/>',
-            f'<path d="M{w*.27:.0f} {h*.14:.0f} V{h*.42:.0f} M{w*.12:.0f} {h*.28:.0f} H{w*.42:.0f}" stroke="#8297AC" stroke-width="5"/>',
-            f'<rect x="{w*.12:.0f}" y="{h*.58:.0f}" width="{w*.60:.0f}" height="{h*.20:.0f}" rx="24" fill="#64758A"/>',
-            f'<rect x="{w*.16:.0f}" y="{h*.53:.0f}" width="{w*.22:.0f}" height="{h*.12:.0f}" rx="18" fill="#D5C6B4"/>',
-            f'<path d="M{w*.10:.0f} {h*.79:.0f} H{w*.76:.0f} V{h*.85:.0f} H{w*.10:.0f}Z" fill="#A88A72"/>',
-            f'<circle cx="{w*.82:.0f}" cy="{h*.34:.0f}" r="{min(w,h)*.045:.0f}" fill="#F1D28C" opacity=".85"/>',
-        ]
+        if env == "home":
+            parts += [f'<rect x="{w*.06:.0f}" y="{h*.68:.0f}" width="{w*.22:.0f}" height="{h*.11:.0f}" rx="12" fill="#9A7355"/>',
+                      f'<path d="M{w*.09:.0f} {h*.68:.0f} q{w*.075:.0f} {-h*.17:.0f} {w*.15:.0f} 0" fill="#6F9479"/>']
     elif env == "workplace":
         parts += [
-            f'<rect x="{w*.06:.0f}" y="{h*.09:.0f}" width="{w*.88:.0f}" height="{h*.50:.0f}" fill="#344D66" stroke="#91A8B8" stroke-width="7"/>',
-            f'<path d="M{w*.50:.0f} {h*.09:.0f} V{h*.59:.0f} M{w*.06:.0f} {h*.34:.0f} H{w*.94:.0f}" stroke="#A9C1CC" stroke-width="5"/>',
-            f'<rect x="{w*.12:.0f}" y="{h*.64:.0f}" width="{w*.76:.0f}" height="{h*.07:.0f}" rx="8" fill="#805F49"/>',
-            f'<path d="M{w*.18:.0f} {h*.71:.0f} V{h*.91:.0f} M{w*.82:.0f} {h*.71:.0f} V{h*.91:.0f}" stroke="#594737" stroke-width="13"/>',
-            f'<rect x="{w*.33:.0f}" y="{h*.52:.0f}" width="{w*.28:.0f}" height="{h*.12:.0f}" rx="8" fill="#172637" stroke="#6EC9C1" stroke-width="5"/>',
-            f'<rect x="{w*.36:.0f}" y="{h*.55:.0f}" width="{w*.22:.0f}" height="{h*.06:.0f}" fill="#9BC9D2" opacity=".55"/>',
+            f'<rect width="{w}" height="{h*.76:.0f}" fill="{wall}"/>',
+            f'<rect x="{w*(.06+.06*variant):.0f}" y="{h*.08:.0f}" width="{w*.72:.0f}" height="{h*.40:.0f}" fill="#344D66" stroke="#A9C1CC" stroke-width="7"/>',
+            f'<path d="M{w*(.30+.06*variant):.0f} {h*.08:.0f} V{h*.48:.0f} M{w*(.06+.06*variant):.0f} {h*.28:.0f} H{w*(.78+.06*variant):.0f}" stroke="#A9C1CC" stroke-width="5"/>',
+            f'<rect x="{w*(.08+.04*variant):.0f}" y="{h*(.59+.015*(variant%2)):.0f}" width="{w*.78:.0f}" height="{h*.075:.0f}" rx="8" fill="#805F49"/>',
+            f'<path d="M{w*.16:.0f} {h*.665:.0f} V{h*.91:.0f} M{w*.80:.0f} {h*.665:.0f} V{h*.91:.0f}" stroke="#594737" stroke-width="13"/>',
+            f'<rect x="{w*(.32+.04*variant):.0f}" y="{h*.46:.0f}" width="{w*.23:.0f}" height="{h*.14:.0f}" rx="9" fill="#172637" stroke="#6EC9C1" stroke-width="5"/>',
         ]
-    elif env == "interior":
+    elif env in {"interior", "studio"}:
         parts += [
-            f'<rect x="{w*.04:.0f}" y="{h*.06:.0f}" width="{w*.92:.0f}" height="{h*.72:.0f}" fill="#40536A" stroke="#8192A2" stroke-width="6"/>',
-            f'<path d="M{w*.04:.0f} {h*.24:.0f} H{w*.96:.0f} M{w*.04:.0f} {h*.48:.0f} H{w*.96:.0f}" stroke="#71869A" stroke-width="3" opacity=".55"/>',
-            f'<rect x="{w*.72:.0f}" y="{h*.17:.0f}" width="{w*.17:.0f}" height="{h*.53:.0f}" fill="#805D43" stroke="#D6B38C" stroke-width="8"/>',
-            f'<rect x="{w*.75:.0f}" y="{h*.21:.0f}" width="{w*.11:.0f}" height="{h*.22:.0f}" fill="#B6C9D0" opacity=".38"/>',
-            f'<circle cx="{w*.85:.0f}" cy="{h*.46:.0f}" r="9" fill="#F2C66D"/>',
-            f'<path d="M{w*.12:.0f} {h*.66:.0f} V{h*.36:.0f} Q{w*.12:.0f} {h*.28:.0f} {w*.20:.0f} {h*.28:.0f} Q{w*.28:.0f} {h*.28:.0f} {w*.28:.0f} {h*.36:.0f} V{h*.66:.0f}" fill="#263B50" stroke="#9AAAB7" stroke-width="5"/>',
-            f'<path d="M{w*.08:.0f} {h*.67:.0f} H{w*.32:.0f}" stroke="#9AAAB7" stroke-width="8"/>',
+            f'<rect width="{w}" height="{h*.80:.0f}" fill="{wall}"/>',
+            f'<path d="M{w*.04:.0f} {h*.16:.0f} H{w*.96:.0f} M{w*.04:.0f} {h*.43:.0f} H{w*.96:.0f}" stroke="#A5B1B8" stroke-width="4" opacity=".35"/>',
+            f'<rect x="{w*(.64-.04*variant):.0f}" y="{h*.14:.0f}" width="{w*.20:.0f}" height="{h*.53:.0f}" fill="#805D43" stroke="#D6B38C" stroke-width="7"/>',
+            f'<circle cx="{w*(.79-.04*variant):.0f}" cy="{h*.44:.0f}" r="9" fill="{accent}"/>',
+            f'<rect x="{w*(.08+.035*variant):.0f}" y="{h*.20:.0f}" width="{w*.22:.0f}" height="{h*.25:.0f}" fill="#263B50" stroke="#9AAAB7" stroke-width="5"/>',
+            f'<path d="M{w*.12:.0f} {h*.45:.0f} h{w*.14:.0f}" stroke="#9AAAB7" stroke-width="8"/>',
         ]
+        if env == "studio":
+            parts += [f'<circle cx="{w*(.48+.025*variant):.0f}" cy="{h*.28:.0f}" r="{min(w,h)*(.12+.012*variant):.0f}" fill="{accent}" opacity=".20"/>',
+                      f'<path d="M{w*.08:.0f} {h*.72:.0f} Q{w*.5:.0f} {h*(.60+.02*variant):.0f} {w*.92:.0f} {h*.72:.0f}" stroke="#9EB0BE" stroke-width="5" fill="none" opacity=".5"/>']
     elif env == "rainy_street":
-        parts += [
-            f'<path d="M0 {h*.66:.0f} L{w*.22:.0f} {h*.44:.0f} L{w*.43:.0f} {h*.62:.0f} L{w*.68:.0f} {h*.39:.0f} L{w} {h*.58:.0f} V{h} H0Z" fill="#26384D"/>',
-            f'<rect y="{h*.72:.0f}" width="{w}" height="{h*.28:.0f}" fill="#15263B"/>',
-        ]
+        parts += [f'<rect width="{w}" height="{h}" fill="#17283D"/>']
         for i in range(7):
-            x = int(w*(i/7)) + int(seed % max(1,int(w*.05)))
-            bw = int(w*(.08 + (i%3)*.025)); bh = int(h*(.22 + (i%4)*.07))
-            parts.append(f'<rect x="{x-bw//2}" y="{h*.66-bh:.0f}" width="{bw}" height="{bh}" fill="{("#30445D","#3A4C62","#26384F")[i%3]}"/>')
+            x = int(w*((i+.5)/7)) + int((seed >> (i%8)) % max(1,int(w*.035)))
+            bw = int(w*(.07+((i+variant)%3)*.025)); bh = int(h*(.25+((i+variant)%4)*.065))
+            parts.append(f'<rect x="{x-bw//2}" y="{h*.70-bh:.0f}" width="{bw}" height="{bh}" fill="{("#30445D","#3A4C62","#26384F")[(i+variant)%3]}"/>')
             for j in range(3):
-                parts.append(f'<rect x="{x-bw*.30+j*bw*.28:.0f}" y="{h*.66-bh*.75:.0f}" width="{bw*.12:.0f}" height="{bh*.12:.0f}" fill="#E8C887" opacity=".75"/>')
-        for i in range(42):
-            x = (seed * (i + 11) % w)
-            y = (seed // (i + 3) % max(1,int(h*.70)))
-            parts.append(f'<path d="M{x} {y} l-12 35" stroke="#9BC7DA" stroke-width="2" opacity=".42"/>')
-        parts.append(f'<path d="M0 {h*.84:.0f} Q{w*.5:.0f} {h*.76:.0f} {w} {h*.85:.0f}" stroke="#7896A9" stroke-width="5" fill="none" opacity=".6"/>')
-    elif env == "dark_room":
-        parts += [
-            f'<circle cx="{w*.78:.0f}" cy="{h*.20:.0f}" r="{min(w,h)*.10:.0f}" fill="#52617C" opacity=".45"/>',
-            f'<rect x="{w*.62:.0f}" y="{h*.12:.0f}" width="{w*.25:.0f}" height="{h*.30:.0f}" fill="#111E34" stroke="#6C829B" stroke-width="6"/>',
-            f'<path d="M{w*.745:.0f} {h*.12:.0f} V{h*.42:.0f} M{w*.62:.0f} {h*.27:.0f} H{w*.87:.0f}" stroke="#50647D" stroke-width="4"/>',
-        ]
-        for i in range(18):
-            x = (seed*(i+5)) % w; y = (seed//(i+2)) % max(1,int(h*.62))
-            parts.append(f'<circle cx="{x}" cy="{y}" r="{2+i%3}" fill="#C7D8E8" opacity=".5"/>')
+                wy = h*.70-bh*.78 + ((j+variant)%2)*h*.06
+                parts.append(f'<rect x="{x-bw*.30+j*bw*.28:.0f}" y="{wy:.0f}" width="{bw*.12:.0f}" height="{bh*.12:.0f}" fill="{accent}" opacity=".8"/>')
+        for i in range(32):
+            x = (seed*(i+11) % w); y = (seed//(i+2) % max(1,int(h*.70)))
+            parts.append(f'<path d="M{x} {y} l-10 34" stroke="#9BC7DA" stroke-width="2" opacity=".42"/>')
+        parts += [f'<path d="M0 {h*.83:.0f} Q{w*.5:.0f} {h*(.75+.015*variant):.0f} {w} {h*.85:.0f}" stroke="#7896A9" stroke-width="6" fill="none"/>']
+    elif env == "city":
+        parts += [f'<rect width="{w}" height="{h}" fill="#26384D"/>']
+        for i in range(8):
+            bw = w*(.09+((i+variant)%3)*.025); bh = h*(.28+((i*2+variant)%5)*.07)
+            x = w*(i/8)-bw*.2
+            parts.append(f'<rect x="{x:.0f}" y="{h*.74-bh:.0f}" width="{bw:.0f}" height="{bh:.0f}" fill="{("#34465B","#40536A","#293D52")[(i+variant)%3]}"/>')
+            for j in range(2):
+                parts.append(f'<rect x="{x+bw*.25+j*bw*.35:.0f}" y="{h*.74-bh*.72:.0f}" width="{bw*.12:.0f}" height="{h*.035:.0f}" fill="{accent}" opacity=".75"/>')
+        parts += [f'<path d="M0 {h*.74:.0f} H{w} V{h} H0Z" fill="#1B2B3E"/>',
+                  f'<path d="M{w*.12:.0f} {h*.86:.0f} H{w*.88:.0f}" stroke="#D3C3A4" stroke-width="5" stroke-dasharray="36 30" opacity=".55"/>']
+    elif env == "cafe":
+        parts += [f'<rect width="{w}" height="{h*.78:.0f}" fill="{wall}"/>',
+                  f'<rect x="{w*.08:.0f}" y="{h*.12:.0f}" width="{w*.34:.0f}" height="{h*.34:.0f}" fill="#29465A" stroke="#D7C7AE" stroke-width="7"/>',
+                  f'<path d="M{w*.25:.0f} {h*.12:.0f} V{h*.46:.0f} M{w*.08:.0f} {h*.29:.0f} H{w*.42:.0f}" stroke="#D7C7AE" stroke-width="4"/>',
+                  f'<rect x="{w*(.52+.025*variant):.0f}" y="{h*.18:.0f}" width="{w*.34:.0f}" height="{h*.16:.0f}" rx="12" fill="#6D4D3B"/>',
+                  f'<path d="M{w*.10:.0f} {h*.68:.0f} H{w*.90:.0f}" stroke="#A87B55" stroke-width="{max(20,int(w*.05))}"/>',
+                  f'<path d="M{w*.18:.0f} {h*.68:.0f} V{h*.90:.0f} M{w*.82:.0f} {h*.68:.0f} V{h*.90:.0f}" stroke="#654A39" stroke-width="12"/>',
+                  f'<circle cx="{w*(.70+.025*variant):.0f}" cy="{h*.53:.0f}" r="{min(w,h)*.045:.0f}" fill="{accent}"/>']
+    elif env == "classroom":
+        parts += [f'<rect width="{w}" height="{h*.80:.0f}" fill="{wall}"/>',
+                  f'<rect x="{w*.10:.0f}" y="{h*.12:.0f}" width="{w*.80:.0f}" height="{h*.30:.0f}" fill="#24443F" stroke="#D2C7B2" stroke-width="8"/>',
+                  f'<path d="M{w*.18:.0f} {h*.25:.0f} q{w*.12:.0f} {-h*.05:.0f} {w*.22:.0f} 0 M{w*.52:.0f} {h*.32:.0f} q{w*.12:.0f} {-h*.06:.0f} {w*.20:.0f} 0" stroke="#DCE5D8" stroke-width="5" fill="none"/>',
+                  f'<rect x="{w*.08:.0f}" y="{h*.58:.0f}" width="{w*.84:.0f}" height="{h*.06:.0f}" fill="#805F49"/>',
+                  f'<path d="M{w*.15:.0f} {h*.64:.0f} V{h*.90:.0f} M{w*.85:.0f} {h*.64:.0f} V{h*.90:.0f}" stroke="#594737" stroke-width="12"/>']
     else:
-        parts += [
-            f'<circle cx="{w*.78:.0f}" cy="{h*.22:.0f}" r="{min(w,h)*.22:.0f}" fill="#36516C" opacity=".65"/>',
-            f'<circle cx="{w*.78:.0f}" cy="{h*.22:.0f}" r="{min(w,h)*.15:.0f}" fill="#4B6A83" opacity=".36"/>',
-            f'<path d="M0 {h*.74:.0f} Q{w*.25:.0f} {h*.68:.0f} {w*.5:.0f} {h*.75:.0f} T{w} {h*.72:.0f} V{h} H0Z" fill="#263C53"/>',
-            f'<path d="M0 {h*.83:.0f} Q{w*.5:.0f} {h*.77:.0f} {w} {h*.84:.0f} V{h} H0Z" fill="#1C2E43"/>',
-        ]
-    parts.append(f'<rect y="{h*.90:.0f}" width="{w}" height="{h*.10:.0f}" fill="#101B2A" opacity=".20"/>')
+        # A fallback landscape is still a designed place, not a blank colour card.
+        parts += [f'<circle cx="{w*(.70-.025*variant):.0f}" cy="{h*.20:.0f}" r="{min(w,h)*.16:.0f}" fill="{accent}" opacity=".5"/>',
+                  f'<path d="M0 {h*.68:.0f} Q{w*.25:.0f} {h*(.60+.02*variant):.0f} {w*.5:.0f} {h*.68:.0f} T{w} {h*.67:.0f} V{h} H0Z" fill="#405B62"/>']
+    parts += [
+        f'<rect y="{h*.88:.0f}" width="{w}" height="{h*.12:.0f}" fill="url(#floor{seed:x})" opacity=".42"/>',
+        f'<path d="M0 {h*.94:.0f} Q{w*.5:.0f} {h*(.90+.008*variant):.0f} {w} {h*.94:.0f}" stroke="#FFFFFF" stroke-width="3" opacity=".08" fill="none"/>',
+    ]
     return "".join(parts)
 
 def _character(x: float, y: float, scale: float, brief: dict, phase: float) -> str:
@@ -301,6 +332,12 @@ def _prop(name: str, x: float, y: float, scale: float) -> str:
         return f'<g><circle cx="{x:.0f}" cy="{y:.0f}" r="65" fill="#F3E8D7" stroke="#31577A" stroke-width="8"/><path d="M{x:.0f} {y-42:.0f} V{y:.0f} l35 22" stroke="#18202B" stroke-width="8" fill="none"/></g>'
     if name == "book":
         return f'<g><path d="M{x-85:.0f} {y-55:.0f} Q{x-20:.0f} {y-80:.0f} {x:.0f} {y-48:.0f} Q{x+35:.0f} {y-80:.0f} {x+85:.0f} {y-55:.0f} V{y+60:.0f} Q{x+35:.0f} {y+35:.0f} {x:.0f} {y+65:.0f} Q{x-40:.0f} {y+35:.0f} {x-85:.0f} {y+60:.0f}Z" fill="#E6C58E" stroke="#5B4938" stroke-width="6"/></g>'
+    if name == "mirror":
+        return f'<g transform="translate({x:.0f} {y:.0f})"><rect x="-55" y="-105" width="110" height="190" rx="52" fill="#A8C4D1" stroke="#E9E1D4" stroke-width="12"/><ellipse cx="0" cy="-10" rx="34" ry="70" fill="#D5E1E5" opacity=".7"/></g>'
+    if name == "eye":
+        return f'<g transform="translate({x:.0f} {y:.0f})"><path d="M-105 0 Q0 -90 105 0 Q0 90 -105 0Z" fill="#F3E8D7" stroke="#31577A" stroke-width="9"/><circle r="35" fill="#6D9DB8"/><circle r="16" fill="#101B2A"/></g>'
+    if name == "keys":
+        return f'<g transform="translate({x:.0f} {y:.0f})" fill="none" stroke="#EFCB86" stroke-width="12"><circle cx="-30" cy="0" r="22"/><path d="M-8 0 H75 V18 H55 V34 H38 V18"/></g>'
     if name == "coffee":
         return f'<g><path d="M{x-38:.0f} {y-28:.0f} h70 v70 h-70Z" fill="#F3E8D7"/><path d="M{x+32:.0f} {y-12:.0f} q45 -8 22 34 h-22" stroke="#F3E8D7" stroke-width="10" fill="none"/></g>'
     return ""
