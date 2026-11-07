@@ -19,6 +19,41 @@ SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 REQUIRED = ("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN")
 
 
+HASHTAG_RE = re.compile(r"(?<![\\w])#[\\w]+", re.UNICODE)
+YOUTUBE_DESCRIPTION_MAX_BYTES = 5000
+YOUTUBE_HASHTAG_MAX = 60
+
+
+def truncate_utf8(text: str, max_bytes: int) -> str:
+    """Trim at a valid UTF-8 boundary and avoid leaving a partial final word."""
+    encoded = text.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return text
+    clipped = encoded[:max_bytes]
+    while clipped:
+        try:
+            decoded = clipped.decode("utf-8")
+            break
+        except UnicodeDecodeError:
+            clipped = clipped[:-1]
+    else:
+        return ""
+    if " " in decoded:
+        decoded = decoded.rsplit(" ", 1)[0]
+    return decoded.rstrip()
+
+
+def validate_hashtags(title: str, description: str) -> int:
+    """Reject metadata with over 60 hashtags; YouTube ignores all of them above this."""
+    hashtags = HASHTAG_RE.findall(title + "\\n" + description)
+    if len(hashtags) > YOUTUBE_HASHTAG_MAX:
+        raise RuntimeError(
+            f"YouTube hashtag limit exceeded: {len(hashtags)}/{YOUTUBE_HASHTAG_MAX}. "
+            "Reduce hashtags in the title/description; upload stopped before sending the video."
+        )
+    return len(hashtags)
+
+
 def main() -> int:
     missing = [name for name in REQUIRED if not os.getenv(name, "").strip()]
     if len(missing) == len(REQUIRED):
@@ -67,11 +102,24 @@ def main() -> int:
             "Individual asset references are retained in the production visual manifest.",
         ])
     description = "\n".join(description_lines).strip()
-    if len(description) > 5000:
-        description = description[:4990].rsplit(" ", 1)[0].rstrip() + "\n[Description shortened to meet YouTube's 5,000-character limit.]"
-    if len(description) > 5000:
-        raise RuntimeError("YouTube description could not be reduced below 5,000 characters.")
-    print(f"YouTube description validated: {len(description)}/5000 characters.")
+    # The YouTube Data API enforces the description limit in UTF-8 bytes.
+    # Reserve room for a clear notice if a long description needs shortening.
+    shortened_notice = "\n[Description shortened to meet YouTube's 5,000-byte limit.]"
+    if len(description.encode("utf-8")) > YOUTUBE_DESCRIPTION_MAX_BYTES:
+        budget = YOUTUBE_DESCRIPTION_MAX_BYTES - len(shortened_notice.encode("utf-8"))
+        description = truncate_utf8(description, budget) + shortened_notice
+    description_bytes = len(description.encode("utf-8"))
+    if description_bytes > YOUTUBE_DESCRIPTION_MAX_BYTES:
+        raise RuntimeError(
+            f"YouTube description is {description_bytes} bytes; maximum is "
+            f"{YOUTUBE_DESCRIPTION_MAX_BYTES}. Upload stopped before sending the video."
+        )
+    hashtag_count = validate_hashtags(title, description)
+    print(
+        f"YouTube description validated: {description_bytes}/"
+        f"{YOUTUBE_DESCRIPTION_MAX_BYTES} UTF-8 bytes."
+    )
+    print(f"YouTube hashtags validated: {hashtag_count}/{YOUTUBE_HASHTAG_MAX}.")
     tags = ["WISE LAB", "psychology", "human behaviour", "human behavior",
             "psychology explained", "self awareness", "mental strength",
             "personal growth", "emotional intelligence"]
