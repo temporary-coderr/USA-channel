@@ -19,7 +19,7 @@ SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 REQUIRED = ("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN")
 
 
-HASHTAG_RE = re.compile(r"(?<![\\w])#[\\w]+", re.UNICODE)
+HASHTAG_RE = re.compile(r"(?<![\w])#[\w]+", re.UNICODE)
 YOUTUBE_DESCRIPTION_MAX_BYTES = 5000
 YOUTUBE_HASHTAG_MAX = 60
 
@@ -45,7 +45,7 @@ def truncate_utf8(text: str, max_bytes: int) -> str:
 
 def validate_hashtags(title: str, description: str) -> int:
     """Reject metadata with over 60 hashtags; YouTube ignores all of them above this."""
-    hashtags = HASHTAG_RE.findall(title + "\\n" + description)
+    hashtags = HASHTAG_RE.findall(title + "\n" + description)
     if len(hashtags) > YOUTUBE_HASHTAG_MAX:
         raise RuntimeError(
             f"YouTube hashtag limit exceeded: {len(hashtags)}/{YOUTUBE_HASHTAG_MAX}. "
