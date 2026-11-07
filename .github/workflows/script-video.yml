@@ -30,6 +30,7 @@ jobs:
     env:
       PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       OPENAI_IMAGE_MODEL: gpt-image-2.5-flare
       OPENAI_IMAGE_QUALITY: medium
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -91,7 +92,8 @@ jobs:
           test -s scripts/script.txt || (echo "Upload your script to scripts/script.txt first." && exit 1)
           test -n "$PIXABAY_API_KEY" || (echo "Missing PIXABAY_API_KEY repository secret." && exit 1)
           echo "Voice: Edge-TTS en-US-AndrewNeural; unchanged and independent of image generation."
-          if [ -n "$OPENAI_API_KEY" ]; then echo "OpenAI image generation: enabled (first provider batch)."; else echo "OpenAI image generation: unavailable; Gemini/stock fallback remains active."; fi\n          if [ -n "$GEMINI_API_KEY" ]; then echo "Gemini image generation: enabled (alternating provider batch and fallback)."; else echo "Gemini image generation: unavailable; OpenAI/stock fallback remains active."; fi
+          if [ -n "$OPENAI_API_KEY" ]; then echo "OpenAI image generation: enabled (first batch, up to four images)."; else echo "OpenAI image generation: unavailable."; fi
+          if [ -n "$GEMINI_API_KEY" ]; then echo "Gemini image generation: enabled (next batch and fallback)."; else echo "Gemini image generation: unavailable."; fi
           if [ -n "$GROQ_API_KEY" ]; then echo "Groq prompt refinement: enabled (optional)."; else echo "Groq prompt refinement: local prompt fallback."; fi
 
       - name: Run originality and editorial checks
