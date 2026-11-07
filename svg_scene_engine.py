@@ -81,8 +81,20 @@ def plan_scene(narration: str, beat_index: int) -> dict:
     else:
         environment = ("studio", "interior", "park", "bedroom")[_seed(narration + str(beat_index)) % 4]
 
-    emotion = action if action in {"sad", "happy", "shocked", "thinking", "angry", "scared"} else (
-        "thinking" if action == "explaining" else "neutral")
+    emotion = "neutral"
+    for terms, value in [
+        ({"sad", "lonely", "loss", "grief"}, "sad"),
+        ({"happy", "joy", "smile", "delighted"}, "happy"),
+        ({"shocked", "shock", "surprised", "unexpected"}, "shocked"),
+        ({"thinking", "think", "wonder", "consider", "remember"}, "thinking"),
+        ({"angry", "anger", "frustrated", "furious"}, "angry"),
+        ({"scared", "fear", "afraid", "terrified", "anxiety"}, "scared"),
+    ]:
+        if words & terms:
+            emotion = value
+            break
+    if emotion == "neutral" and action == "explaining":
+        emotion = "thinking"
     props = []
     if subject in {"phone", "door", "brain", "heart", "clock", "book", "mirror", "eye"}:
         props.append(subject)
