@@ -56,6 +56,7 @@ class StoryPlannerTests(unittest.TestCase):
         self.assertEqual(report["planned_scene_count"], 2)
         self.assertEqual(scenes[0]["subject"], "dog")
         self.assertEqual(scenes[1]["emotion"], "happy")
+        self.assertNotEqual(scenes[0]["layout"], scenes[1]["layout"])
         self.assertEqual(post.call_count, 1)
 
 
