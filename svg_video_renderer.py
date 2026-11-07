@@ -10,7 +10,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from svg_animation_engine import plan_visual_beats, render_scene_svg
+from svg_animation_engine import plan_visual_beats
+from svg_scene_engine import plan_scene, render_scene_svg
 from svg_audio_engine import build_sound_events, write_audio_tracks
 
 def _ffmpeg() -> str:
@@ -108,14 +109,16 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
         "duration_seconds": round(total_duration, 3),
         "beat_count": len(beats),
         "rendered_frame_count": global_frame,
-        "character_animation": ["breathing_bob", "gesture_swing"],
+        "character_animation": ["expression_shapes", "blink", "breathing_bob", "walking_cycle", "pose_variants"],
+        "scene_engine": "script_adaptive_svg_scene_composer",
+        "scene_variation": ["emotion", "pose", "environment", "props", "composition"],
         "camera_animation": ["slow_push_in", "alternating_pan", "background_parallax"],
         "transitions": {"type": "crossfade", "duration_seconds": round(transition_frames/fps, 3)},
         "audio": {**audio_report, "effects_track": sfx_path.name, "mixed_track": mix_path.name,
                   "narration_included": False},
         "stock_media_used": False,
         "external_image_apis_used": False,
-        "beats": beats,
+        "beats": [{**beat, "visual_brief": plan_scene(beat["narration"], i)} for i, beat in enumerate(beats, 1)],
         "files": {
             "video": final_video.name,
             "sound_effects": sfx_path.name,
