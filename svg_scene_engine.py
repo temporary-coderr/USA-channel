@@ -234,6 +234,18 @@ def _prop(name: str, x: float, y: float, scale: float) -> str:
         return f'<g><path d="M{x-38:.0f} {y-28:.0f} h70 v70 h-70Z" fill="#F3E8D7"/><path d="M{x+32:.0f} {y-12:.0f} q45 -8 22 34 h-22" stroke="#F3E8D7" stroke-width="10" fill="none"/></g>'
     return ""
 
+def _cat(x: float, y: float, scale: float, seed: int, phase: float) -> str:
+    fur = "#C7CED8" if seed % 2 else "#D9A46F"
+    tail = math.sin(phase * math.tau) * 12
+    return (f'<g transform="translate({x:.1f} {y:.1f}) scale({scale:.3f})">'
+            f'<path d="M-62 -4 Q-72 -82 0 -78 Q72 -82 62 -4 L48 48 H-48Z" fill="{fur}" stroke="#3B3540" stroke-width="7"/>'
+            f'<path d="M-48 -50 L-65 -120 L-10 -82Z M15 -82 L65 -120 L48 -50Z" fill="{fur}" stroke="#3B3540" stroke-width="7"/>'
+            f'<ellipse cx="-22" cy="-28" rx="5" ry="8" fill="#18202B"/><ellipse cx="22" cy="-28" rx="5" ry="8" fill="#18202B"/>'
+            f'<path d="M-8 -8 L8 -8 L0 1Z" fill="#D98278"/><path d="M0 1 Q-18 16 -34 7 M0 1 Q18 16 34 7" stroke="#3B3540" stroke-width="4" fill="none"/>'
+            f'<path d="M-38 42 L-45 78 M38 42 L45 78" stroke="{fur}" stroke-width="15" stroke-linecap="round"/>'
+            f'<path d="M58 18 Q112 15 100 -45" stroke="{fur}" stroke-width="14" fill="none" transform="rotate({tail:.1f} 58 18)"/></g>')
+
+
 def render_scene_svg(narration: str, beat_index: int, width: int = 1920,
                      height: int = 1080, phase: float = 0.0) -> str:
     brief = plan_scene(narration, beat_index)
@@ -267,7 +279,7 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920,
         # Interaction is explicit: the dog is placed close and oriented toward the person.
         prop += dog
     if brief["subject"] == "cat":
-        prop += _dog(prop_x, height*.76, scale*.62, seed, phase)
+        prop += _cat(prop_x, height*.76, scale*.62, seed, phase)
     camera_zoom = 1 + .025 * math.sin(math.pi * phase)
     pan = math.sin(math.pi * phase) * (1 if seed % 2 else -1) * width*.008
     camera = (f'translate({pan:.1f} 0) translate({width/2:.1f} {height/2:.1f}) '
