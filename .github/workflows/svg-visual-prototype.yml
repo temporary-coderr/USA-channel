@@ -42,6 +42,9 @@ jobs:
       - name: Validate engine
         run: python -m py_compile svg_animation_engine.py
 
+      - name: Run SVG engine tests
+        run: python -m unittest discover -s tests -p 'test_svg_animation_engine.py' -v
+
       - name: Generate original visuals from the current script
         run: |
           python svg_animation_engine.py \
