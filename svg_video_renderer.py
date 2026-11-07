@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import shutil
 import subprocess
 import tempfile
@@ -79,7 +80,7 @@ def render_animated_video(script_path: Path, output_dir: Path, video_format: str
                 visual_brief=visual_briefs[beat_index - 1],
             )
             (scene_dir / f"{beat['id']}.svg").write_text(svg, encoding="utf-8")
-            frame_total = max(1, round(float(beat["duration_seconds"]) * fps))
+            frame_total = max(1, math.ceil(float(beat["duration_seconds"]) * fps))
             last_frame = None
             for local_index in range(frame_total):
                 phase = local_index / max(1, frame_total - 1)
