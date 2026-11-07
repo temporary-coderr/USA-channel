@@ -420,6 +420,57 @@ def generate_openai_image(prompt: str, destination: Path, api_key: str, vertical
                 time.sleep(2 ** (attempt + 1))
     raise RuntimeError(f"OpenAI image generation failed after 3 attempts: {last_error}")
 
+
+def generate_gemini_image(prompt: str, destination: Path, api_key: str, vertical: bool) -> dict:
+    """Generate one custom still with Gemini's image-generation model."""
+    import time
+    model = os.getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image").strip() or "gemini-2.5-flash-image"
+    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    payload = {
+        "contents": [{"role": "user", "parts": [{
+            "text": prompt + (" Compose for a vertical 9:16 frame." if vertical else " Compose for a wide 16:9 frame.")
+        }]}],
+        "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]},
+    }
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = SESSION.post(
+                endpoint, params={"key": api_key}, json=payload, timeout=(20, 240)
+            )
+            if response.status_code in (429, 500, 502, 503, 504):
+                last_error = RuntimeError(f"Gemini image API HTTP {response.status_code}: {response.text[:500]}")
+                if attempt < 2:
+                    time.sleep(2 ** (attempt + 1))
+                    continue
+            response.raise_for_status()
+            body = response.json()
+            encoded = None
+            mime_type = "image/png"
+            for candidate in body.get("candidates", []):
+                for part in candidate.get("content", {}).get("parts", []):
+                    inline = part.get("inlineData") or part.get("inline_data") or {}
+                    if inline.get("data"):
+                        encoded = inline["data"]
+                        mime_type = inline.get("mimeType") or inline.get("mime_type") or mime_type
+                        break
+                if encoded:
+                    break
+            if not encoded:
+                raise RuntimeError("Gemini returned no image data in its response.")
+            raw = base64.b64decode(encoded)
+            if len(raw) < 4000:
+                raise RuntimeError("Gemini returned an unexpectedly small image.")
+            extension = ".webp" if "webp" in mime_type.lower() else ".png"
+            actual_destination = destination.with_suffix(extension)
+            actual_destination.write_bytes(raw)
+            return {"path": actual_destination, "mime_type": mime_type, "model": model}
+        except Exception as exc:
+            last_error = exc
+            if attempt < 2:
+                time.sleep(2 ** (attempt + 1))
+    raise RuntimeError(f"Gemini image generation failed after 3 attempts: {last_error}")
+
 def choose_ai_shot_indices(total_shots: int, requested: int = 6) -> set[int]:
     """Distribute 5–7 AI stills evenly across the full video."""
     if total_shots <= 0:
@@ -1230,7 +1281,7 @@ def main() -> int:
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
     groq_key = os.getenv("GROQ_API_KEY", "").strip()
     print("Optional Pexels fallback enabled." if pexels_key else "Pexels fallback not configured; using Pixabay only.")
-    print("Selective OpenAI GPT Image generation enabled (5–7 images)." if openai_key else "OpenAI image generation disabled; OPENAI_API_KEY is not configured.")
+    print("OpenAI image generation: enabled." if openai_key else "OpenAI image generation: unavailable; optional.")\n    print("Gemini image generation: enabled." if gemini_key else "Gemini image generation: unavailable; optional.")
     print("Groq art-direction prompt refinement enabled." if groq_key else "Groq prompt refinement disabled; local prompts will be used.")
     # Scene planning stays local; OpenAI/Groq are used only for selected custom stills.
     plan = plan_scenes(script)
@@ -1349,24 +1400,40 @@ def main() -> int:
                         source_errors.append(f"Original diagram: {exc}")
                         print(f"WARNING: Diagram generation failed; trying other visual sources: {exc}")
 
-                if asset_attempt == 1 and not asset and openai_key and shot_number in ai_shot_indices:
+                if asset_attempt == 1 and not asset and shot_number in ai_shot_indices:
                     prompt = build_ai_image_prompt(shot_text, query, vertical, groq_key)
-                    try:
-                        generated = generate_openai_image(
-                            prompt, WORK / f"openai_visual_{shot_number:04}", openai_key, vertical
-                        )
-                        asset = {
-                            "id": f"openai:{hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:16]}",
-                            "url": "", "type": "image", "source": "OpenAI GPT Image",
-                            "query": query, "page_url": "https://developers.openai.com/api/docs/guides/image-generation",
-                            "prompt": prompt, "mime_type": generated["mime_type"],
-                            "local_path": str(generated["path"]),
-                        }
-                        is_image = True
-                        print(f"Generated custom OpenAI visual for shot {shot_number + 1}/{total_shots}.")
-                    except Exception as exc:
-                        source_errors.append(f"OpenAI image: {exc}")
-                        print(f"WARNING: OpenAI image failed; falling back to Pixabay/Openverse: {exc}")
+                    preferred = ai_provider_by_shot.get(shot_number, "openai")
+                    providers = [preferred, "gemini" if preferred == "openai" else "openai"]
+                    for provider in providers:
+                        api_key = openai_key if provider == "openai" else gemini_key
+                        if not api_key:
+                            continue
+                        try:
+                            if provider == "openai":
+                                generated = generate_openai_image(
+                                    prompt, WORK / f"openai_visual_{shot_number:04}", api_key, vertical
+                                )
+                                source_name = "OpenAI GPT Image"
+                                page_url = "https://developers.openai.com/api/docs/guides/image-generation"
+                            else:
+                                generated = generate_gemini_image(
+                                    prompt, WORK / f"gemini_visual_{shot_number:04}", api_key, vertical
+                                )
+                                source_name = "Google Gemini Image"
+                                page_url = "https://ai.google.dev/gemini-api/docs/image-generation"
+                            asset = {
+                                "id": f"{provider}:" + hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:16],
+                                "url": "", "type": "image", "source": source_name,
+                                "query": query, "page_url": page_url,
+                                "prompt": prompt, "mime_type": generated["mime_type"],
+                                "local_path": str(generated["path"]),
+                            }
+                            is_image = True
+                            print(f"Generated custom {source_name} visual for shot {shot_number + 1}/{total_shots}.")
+                            break
+                        except Exception as exc:
+                            source_errors.append(f"{provider} image: {exc}")
+                            print(f"WARNING: {provider} image failed; trying the other AI provider or stock fallback: {exc}")
 
                 # Pixabay is the free stock-video source. Search alternate query
                 # variants and let used_ids exclude every previously rejected result.
