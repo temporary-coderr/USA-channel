@@ -21,37 +21,38 @@ REQUIRED = ("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN
 
 HASHTAG_RE = re.compile(r"(?<![\w])#[\w]+", re.UNICODE)
 YOUTUBE_DESCRIPTION_MAX_BYTES = 5000
-YOUTUBE_HASHTAG_MAX = 60
+YOUTUBE_HASHTAG_MAX = 10
 
 
-def truncate_utf8(text: str, max_bytes: int) -> str:
-    """Trim at a valid UTF-8 boundary and avoid leaving a partial final word."""
-    encoded = text.encode("utf-8")
-    if len(encoded) <= max_bytes:
-        return text
-    clipped = encoded[:max_bytes]
-    while clipped:
-        try:
-            decoded = clipped.decode("utf-8")
-            break
-        except UnicodeDecodeError:
-            clipped = clipped[:-1]
-    else:
-        return ""
-    if " " in decoded:
-        decoded = decoded.rsplit(" ", 1)[0]
-    return decoded.rstrip()
+def cap_hashtags(text: str, remaining: int, seen: set[str]) -> tuple[str, int]:
+    """Keep only the first allowed unique hashtags, removing extras cleanly."""
+    kept = 0
+
+    def replace(match: re.Match[str]) -> str:
+        nonlocal kept
+        tag = match.group(0)
+        normalized = tag.casefold()
+        if normalized in seen or kept >= remaining:
+            return ""
+        seen.add(normalized)
+        kept += 1
+        return tag
+
+    cleaned = HASHTAG_RE.sub(replace, text)
+    cleaned = re.sub(r"[ \\t]{2,}", " ", cleaned)
+    cleaned = re.sub(r" *\\n *", "\\n", cleaned)
+    cleaned = re.sub(r"\\n{3,}", "\\n\\n", cleaned)
+    return cleaned.strip(), kept
 
 
-def validate_hashtags(title: str, description: str) -> int:
-    """Reject metadata with over 60 hashtags; YouTube ignores all of them above this."""
-    hashtags = HASHTAG_RE.findall(title + "\n" + description)
-    if len(hashtags) > YOUTUBE_HASHTAG_MAX:
-        raise RuntimeError(
-            f"YouTube hashtag limit exceeded: {len(hashtags)}/{YOUTUBE_HASHTAG_MAX}. "
-            "Reduce hashtags in the title/description; upload stopped before sending the video."
-        )
-    return len(hashtags)
+def limit_hashtags(title: str, description: str) -> tuple[str, str, int]:
+    """Cap combined title and description hashtags at ten, removing duplicates."""
+    seen: set[str] = set()
+    title, title_count = cap_hashtags(title, YOUTUBE_HASHTAG_MAX, seen)
+    description, description_count = cap_hashtags(
+        description, YOUTUBE_HASHTAG_MAX - title_count, seen
+    )
+    return title, description, title_count + description_count
 
 
 def main() -> int:
@@ -114,7 +115,7 @@ def main() -> int:
             f"YouTube description is {description_bytes} bytes; maximum is "
             f"{YOUTUBE_DESCRIPTION_MAX_BYTES}. Upload stopped before sending the video."
         )
-    hashtag_count = validate_hashtags(title, description)
+    title, description, hashtag_count = limit_hashtags(title, description)
     print(
         f"YouTube description validated: {description_bytes}/"
         f"{YOUTUBE_DESCRIPTION_MAX_BYTES} UTF-8 bytes."
