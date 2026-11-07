@@ -127,7 +127,7 @@ def _build_sfx(duration: float, events: list[dict]) -> array:
     return mixed
 
 
-def _build_music(duration: float) -> array:
+def _build_music(duration: float, seed: int = 0) -> array:
     """Generate a calm, original ambient bed with slow chord movement."""
     count = max(1, int(math.ceil(duration * SAMPLE_RATE)))
     music = array("f", [0.0]) * count
@@ -137,7 +137,12 @@ def _build_music(duration: float) -> array:
         (98.00, 146.83, 196.00, 293.66),
         (73.42, 110.00, 146.83, 220.00),
     )
-    chord_seconds = 8.0
+    # Rotate the progression and vary its pace from the script fingerprint,
+    # so different videos do not all receive an identical music bed.
+    rotation = seed % len(chords)
+    chords = chords[rotation:] + chords[:rotation]
+    chord_seconds = (7.5, 8.0, 8.5)[(seed >> 3) % 3]
+    pulse_rate = (0.13, 0.16, 0.19)[(seed >> 5) % 3]
     fade_seconds = min(1.8, max(0.35, duration * 0.08))
     for pos in range(count):
         t = pos / SAMPLE_RATE
@@ -148,7 +153,7 @@ def _build_music(duration: float) -> array:
         fade_out = min(1.0, max(0.0, (duration - t) / fade_seconds))
         edge = min(fade_in, fade_out)
         # Gentle slow pulse keeps the bed alive without competing with speech.
-        pulse = 0.90 + 0.10 * math.sin(2 * math.pi * 0.16 * t)
+        pulse = 0.90 + 0.10 * math.sin(2 * math.pi * pulse_rate * t)
         pad = (
             0.40 * math.sin(2 * math.pi * chord[0] * t)
             + 0.25 * math.sin(2 * math.pi * chord[1] * t)
@@ -164,10 +169,10 @@ def _build_music(duration: float) -> array:
 
 
 def write_audio_tracks(duration: float, events: list[dict],
-                       sfx_path: Path, mix_path: Path) -> dict:
+                       sfx_path: Path, mix_path: Path, music_seed: int = 0) -> dict:
     """Write separate SFX and mastered SFX+music mix WAV files."""
     sfx = _build_sfx(duration, events)
-    music = _build_music(duration)
+    music = _build_music(duration, music_seed)
     mixed = array("f", [0.0]) * len(sfx)
     peak = 0.0
     for index in range(len(sfx)):
