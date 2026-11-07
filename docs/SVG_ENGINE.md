@@ -1,30 +1,40 @@
-# WISE-LAB Procedural SVG Visual Engine
+# WISE-LAB Procedural SVG Animation Engine
 
-## What it does
+## Current prototype
 
-`svg_animation_engine.py` turns the current narration script into an ordered set of original SVG illustrations and PNG previews. It uses Python, procedural vector drawing, and CairoSVG. It does not call Pixabay, Openverse, OpenAI Images, Gemini Images, or another external image service.
+The engine turns narration into ordered visual beats, creates original SVG compositions, animates them frame-by-frame, and encodes a review MP4. It uses Python, CairoSVG, Pillow, FFmpeg, and standard-library audio synthesis. It does not call Pixabay, Openverse, OpenAI Images, Gemini Images, or another external image service.
 
-The scene plan preserves every script word in order and aims for a visual beat about every three seconds at the configured narration speed. Each beat is analysed for a likely subject and action, then composed from vector characters, props, diagrams, backgrounds, labels, and channel styling. A manifest records the narration span, duration, inferred subject/action, generated files, and image hash.
+### Animation features
 
-## Preview it
+- Character breathing/bobbing and gesture movement.
+- Per-scene camera push-in and alternating pan.
+- Subtle background parallax.
+- Short crossfade transitions between beats.
+- A new script-directed SVG composition for each beat.
+- Original generated sound effects: a short WISE-LAB sonic mark, soft UI clicks/ticks, steps, impacts, and transition whooshes.
+- Sound events are timed to beat boundaries and selected actions; effects are deliberately restrained rather than playing on every word.
 
-Use the separate **WISE LAB SVG visual prototype** workflow in GitHub Actions. It is manual-only and creates one review artifact containing the SVG source files, PNG previews, and manifest. It does not upload to YouTube and does not change the production renderer.
+## Render a review video
+
+Use GitHub Actions → **WISE LAB SVG visual prototype** → Run workflow. Choose landscape or Shorts. The workflow is manual-only, runs tests, renders the complete current script, and creates one review artifact with:
+
+- `wise_lab_animated_preview.mp4` — animated visual preview with synthesized SFX.
+- `sound_effects.wav` — separate generated effects track.
+- `animation_manifest.json` — timing, beats, effects, and render metadata.
+- `scene_svgs/` — editable vector source for each visual beat.
 
 Or run locally:
 
 ```bash
-python -m pip install CairoSVG
-python svg_animation_engine.py --script scripts/script.txt --output output/svg_prototype --format landscape --wpm 140 --seconds 3
+python -m pip install CairoSVG Pillow
+python -m unittest discover -s tests -v
+python svg_video_renderer.py --script scripts/script.txt --output output/svg_animation_preview --format landscape --wpm 140 --seconds 3 --fps 12 --width 720
 ```
 
-Choose `shorts` for vertical 1080×1920 output.
+Use `--format shorts` for vertical 9:16 output. The preview defaults to 720 pixels wide and 12 FPS to keep the first review render practical. The final production pipeline can raise resolution and frame rate after timing and visual quality are approved.
 
-## Important limits of this first prototype
+## Production integration status
 
-- It generates original, editable vector artwork, not photorealistic AI pictures.
-- Its visual vocabulary is a growing set of reusable primitives. New subjects, props, gestures, environments, and diagram types can be added as the channel's scripts require them.
-- It varies layout and composition deterministically from the narration and beat index; the prototype still needs editorial review for semantic accuracy and visual repetition.
-- PNG previews are still illustrations. The production renderer must add timed movement, camera animation, transitions, and sound design before this becomes the final video engine.
-- This prototype is intentionally separate from the production workflow. Do not remove the existing renderer's stock paths until the SVG output has been reviewed and the full video pipeline has passed short- and long-form tests.
+This remains a separate review renderer. It does not yet replace `render_script.py`, attach the existing Edge-TTS narration, mix the channel's background music, or upload to YouTube. The SFX track is generated separately and then muxed into the preview. Keep the current production workflow unchanged until the visual output, audio balance, long-form runtime, and resource usage have been reviewed.
 
-The aim is to remove dependence on a finite stock library. It does not mean every possible subject is already modelled: missing visual concepts should be added as new SVG primitives, not filled with unrelated footage.
+The visual vocabulary is deliberately extensible. If a script introduces an unsupported subject, add a specific SVG character, prop, environment, or diagram. Do not substitute unrelated stock media.
