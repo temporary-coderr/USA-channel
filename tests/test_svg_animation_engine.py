@@ -10,6 +10,7 @@ class SVGEngineTests(unittest.TestCase):
         beats = plan_visual_beats(script, target_wpm=140, target_seconds=3)
         self.assertEqual(" ".join(b["narration"] for b in beats).split(), script.split())
         self.assertGreaterEqual(len(beats), 2)
+        self.assertLessEqual(max(len(b["narration"].split()) for b in beats), 8)
 
     def test_subject_selection_uses_script_context(self):
         self.assertEqual(infer_subject("A dog waits beside the front door."), "dog")
