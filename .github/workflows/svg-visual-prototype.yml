@@ -45,7 +45,7 @@ jobs:
       - name: Install SVG renderer
         run: |
           python -m pip install --upgrade pip
-          python -m pip install CairoSVG Pillow requests
+          python -m pip install CairoSVG Pillow requests edge-tts
 
       - name: Validate engine
         run: python -m py_compile svg_animation_engine.py svg_scene_engine.py svg_story_planner.py
@@ -60,7 +60,7 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_svg_story_planner.py' -v
 
       - name: Validate audio and animated renderer
-        run: python -m py_compile svg_audio_engine.py svg_video_renderer.py
+        run: python -m py_compile svg_audio_engine.py svg_narration.py svg_video_renderer.py
 
       - name: Run animation and sound tests
         run: python -m unittest discover -s tests -p 'test_svg_video_renderer.py' -v
@@ -83,8 +83,11 @@ jobs:
           if-no-files-found: error
           path: |
             output/svg_animation_preview/wise_lab_animated_preview.mp4
+            output/svg_animation_preview/narration.mp3
+            output/svg_animation_preview/captions.ass
             output/svg_animation_preview/sound_effects.wav
             output/svg_animation_preview/audio_mix.wav
+            output/svg_animation_preview/narration_segments/
             output/svg_animation_preview/animation_manifest.json
             output/svg_animation_preview/scene_svgs/
           retention-days: 7
