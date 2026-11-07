@@ -1,0 +1,79 @@
+name: Upload existing WISE LAB render
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Completed render run containing the video artifact"
+        required: true
+        default: "42328276386"
+        type: string
+      artifact_name:
+        description: "Exact artifact name from that render run"
+        required: true
+        default: "wise-lab-video-23"
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  validate-and-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      YOUTUBE_PRIVACY_STATUS: private
+      VIDEO_FORMAT: landscape
+    steps:
+      - name: Checkout repository tools
+        uses: actions/checkout@v4
+
+      - name: Download the already-rendered video artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          path: .
+
+      - name: Verify existing MP4 and required review files
+        run: |
+          test -s output/wise_lab_video.mp4 || (echo "Existing landscape MP4 is missing from the selected artifact." && exit 1)
+          test -s output/visual_manifest.json || (echo "Visual manifest is missing." && exit 1)
+          test -s output/scene_plan.json || (echo "Scene plan is missing." && exit 1)
+          test -s scripts/research_notes.md || (echo "Research notes are missing." && exit 1)
+          ls -lh output/wise_lab_video.mp4
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run technical quality checks on the existing render
+        run: python quality_check.py
+
+      - name: Upload existing video to YouTube privately
+        run: python upload_youtube.py
+
+      - name: Save private YouTube review link
+        if: always() && hashFiles('output/youtube_video_url.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: wise-lab-private-review-link-existing-render
+          path: |
+            output/youtube_video_url.txt
+            output/review_checklist.md
+            output/technical_quality.txt
+            output/technical_quality.json
+          if-no-files-found: warn
+          retention-days: 7
