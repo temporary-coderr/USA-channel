@@ -2157,6 +2157,491 @@
       "used_at": "2026-11-07T02:36:05.221357+00:00",
       "format": "landscape",
       "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "148594",
+      "type": "video",
+      "query": "doesn't love food",
+      "page_url": "https://pixabay.com/videos/id-148594/",
+      "shot_duration_seconds": 2.391,
+      "scene_number": 1,
+      "shot_number": 1,
+      "sha256": "96cb86a9868c3cdd4f16db3e09d23b663c5572eace54cf15cbb88dd92b8d7643",
+      "visual_hashes": [
+        "2b3f1f1e3f0f130f",
+        "0a0f2f0e39131b0d",
+        "2b7e1f1f2b374b1d"
+      ],
+      "used_at": "2026-11-07T06:46:31.658659+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "106379",
+      "type": "video",
+      "query": "loves like child parent",
+      "page_url": "https://pixabay.com/videos/id-106379/",
+      "shot_duration_seconds": 2.391,
+      "scene_number": 1,
+      "shot_number": 2,
+      "sha256": "fc40e6e84b6ffc1bb445defb65b0efcfd7ea80182f4bf18f42be0f9d0533a1f0",
+      "visual_hashes": [
+        "0000040606163610",
+        "0000040606163610",
+        "0000040606163618"
+      ],
+      "used_at": "2026-11-07T06:46:31.658679+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "76496",
+      "type": "video",
+      "query": "cute line science",
+      "page_url": "https://pixabay.com/videos/id-76496/",
+      "shot_duration_seconds": 2.657,
+      "scene_number": 1,
+      "shot_number": 3,
+      "sha256": "3e998d1dd6d966b19772c5fd55778716642a0da46a77aed5572573835b11429f",
+      "visual_hashes": [
+        "7f5f4f5f1f1f1d5d",
+        "7f3f5f37333b7f6f",
+        "3f1f3f1b153f3f67"
+      ],
+      "used_at": "2026-11-07T06:46:31.658685+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "84757",
+      "type": "video",
+      "query": "look dog's eyes",
+      "page_url": "https://pixabay.com/videos/id-84757/",
+      "shot_duration_seconds": 2.214,
+      "scene_number": 2,
+      "shot_number": 4,
+      "sha256": "42aa3adc324a7a1a0686f4ea1db638bf71bb01cbcc3162b065c0d0c0a998b80c",
+      "visual_hashes": [
+        "5273636161616161",
+        "151d1e1e141c5c9a",
+        "191d1715058fbfbb"
+      ],
+      "used_at": "2026-11-07T06:46:31.658689+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "60859",
+      "type": "video",
+      "query": "looks back both",
+      "page_url": "https://pixabay.com/videos/id-60859/",
+      "shot_duration_seconds": 2.49,
+      "scene_number": 2,
+      "shot_number": 5,
+      "sha256": "a8dc89a15c614d64892cf5fc4c6fc63bbbe46e04fe8dcbbafb03a85d79e44a36",
+      "visual_hashes": [
+        "0f8a8b4b8f83838b",
+        "0f8a8b4b8f83838b",
+        "0f8a8b4b8f83838b"
+      ],
+      "used_at": "2026-11-07T06:46:31.658694+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "137485",
+      "type": "video",
+      "query": "brains release same hormone mother releases",
+      "page_url": "https://pixabay.com/videos/id-137485/",
+      "shot_duration_seconds": 4.704,
+      "scene_number": 2,
+      "shot_number": 6,
+      "sha256": "ebd18732f97935db8546d71bfb1e59ef12b8b48c1ca279f42bd5a96efce0117a",
+      "visual_hashes": [
+        "adad89a191915356",
+        "a5a585a5b1b15776",
+        "a59595a5b1b15373"
+      ],
+      "used_at": "2026-11-07T06:46:31.658698+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "262187",
+      "type": "video",
+      "query": "love hormone researchers",
+      "page_url": "https://pixabay.com/videos/id-262187/",
+      "shot_duration_seconds": 2.405,
+      "scene_number": 3,
+      "shot_number": 7,
+      "sha256": "45aff10a0b2fc6700c180499b135d59cfad6e83c89eec65c6c073f66cf51ecc7",
+      "visual_hashes": [
+        "4822025d89df1b1b",
+        "4822121d99df1b5b",
+        "48221219994f1b1b"
+      ],
+      "used_at": "2026-11-07T06:46:31.658702+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "214940",
+      "type": "video",
+      "query": "japan proved found",
+      "page_url": "https://pixabay.com/videos/id-214940/",
+      "shot_duration_seconds": 2.405,
+      "scene_number": 3,
+      "shot_number": 8,
+      "sha256": "5ca547c372b05aa1f31b9316080d0ec218506235c3c31da27c96a69745b523bf",
+      "visual_hashes": [
+        "0f0f3f1b1b5b1f1b",
+        "0f0f3f1b1b5b1f1b",
+        "0f0f3f131b5b1f1b"
+      ],
+      "used_at": "2026-11-07T06:46:31.658705+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "213945",
+      "type": "video",
+      "query": "owner gaze",
+      "page_url": "https://pixabay.com/videos/id-213945/",
+      "shot_duration_seconds": 2.405,
+      "scene_number": 3,
+      "shot_number": 9,
+      "sha256": "6815abaffe20e1b70e950dc49edd2fe3b06d29ff66fe3df017ede7c8888fdf49",
+      "visual_hashes": [
+        "8080809696961333",
+        "0000001410101230",
+        "0000101010181030"
+      ],
+      "used_at": "2026-11-07T06:46:31.658709+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "38690",
+      "type": "video",
+      "query": "each other both oxytocin levels",
+      "page_url": "https://pixabay.com/videos/id-38690/",
+      "shot_duration_seconds": 2.405,
+      "scene_number": 3,
+      "shot_number": 10,
+      "sha256": "588d17992c1c200472a450cc3a61003780a07c2253765b85b7d5df1d31070bba",
+      "visual_hashes": [
+        "5d89ad76f3b0e0f9",
+        "5dcbad76b3b0e0f9",
+        "5d8bad76b3b0e0f9"
+      ],
+      "used_at": "2026-11-07T06:46:31.658713+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "145991",
+      "type": "video",
+      "query": "looking food",
+      "page_url": "https://pixabay.com/videos/id-145991/",
+      "shot_duration_seconds": 2.405,
+      "scene_number": 3,
+      "shot_number": 11,
+      "sha256": "4693e42e4d885e2bb07b570701841da7813bbc9f88a9210860e17791d6deef24",
+      "visual_hashes": [
+        "d2d258dbd9a8d8ab",
+        "d2ca4cc3699cd8af",
+        "d2d244cb699cc8ab"
+      ],
+      "used_at": "2026-11-07T06:46:31.658717+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "31604",
+      "type": "video",
+      "query": "play contact that's",
+      "page_url": "https://pixabay.com/videos/id-31604/",
+      "shot_duration_seconds": 2.408,
+      "scene_number": 4,
+      "shot_number": 12,
+      "sha256": "77795758178abca0f24c2e3554f23da9cb1d3f504721c6c454ba71275875e706",
+      "visual_hashes": [
+        "aab28bc3c3d3c206",
+        "aaaeb3cf92928184",
+        "db9edace82868184"
+      ],
+      "used_at": "2026-11-07T06:46:31.658721+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "135798",
+      "type": "video",
+      "query": "come home long",
+      "page_url": "https://pixabay.com/videos/id-135798/",
+      "shot_duration_seconds": 2.709,
+      "scene_number": 4,
+      "shot_number": 13,
+      "sha256": "5e3c08fc8b2519f88044233d6acc19365392100decbdaa0ffd73e88179a6f46d",
+      "visual_hashes": [
+        "7f7f1f1f1f3f7f7f",
+        "7f7f1f2f1f7e7e7f",
+        "7f7f1f6f1f3d7f7d"
+      ],
+      "used_at": "2026-11-07T06:46:31.658725+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "diagram:ea8bf543675ea3c4a190",
+      "type": "image",
+      "source": "WISE-LAB Original Diagram",
+      "query": "doesn't tail whole body shakes gone",
+      "page_url": "",
+      "shot_duration_seconds": 5.419,
+      "scene_number": 4,
+      "shot_number": 14,
+      "sha256": "ea8bf543675ea3c4a190de58be380b34ad1d38e7e837ca1cbbea34bd0a65b4f2",
+      "visual_hashes": [
+        "19562b2dcc2b3354"
+      ],
+      "used_at": "2026-11-07T06:46:31.658729+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "134051",
+      "type": "video",
+      "query": "humans friends jobs phones whole world",
+      "page_url": "https://pixabay.com/videos/id-134051/",
+      "shot_duration_seconds": 2.467,
+      "scene_number": 5,
+      "shot_number": 15,
+      "sha256": "36274cbe581c6466ca2d1e643cec6e514b5dd9aea213283d7d6b42de5dae7c60",
+      "visual_hashes": [
+        "0f5c90949092de1c",
+        "4f5c90949092d60f",
+        "0f5c909c9092d60f"
+      ],
+      "used_at": "2026-11-07T06:46:31.658733+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "83865",
+      "type": "video",
+      "query": "whole humans friends jobs phones",
+      "page_url": "https://pixabay.com/videos/id-83865/",
+      "shot_duration_seconds": 2.467,
+      "scene_number": 5,
+      "shot_number": 16,
+      "sha256": "a294132377c208344ae05bdef2d834bcfbe5f6f891f4e940610eacfb1e474114",
+      "visual_hashes": [
+        "e6f2eaecfcb93332",
+        "e6f6eeececf93534",
+        "c6eaeaf0f8b13332"
+      ],
+      "used_at": "2026-11-07T06:46:31.658738+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "144452",
+      "type": "video",
+      "query": "world doesn't care rich",
+      "page_url": "https://pixabay.com/videos/id-144452/",
+      "shot_duration_seconds": 2.467,
+      "scene_number": 5,
+      "shot_number": 17,
+      "sha256": "ed7194c728f9445d9b0a5c55b9c1b00a9c5c7e1a69a97a6db10625dd3ddf8853",
+      "visual_hashes": [
+        "37773333331ba9f1",
+        "17333333333ba131",
+        "173733a3f34bcde5"
+      ],
+      "used_at": "2026-11-07T06:46:31.658743+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "262181",
+      "type": "video",
+      "query": "poor doesn't care failed today",
+      "page_url": "https://pixabay.com/videos/id-262181/",
+      "shot_duration_seconds": 2.775,
+      "scene_number": 5,
+      "shot_number": 18,
+      "sha256": "ea230af9e5ae64c531933bd62920e03468274ece7b3c30afd2b5789970a1cbb9",
+      "visual_hashes": [
+        "1b1e4b6baf23931f",
+        "2b1e5b1f8767171d",
+        "1b0e4b0f87431f0d"
+      ],
+      "used_at": "2026-11-07T06:46:31.658746+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "142005",
+      "type": "video",
+      "query": "doesn't care look tired",
+      "page_url": "https://pixabay.com/videos/id-142005/",
+      "shot_duration_seconds": 2.479,
+      "scene_number": 6,
+      "shot_number": 19,
+      "sha256": "c365190a8a828ae0c65b24f3d928c8f8b80c304ba8df0e1c5c7c500f8ffaeb97",
+      "visual_hashes": [
+        "c3dbdcfcfdfcfeff",
+        "cbdbdcfcfdfcfeff",
+        "c3d7dcfcfcfcfeff"
+      ],
+      "used_at": "2026-11-07T06:46:31.658751+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "172491",
+      "type": "video",
+      "query": "wants minutes",
+      "page_url": "https://pixabay.com/videos/id-172491/",
+      "shot_duration_seconds": 2.789,
+      "scene_number": 6,
+      "shot_number": 20,
+      "sha256": "68015812ba794c7d8f8ef829691751d54754f094f017996a652013b9125c48fa",
+      "visual_hashes": [
+        "010c020716160e1c",
+        "000c020717160e1c",
+        "0104020716160e1c"
+      ],
+      "used_at": "2026-11-07T06:46:31.658755+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "7012",
+      "type": "video",
+      "query": "rescue dogs truth",
+      "page_url": "https://pixabay.com/videos/id-7012/",
+      "shot_duration_seconds": 2.479,
+      "scene_number": 6,
+      "shot_number": 21,
+      "sha256": "20c53a0b049a0552cf0c049270d0b74c8eb73a3a491746d62fd45b254c5532a0",
+      "visual_hashes": [
+        "08060e4f763e0730",
+        "020d0646663f8730",
+        "080c0e4e671e8730"
+      ],
+      "used_at": "2026-11-07T06:46:31.658758+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "272625",
+      "type": "video",
+      "query": "time rescue loneliness stress",
+      "page_url": "https://pixabay.com/videos/id-272625/",
+      "shot_duration_seconds": 2.789,
+      "scene_number": 6,
+      "shot_number": 22,
+      "sha256": "a485e4899370111e78e077aabbe4d1c982324a608d2294bbef7050547bec9c59",
+      "visual_hashes": [
+        "93cbcbc5c4c0c0c4",
+        "6343cbcbcbc3d3d1",
+        "634bcbcbcbc3d381"
+      ],
+      "used_at": "2026-11-07T06:46:31.658762+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "564",
+      "type": "video",
+      "query": "feeling unloved today",
+      "page_url": "https://pixabay.com/videos/id-564/",
+      "shot_duration_seconds": 2.376,
+      "scene_number": 7,
+      "shot_number": 23,
+      "sha256": "5ce4db5cfc4950075d6c18039f098d0cb36f43bebe7baf86dab8e33604308a3d",
+      "visual_hashes": [
+        "00000c0616000000",
+        "c9b2b0b1b0b43054",
+        "8911707551499484"
+      ],
+      "used_at": "2026-11-07T06:46:31.658766+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "21222",
+      "type": "video",
+      "query": "home don't feed minutes look eyes",
+      "page_url": "https://pixabay.com/videos/id-21222/",
+      "shot_duration_seconds": 7.128,
+      "scene_number": 7,
+      "shot_number": 24,
+      "sha256": "9dc1cc0b9b6f9ffb9a45e8a5b0035c073b16471ce2bdd22703b5a439b3fd6734",
+      "visual_hashes": [
+        "93333d39bb3d3f1f",
+        "d1333d39bb3d3d1f",
+        "91333d39bb3d3d1f"
+      ],
+      "used_at": "2026-11-07T06:46:31.658787+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "212598",
+      "type": "video",
+      "query": "animal loves comment name let's",
+      "page_url": "https://pixabay.com/videos/id-212598/",
+      "shot_duration_seconds": 2.256,
+      "scene_number": 8,
+      "shot_number": 25,
+      "sha256": "7011f4326b49e54f876cbf473b046943a32ba81495885b606d3708b3a7266abb",
+      "visual_hashes": [
+        "72736f2eb3e55b6d",
+        "72536f2eb1e55b6d",
+        "72536f2ef1e55b6c"
+      ],
+      "used_at": "2026-11-07T06:46:31.658793+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "9797",
+      "type": "video",
+      "query": "animal loves comment name let's",
+      "page_url": "https://pixabay.com/videos/id-9797/",
+      "shot_duration_seconds": 2.256,
+      "scene_number": 8,
+      "shot_number": 26,
+      "sha256": "b56fa02c4bc35ab828cd598e1a091494d25983e7f9907c65d0d4556745edc0a3",
+      "visual_hashes": [
+        "0212960f07b7b567",
+        "307edf8f8fbfb557",
+        "c44edfdfaf9b3737"
+      ],
+      "used_at": "2026-11-07T06:46:31.658797+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
+    },
+    {
+      "id": "189573",
+      "type": "video",
+      "query": "best friends here",
+      "page_url": "https://pixabay.com/videos/id-189573/",
+      "shot_duration_seconds": 2.256,
+      "scene_number": 8,
+      "shot_number": 27,
+      "sha256": "ebf1e540ea4bc57a31415b2082686bd186470cc3d44a56acbfb6003486ebea6d",
+      "visual_hashes": [
+        "f6e4f9ddfdf1fdbd",
+        "eae8e1f1e1e9e969",
+        "fad8f9d5f5f5e565"
+      ],
+      "used_at": "2026-11-07T06:46:31.658801+00:00",
+      "format": "landscape",
+      "script_file": "scripts/script.txt"
     }
   ],
   "rejected_ids": [
@@ -2166,6 +2651,9 @@
     "135140",
     "63537",
     "73714",
-    "14912"
+    "14912",
+    "106377",
+    "345377",
+    "diagram:c7e9c3b6f89bf2a79394"
   ]
 }
