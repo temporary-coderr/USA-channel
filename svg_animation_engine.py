@@ -151,7 +151,7 @@ def _background(seed: int, width: int, height: int) -> str:
     <path d="M0 {height*.82:.0f} Q{width*.25:.0f} {height*.76:.0f} {width*.5:.0f} {height*.84:.0f} T{width} {height*.80:.0f} V{height} H0Z" fill="#07101D" opacity=".46"/>
     """
 
-def _human(x: int, y: int, scale: float, action: str, seed: int) -> str:
+def _human(x: int, y: int, scale: float, action: str, seed: int, phase: float = 0.0) -> str:
     skin = PALETTE["skin"] if seed % 2 else PALETTE["skin2"]
     shirt = [PALETTE["teal"], PALETTE["blue"], PALETTE["purple"], "#E9EDF3"][seed % 4]
     arm = {
@@ -168,7 +168,9 @@ def _human(x: int, y: int, scale: float, action: str, seed: int) -> str:
     hair = f'<path d="M-45 -145 Q-55 -205 0 -198 Q53 -202 47 -143 Q20 -170 -5 -160 Q-25 -150 -45 -145Z" fill="{PALETTE["hair"]}"/>'
     eyes = '<circle cx="-16" cy="-132" r="4" fill="#17263A"/><circle cx="16" cy="-132" r="4" fill="#17263A"/>'
     mouth = '<path d="M-10 -105 Q0 -98 10 -105" fill="none" stroke="#8F4D47" stroke-width="4" stroke-linecap="round"/>'
-    return f'<g transform="translate({x} {y}) scale({scale})"><ellipse cx="0" cy="126" rx="66" ry="13" fill="#000" opacity=".24"/><path d="M-38 -75 Q0 -95 38 -75 L52 55 Q0 80 -52 55Z" fill="{shirt}" stroke="#17263A" stroke-width="7"/><path d="M-22 55 L-30 120 M22 55 L30 120" stroke="#25364B" stroke-width="22" stroke-linecap="round"/>{arm}{face}{hair}{eyes}{mouth}</g>'
+    bob = math.sin(phase * math.tau) * 5.0
+    arm_swing = math.sin(phase * math.tau) * 8.0
+    return f'<g transform="translate({x} {y + bob:.2f}) scale({scale})"><ellipse cx="0" cy="126" rx="66" ry="13" fill="#000" opacity=".24"/><path d="M-38 -75 Q0 -95 38 -75 L52 55 Q0 80 -52 55Z" fill="{shirt}" stroke="#17263A" stroke-width="7"/><path d="M-22 55 L-30 120 M22 55 L30 120" stroke="#25364B" stroke-width="22" stroke-linecap="round"/><g transform="rotate({arm_swing:.2f} 0 -35)">{arm}</g>{face}{hair}{eyes}{mouth}</g>'
 
 def _dog(x: int, y: int, scale: float, seed: int) -> str:
     coat = "#D8A66F" if seed % 2 else "#E7D7BE"
@@ -217,7 +219,7 @@ def _callout(text: str, x: int, y: int, width: int) -> str:
     label = label[:68] + ("…" if len(label) > 68 else "")
     return f'<g><rect x="{x}" y="{y}" width="{width}" height="76" rx="18" fill="#10243A" stroke="{PALETTE["teal"]}" stroke-opacity=".65" stroke-width="2"/><text x="{x+24}" y="{y+48}" fill="{PALETTE["white"]}" font-family="DejaVu Sans,sans-serif" font-size="25" font-weight="600">{_esc(label)}</text></g>'
 
-def render_scene_svg(narration: str, beat_index: int, width: int = 1920, height: int = 1080) -> str:
+def render_scene_svg(narration: str, beat_index: int, width: int = 1920, height: int = 1080, phase: float = 0.0) -> str:
     """Compose a fresh SVG scene from the narration's subject, action and stable seed."""
     seed = _seed(f"{beat_index}|{narration}")
     subject = infer_subject(narration)
@@ -232,12 +234,12 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920, height:
     if subject in {"dog", "cat"}:
         elements.append(_object(subject, int(width*.66), int(height*.61), scale*.72, seed))
         if show_person:
-            elements.append(_human(int(width*.30), int(height*.72), scale*.72, action, seed))
+            elements.append(_human(int(width*.30), int(height*.72), scale*.72, action, seed, phase))
     elif subject == "crowd":
         elements.append(_object("crowd", int(width*.52), int(height*.72), scale, seed))
         elements.append(_object("eye", int(width*.78), int(height*.28), scale*.48, seed))
     elif subject in {"brain", "heart", "puzzle", "eye"}:
-        elements.append(_human(int(width*.28), int(height*.72), scale*.76, action, seed))
+        elements.append(_human(int(width*.28), int(height*.72), scale*.76, action, seed, phase))
         elements.append(_object(subject, int(width*.69), int(height*.48), scale*.82, seed))
         elements.append(f'<path d="M{width*.42:.0f} {height*.48:.0f} Q{width*.53:.0f} {height*.28:.0f} {width*.57:.0f} {height*.43:.0f}" fill="none" stroke="{PALETTE["teal"]}" stroke-width="7" stroke-dasharray="12 14"/>')
     elif subject in {"phone", "door", "clock", "mirror", "book"}:
@@ -245,7 +247,7 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920, height:
         elements.append(_object(subject, int(width*.70), int(height*.48), scale*.82, seed))
         elements.append(f'<path d="M{width*.42:.0f} {height*.55:.0f} Q{width*.53:.0f} {height*.34:.0f} {width*.58:.0f} {height*.48:.0f}" fill="none" stroke="{PALETTE["gold"]}" stroke-width="6" stroke-dasharray="9 12"/>')
     else:
-        elements.append(_human(cx, int(height*.73), scale*.95, action, seed))
+        elements.append(_human(cx, int(height*.73), scale*.95, action, seed, phase))
         elements.append(_callout(" ".join([w for w in _tokens(narration) if w not in STOP][:5]) or "HUMAN BEHAVIOUR",
                                  int(width*.55), int(height*.20), int(width*.34)))
     # Short, editorially useful title; narration itself remains in the voice track.
@@ -261,9 +263,20 @@ def render_scene_svg(narration: str, beat_index: int, width: int = 1920, height:
     footer = f'<text x="{text_x}" y="{height-42}" fill="{PALETTE["muted"]}" font-family="DejaVu Sans,sans-serif" font-size="{max(18,int(min(width,height)*.018))}" letter-spacing="4">WISE LAB  /  EXPLORE THE MIND</text>'
     # Subtle numbered motif makes each beat identifiable without recycling a slide.
     number = f'<text x="{width-75}" y="{height-48}" text-anchor="end" fill="{PALETTE["teal"]}" opacity=".8" font-family="DejaVu Sans,sans-serif" font-size="28">{beat_index:03d}</text>'
+    # Camera move: gentle push-in with a slow alternating pan. The frame renderer
+    # supplies phase from 0..1 so each beat has continuous motion, not a static slide.
+    phase = max(0.0, min(1.0, phase))
+    zoom = 1.0 + 0.035 * math.sin(math.pi * phase)
+    direction = -1 if seed % 2 else 1
+    pan_x = direction * width * 0.012 * math.sin(math.pi * phase)
+    pan_y = height * 0.006 * math.cos(math.pi * phase)
+    camera = (f'translate({pan_x:.2f} {pan_y:.2f}) '
+              f'translate({width/2:.2f} {height/2:.2f}) scale({zoom:.5f}) '
+              f'translate({-width/2:.2f} {-height/2:.2f})')
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
-            + _svg_defs(seed) + _background(seed, width, height)
-            + "".join(elements) + title_svg + accent + footer + number + "</svg>")
+            + _svg_defs(seed)
+            + f'<g transform="translate({-pan_x*.22:.2f} {-pan_y*.22:.2f})">' + _background(seed, width, height) + '</g>'
+            + f'<g transform="{camera}">' + "".join(elements) + title_svg + accent + footer + number + '</g></svg>')
 
 def build_script_visuals(script_path: Path, output_dir: Path, video_format: str = "landscape",
                          target_wpm: int = 140, target_seconds: float = 3.0) -> dict:
