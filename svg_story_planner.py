@@ -52,6 +52,13 @@ def _validate_scene(raw: Any, beat: dict, index: int) -> dict:
         result["props"] = list(dict.fromkeys(
             p for p in props if isinstance(p, str) and p in ALLOWED["props"]
         ))[:4]
+    # Ensure a selected object subject is actually present in the SVG scene.
+    if result["subject"] in {"phone", "door", "brain", "heart", "clock", "book"} and result["subject"] not in result["props"]:
+        result["props"].insert(0, result["subject"])
+    if result["subject"] == "dog" and "dog" not in result["props"]:
+        result["props"].append("dog")
+    if result["subject"] == "cat" and "cat" not in result["props"]:
+        result["props"].append("cat")
     # The procedural renderer only supports the named geometry above.
     result["seed"] = plan_scene(str(beat.get("narration", "")), index)["seed"]
     return result
@@ -131,6 +138,12 @@ def plan_story(beats: list[dict], timeout: int = 35) -> tuple[list[dict], dict]:
                 scenes.append(fallback[i-1])
         if ai_count == 0:
             raise ValueError("Groq returned no usable scene briefs")
+        # Even if the model repeats a framing choice, avoid identical adjacent layouts.
+        layouts = ("left_focus", "right_focus", "wide_interaction", "close_up")
+        for i in range(1, len(scenes)):
+            if scenes[i]["layout"] == scenes[i - 1]["layout"]:
+                current = layouts.index(scenes[i]["layout"])
+                scenes[i]["layout"] = layouts[(current + 1) % len(layouts)]
         return scenes, {
             "provider": "groq",
             "model": model,
