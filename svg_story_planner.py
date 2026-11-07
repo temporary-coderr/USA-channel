@@ -12,7 +12,7 @@ import requests
 from svg_scene_engine import plan_scene
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 
 ALLOWED = {
     "subject": {"human", "dog", "cat", "phone", "door", "brain", "heart", "clock", "book", "mirror", "crowd", "eye"},
@@ -105,7 +105,7 @@ def plan_story(beats: list[dict], timeout: int = 35) -> tuple[list[dict], dict]:
     payload = {
         "model": model,
         "temperature": 0.35,
-        "max_tokens": min(6000, max(1200, len(beats) * 130)),
+        "max_completion_tokens": min(6000, max(1200, len(beats) * 130)),
         "response_format": {"type": "json_object"},
         "messages": [
             {"role": "system", "content": "Return valid JSON only. Follow the schema and allowed values exactly."},
