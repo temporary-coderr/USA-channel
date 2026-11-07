@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 def run(command: list[str]) -> str:
-    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     return result.stdout
 
 
