@@ -164,7 +164,7 @@ def _build_music(duration: float, seed: int = 0) -> array:
         note_phase = (t % 4.0)
         pluck_env = math.exp(-2.8 * note_phase)
         pluck = 0.10 * math.sin(2 * math.pi * (chord[3] * 2) * note_phase) * pluck_env
-        music[pos] = (pad * pulse * 0.070 + pluck * 0.055) * edge
+        music[pos] = (pad * pulse * 0.13 + pluck * 0.07) * edge
     return music
 
 
@@ -194,5 +194,6 @@ def write_audio_tracks(duration: float, events: list[dict],
         "event_count": len(events),
         "event_types": sorted({event["kind"] for event in events}),
         "music_bed": "original_synthesized_ambient",
+        "music_seed": int(music_seed),
         "peak_linear": round(min(peak, 0.92), 4),
     }
