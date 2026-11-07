@@ -1281,7 +1281,8 @@ def main() -> int:
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
     groq_key = os.getenv("GROQ_API_KEY", "").strip()
     print("Optional Pexels fallback enabled." if pexels_key else "Pexels fallback not configured; using Pixabay only.")
-    print("OpenAI image generation: enabled." if openai_key else "OpenAI image generation: unavailable; optional.")\n    print("Gemini image generation: enabled." if gemini_key else "Gemini image generation: unavailable; optional.")
+    print("OpenAI image generation: enabled." if openai_key else "OpenAI image generation: unavailable; optional.")
+    print("Gemini image generation: enabled." if gemini_key else "Gemini image generation: unavailable; optional.")
     print("Groq art-direction prompt refinement enabled." if groq_key else "Groq prompt refinement disabled; local prompts will be used.")
     # Scene planning stays local; OpenAI/Groq are used only for selected custom stills.
     plan = plan_scenes(script)
