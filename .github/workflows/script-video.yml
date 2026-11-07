@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "scripts/script.txt"
+      - "render_script.py"
   workflow_dispatch:
     inputs:
       format:
