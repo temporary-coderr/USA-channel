@@ -23,7 +23,7 @@ class SVGSceneEngineTests(unittest.TestCase):
 
     def test_environment_background_contains_real_scene_layers(self):
         svg = render_scene_svg("A person relaxes in the park.", 8, 720, 1280)
-        self.assertIn("linearGradient id=\"sceneSky\"", svg)
+        self.assertIn("linearGradient id=\"sky", svg)
         self.assertIn("#70533E", svg)
         self.assertIn("#6F9479", svg)
 
