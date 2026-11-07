@@ -1,0 +1,62 @@
+name: WISE LAB SVG visual prototype
+
+on:
+  workflow_dispatch:
+    inputs:
+      format:
+        description: "Preview format"
+        required: true
+        default: landscape
+        type: choice
+        options:
+          - landscape
+          - shorts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wise-lab-svg-prototype
+  cancel-in-progress: false
+
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install SVG renderer
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install CairoSVG
+
+      - name: Validate engine
+        run: python -m py_compile svg_animation_engine.py
+
+      - name: Generate original visuals from the current script
+        run: |
+          python svg_animation_engine.py \
+            --script scripts/script.txt \
+            --output output/svg_prototype \
+            --format "${{ inputs.format }}" \
+            --wpm 140 \
+            --seconds 3
+
+      - name: Upload SVG and PNG review pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: wise-lab-svg-prototype-${{ github.run_number }}
+          if-no-files-found: error
+          path: |
+            output/svg_prototype/scenes/
+            output/svg_prototype/visual_manifest.json
+          retention-days: 7
