@@ -18,7 +18,7 @@ ALLOWED = {
     "subject": {"human", "dog", "cat", "phone", "door", "brain", "heart", "clock", "book", "mirror", "crowd", "eye"},
     "action": {"explaining", "walking", "sitting", "pointing", "hiding", "waving", "talking", "thinking", "shocked", "scared", "angry", "sad", "happy"},
     "emotion": {"neutral", "sad", "happy", "shocked", "thinking", "angry", "scared"},
-    "environment": {"rainy_street", "bedroom", "park", "workplace", "interior", "dark_room", "studio"},
+    "environment": {"rainy_street", "bedroom", "park", "workplace", "interior", "dark_room", "studio", "cafe", "classroom", "city", "home"},
     "character": {"boy", "girl"},
     "layout": {"left_focus", "right_focus", "wide_interaction", "close_up"},
     "props": {"phone", "broken_phone", "door", "brain", "heart", "clock", "book", "coffee", "dog", "cat"},
@@ -85,7 +85,7 @@ def _prompt(beats: list[dict]) -> str:
         "Allowed subject: human,dog,cat,phone,door,brain,heart,clock,book,mirror,crowd,eye. "
         "Allowed action: explaining,walking,sitting,pointing,hiding,waving,talking,thinking,shocked,scared,angry,sad,happy. "
         "Allowed emotion: neutral,sad,happy,shocked,thinking,angry,scared. "
-        "Allowed environment: rainy_street,bedroom,park,workplace,interior,dark_room,studio. "
+        "Allowed environment: rainy_street,bedroom,park,workplace,interior,dark_room,studio,cafe,classroom,city,home. "
         "Allowed props: phone,broken_phone,door,brain,heart,clock,book,coffee,dog,cat. "
         "Allowed character: boy,girl. Allowed layout: left_focus,right_focus,wide_interaction,close_up. "
         "For each beat return exactly one scene, preserving beat_index. "
