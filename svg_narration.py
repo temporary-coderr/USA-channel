@@ -46,7 +46,8 @@ def _caption_text(phrase: str, max_chars: int) -> str:
     lines, current = [], ""
     for word in words:
         candidate = f"{current} {word}".strip()
-        if current and len(candidate) > max_chars:
+        visible_length = len(re.sub(r"\\{[^}]*\\}", "", candidate))
+        if current and visible_length > max_chars:
             lines.append(current)
             current = word
         else:
@@ -112,7 +113,19 @@ def synthesize_beats(beats: list[dict], output_dir: Path, width: int, height: in
         safe_words = [re.sub(r"([{}])", r"\\\1", word) for word in words]
         if safe_words:
             safe_words[key_index] = r"{\c&H0054D4C8&}" + safe_words[key_index] + r"{\c&H00FFFFFF&}"
-        caption = _caption_text(" ".join(safe_words), max_chars)
+        caption_phrase = " ".join(safe_words)
+        caption_width = max_chars
+        while True:
+            try:
+                caption = _caption_text(caption_phrase, caption_width)
+                break
+            except RuntimeError:
+                caption_width += 4
+                if caption_width > max_chars * 1.6:
+                    raise
+        if caption_width > max_chars:
+            fitted_size = max(24, round(font_size * max_chars / caption_width))
+            caption = r"{\\fs" + str(fitted_size) + "}" + caption
         start = cursor
         end = cursor + duration
         rows.append(
